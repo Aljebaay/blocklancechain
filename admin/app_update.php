@@ -75,7 +75,7 @@ $r_date = $row_app->r_date;
           <label class="col-md-6 control-label"> Update File : </label>
           <div class="col-md-6 ">
           <input type="file" required="" class="form-control form-control-sm mt-0" name="zip_file" accept=".zip">
-          <small>Click here to get <a class="text-success" href="https://www.codester.com/items/7515/gigtodo-freelance-service-marketplace">updated files</a></small>
+          <small>Click here to get <a class="text-success" href="https://www.codester.com/items/7515/blocklancechain-freelance-service-marketplace">updated files</a></small>
           </div>
           </div><!--- form-group row Ends --->
           <hr class="mt-0 mb-3">
@@ -217,7 +217,7 @@ if(isset($_POST["update_application"])){
             echo "<script>
             swal({
             type: 'warning',
-            text: 'This Update File Will Only Work On Gigtodo $c_version.',
+            text: 'This Update File Will Only Work On blocklancechain $c_version.',
             timer: 3000,
             onOpen: function(){
             swal.showLoading()

@@ -69,7 +69,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Title </div>
                   <div class="col-md-8">
                     <input type="text" name="site_title" class="form-control" placeholder="Site Title" value="<?= @$form_data['site_title']; ?>" required>
-                    <small>E.g. GigToDo - Freelance MarketPlace</small>
+                    <small>E.g. blocklancechain - Freelance MarketPlace</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -78,7 +78,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Url </div>
                   <div class="col-md-8">
                     <input type="text" name="site_url" class="form-control" placeholder="Site Url" value="<?= @$form_data['site_url']; ?>" required>
-                    <small>E.g https://www.gigtodo.com (include the protocol "http://")</small>
+                    <small>E.g https://www.blocklancechain.com (include the protocol "http://")</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -94,7 +94,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Name <span class="text-danger">*</span> </div>
                   <div class="col-md-8">
                     <input type="text" name="site_name" class="form-control" placeholder="Enter Site Name" value="<?= @$form_data['site_name']; ?>" required>
-                    <small>E.g. GigToDo</small>
+                    <small>E.g. blocklancechain</small>
                   </div>
                 </div><!-- form-group row Ends -->
                 <div class="form-group row "><!-- form-group row Starts -->
@@ -109,7 +109,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> JwPlayer Code <small class="text-muted">(Optional)</small> </div>
                   <div class="col-md-8">
                     <input type="text" name="jwplayer_code" placeholder="JwPlayer Code" value="<?= @$form_data['jwplayer_code']; ?>" class="form-control">
-                    <small> <a href="http://help.gigtodoscript.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
+                    <small> <a href="http://help.blocklancechainscript.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
                   </div>
                 </div>
 
@@ -119,7 +119,7 @@
                   <div class="col-md-8">
                     <input type="text" name="purchase_code" class="form-control" placeholder="Purchase Code" value="<?= @$form_data['purchase_code']; ?>"/>
                     <small>
-                      If you purchased GigToDo from Codecanyon, please use your purchase code from codecanyon to proceed. However, if you purchased the script from Codester, Pixinal Store or Alkanyx, please <a href="https://tawk.to/chat/5eae3327203e206707f9075a/default" target="_blank" class="text-primary">click this link</a> to request a purchase code.
+                      If you purchased blocklancechain from Codecanyon, please use your purchase code from codecanyon to proceed. However, if you purchased the script from Codester, Pixinal Store or Alkanyx, please <a href="https://tawk.to/chat/5eae3327203e206707f9075a/default" target="_blank" class="text-primary">click this link</a> to request a purchase code.
                     </small>
                   </div>
                 </div>
@@ -182,7 +182,7 @@
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-          CURLOPT_URL => "https://www.gigtodo.com/purchase-code-management-system/admin/verify_purchase/",
+          CURLOPT_URL => "https://www.blocklancechain.com/purchase-code-management-system/admin/verify_purchase/",
           CURLOPT_RETURNTRANSFER => true,
           CURLOPT_ENCODING => "",
           CURLOPT_MAXREDIRS => 10,

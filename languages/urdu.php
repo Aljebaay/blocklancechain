@@ -373,7 +373,7 @@ $lang['proposals']['add_video_description'] = "(Optional) Supported Video Extens
 $lang['proposals']['add_video'] = "Add Video";
 $lang['proposals']['remove_video'] = "Remove Video";
 
-// Gigtodo 2.0
+// blocklancechain 2.0
 
 $lang["pages"] = "Pages";
 
@@ -659,7 +659,7 @@ $lang['settings']['account_deactivation'] = "ACCOUNT DEACTIVATION";
 $lang['settings']['please_withdraw'] = "Please withdraw your revenues before deactivating your account.";
 
 $lang['settings']['what_happens']['title'] = "What happens when you deactivate your account?";
-$lang['settings']['what_happens']['1'] = "Your profile and services won't be shown on Gigtodo anymore.";
+$lang['settings']['what_happens']['1'] = "Your profile and services won't be shown on blocklancechain anymore.";
 $lang['settings']['what_happens']['2'] = "Any open orders will be canceled and refunded.";
 $lang['settings']['what_happens']['3'] = "You won't be able to re-activate your proposals/services.";
 $lang['settings']['what_happens']['4'] = "You won't be able to restore your account.";
@@ -820,7 +820,7 @@ $lang['post_request']['column_4']['desc'] = "Enter an amount you are willing to 
 
 /// Knowledge Bank Page
 
-$lang['knowledge_bank']['title'] = "KNOWLEDGE BANK FOR GIGTODO";
+$lang['knowledge_bank']['title'] = "KNOWLEDGE BANK FOR blocklancechain";
 $lang['knowledge_bank']['desc'] = "Everything you need to know";
 
 /// Single Article Page

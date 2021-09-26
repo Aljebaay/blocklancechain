@@ -1,4 +1,4 @@
-$('body').append('<section class="clearfix post_footer">@ Copyright GigToDoScript 2020. Pixinal Studio. </section>');
+$('body').append('<section class="clearfix post_footer">@ Copyright blocklancechainScript 2020. Pixinal Studio. </section>');
 
 // $(document).ready(function(){
 

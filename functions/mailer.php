@@ -130,7 +130,7 @@ function load_view($file,$data=''){
 
 function img_url($url){
    global $site_url;
-   // $site_url = "https://www.gigtodo.com";
+   // $site_url = "https://www.blocklancechain.com";
    echo $site_url."/images/email/".$url;
 }
 

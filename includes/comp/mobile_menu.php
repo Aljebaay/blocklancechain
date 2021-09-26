@@ -4,7 +4,7 @@
   @$count_unread_inbox_messages = $db->query("select * from inbox_messages where message_receiver=:r_id AND message_status='unread'",array("r_id"=>$seller_id))->rowCount();
   $next_icon = "
   <div class='flag-img flag-img-right'>
-  <span class='gigtodo-icon float-right'>
+  <span class='blocklancechain-icon float-right'>
   <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden='true' focusable='false'>
   <path d='M10,17a1,1,0,0,1-.707-1.707L12.586,12,9.293,8.707a1,1,0,0,1,1.414-1.414L15.414,12l-4.707,4.707A1,1,0,0,1,10,17Z'></path>
   </svg>
@@ -12,7 +12,7 @@
   </div>
   ";
 ?>
-<div class="cat-mobile" id="gigtodo-modal-container" style="display:none;"><!--- cat-mobile Starts --->
+<div class="cat-mobile" id="blocklancechain-modal-container" style="display:none;"><!--- cat-mobile Starts --->
   <div data-overlay-mask="" class="overlay-mask mobile-catnav-overlay-mask" data-aria-hidden="true"></div>
   <div data-overlay-content-wrapper="" class="overlay-mask overlay-content-wrapper mobile-catnav-overlay-mask">
     <div class="mobile-catnav-wrapper overlay-region position-relative p-xs-0" id="mobile-catnav-overlay" aria-hidden="false" data-overlay-has-trigger="true" style="top: 0px;">
@@ -27,7 +27,7 @@
           <div class="flex-md-1 pr-md-2">
             <button class="btn-link text-right overlay-close flex-xs-1 justify-self-flex-end border-0 p-md-0" data-overlay-close="">
               <span class="screen-reader-only">Close Menu</span>
-              <span class="gigtodo-icon">
+              <span class="blocklancechain-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path d="M13.414,12l6.293-6.293a1,1,0,0,0-1.414-1.414L12,10.586,5.707,4.293A1,1,0,0,0,4.293,5.707L10.586,12,4.293,18.293a1,1,0,1,0,1.414,1.414L12,13.414l6.293,6.293a1,1,0,0,0,1.414-1.414Z"></path>
                 </svg>
@@ -39,7 +39,7 @@
         <div data-ui="mobile-catnav-header" class="mobile-catnav-header bb-xs-1 align-items-center bg-white display-flex-xs flex-nowrap position-relative height-50px">
           <button class="mobile-catnav-back-btn btn-link overlay-back p-xs-2 text-left display-none flex-xs-1 align-self-flex-start z-index-1 position-absolute" data-subnav-id="0" data-ternav-id="0" data-topnav-name="" data-subnav-name="">
             <span class="screen-reader-only">Go Back</span>
-            <span class="gigtodo-icon">
+            <span class="blocklancechain-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M16,21a0.994,0.994,0,0,1-.664-0.253L5.5,12l9.841-8.747a1,1,0,0,1,1.328,1.494L8.5,12l8.159,7.253A1,1,0,0,1,16,21Z"></path>
               </svg>
@@ -53,7 +53,7 @@
           <div class="flex-xs-1 width-full">
             <button class="show-xs show-sm btn-link p-xs-2 overlay-close border-0 float-right" data-overlay-close="">
               <span class="screen-reader-only">Close Menu</span>
-              <span class="gigtodo-icon">
+              <span class="blocklancechain-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M13.414,12l6.293-6.293a1,1,0,0,0-1.414-1.414L12,10.586,5.707,4.293A1,1,0,0,0,4.293,5.707L10.586,12,4.293,18.293a1,1,0,1,0,1.414,1.414L12,13.414l6.293,6.293a1,1,0,0,0,1.414-1.414Z"></path>
                 </svg>
@@ -143,7 +143,7 @@
 </div>
 <!--- cat-mobile Ends --->
 <?php if(isset($_SESSION['seller_user_name'])){ ?>
-<div class="user-mobile" id="gigtodo-modal-container" style="display: none;">
+<div class="user-mobile" id="blocklancechain-modal-container" style="display: none;">
   <!--- user-mobile Starts --->
   <div data-overlay-mask="" class="overlay-mask mobile-catnav-overlay-mask" data-aria-hidden="true"></div>
   <div data-overlay-content-wrapper="" class="overlay-mask overlay-content-wrapper mobile-catnav-overlay-mask">
@@ -158,7 +158,7 @@
           <div class="flex-md-1 pr-md-2">
             <button class="btn-link text-right overlay-close flex-xs-1 justify-self-flex-end border-0 p-md-0" data-overlay-close="">
               <span class="screen-reader-only">Close Menu</span>
-              <span class="gigtodo-icon">
+              <span class="blocklancechain-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path d="M13.414,12l6.293-6.293a1,1,0,0,0-1.414-1.414L12,10.586,5.707,4.293A1,1,0,0,0,4.293,5.707L10.586,12,4.293,18.293a1,1,0,1,0,1.414,1.414L12,13.414l6.293,6.293a1,1,0,0,0,1.414-1.414Z"></path>
                 </svg>
@@ -168,7 +168,7 @@
         </div>
         <div data-ui="mobile-catnav-header" class="mobile-catnav-header bb-xs-1 align-items-center bg-white display-flex-xs flex-nowrap position-relative height-50px">
           <button class="mobile-catnav-back-btn btn-link overlay-back p-xs-2 text-left display-none flex-xs-1 align-self-flex-start z-index-1 position-absolute" data-subnav-id="0" data-ternav-id="0" data-topnav-name="" data-subnav-name="">
-            <span class="gigtodo-icon">
+            <span class="blocklancechain-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" focusable="false">
                 <path d="M16,21a0.994,0.994,0,0,1-.664-0.253L5.5,12l9.841-8.747a1,1,0,0,1,1.328,1.494L8.5,12l8.159,7.253A1,1,0,0,1,16,21Z"></path>
               </svg>
@@ -182,7 +182,7 @@
           <div class="flex-xs-1 width-full">
             <button class="show-xs show-sm btn-link p-xs-2 overlay-close border-0 float-right" data-overlay-close="">
               <span class="screen-reader-only">Close Menu</span>
-              <span class="gigtodo-icon">
+              <span class="blocklancechain-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M13.414,12l6.293-6.293a1,1,0,0,0-1.414-1.414L12,10.586,5.707,4.293A1,1,0,0,0,4.293,5.707L10.586,12,4.293,18.293a1,1,0,1,0,1.414,1.414L12,13.414l6.293,6.293a1,1,0,0,0,1.414-1.414Z"></path>
                 </svg>
@@ -196,7 +196,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only" data-uid="d-1" data-name="<?= $lang["menu"]['dashboard']; ?>">
                 <a href="#">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/dashboard.svg"); ?>
                     </span>
                     <div class="flag-body">
@@ -209,7 +209,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only">
                 <a href="<?= $site_url; ?>/notifications">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/notification.svg"); ?>
                     </span>
                     <div class="flag-body">
@@ -224,7 +224,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only">
                 <a href="<?= $site_url; ?>/conversations/inbox">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/email.svg"); ?>
                     </span>
                     <div class="flag-body">
@@ -239,7 +239,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only">
                 <a href="<?= $site_url; ?>/favorites">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/heart.svg"); ?>
                     </span>
                     <div class="flag-body">
@@ -254,7 +254,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only">
                 <a href="<?= $site_url; ?>/cart">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/basket.svg"); ?>
                     </span>
                     <div class="flag-body">
@@ -269,7 +269,7 @@
               <li class="p-xs-2 bb-xs-1 text-body-larger top-nav-item a11y-focus-only">
                 <a href="<?= $site_url; ?>/logout">
                   <div class="flag">
-                    <span class="gigtodo-icon icon-smaller mr-2">
+                    <span class="blocklancechain-icon icon-smaller mr-2">
                     <?php include($dir . "images/svg/logout.svg"); ?>
                     </span>
                     <div class="flag-body">

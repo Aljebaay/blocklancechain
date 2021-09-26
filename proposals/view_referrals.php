@@ -42,7 +42,7 @@ echo "<script>window.open('view_proposals','_self');</script>";
 <title><?= $site_name; ?> - My Referrals</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="GigToDo is a fast growing freelance marketplace, where sellers provide their services at extremely affordable prices">
+<meta name="description" content="blocklancechain is a fast growing freelance marketplace, where sellers provide their services at extremely affordable prices">
 <meta name="keywords" content="freelance, freelancer, gigs, onlinejobs, proposals, sellers, buyers">
 <meta name="author" content="<?= $site_author; ?>">
 
