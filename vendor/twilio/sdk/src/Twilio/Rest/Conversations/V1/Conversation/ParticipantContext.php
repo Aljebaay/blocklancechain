@@ -16,9 +16,6 @@ use Twilio\Serialize;
 use Twilio\Values;
 use Twilio\Version;
 
-/**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- */
 class ParticipantContext extends InstanceContext {
     /**
      * Initialize the ParticipantContext
@@ -56,6 +53,8 @@ class ParticipantContext extends InstanceContext {
             'MessagingBinding.ProxyAddress' => $options['messagingBindingProxyAddress'],
             'MessagingBinding.ProjectedAddress' => $options['messagingBindingProjectedAddress'],
             'Identity' => $options['identity'],
+            'LastReadMessageIndex' => $options['lastReadMessageIndex'],
+            'LastReadTimestamp' => $options['lastReadTimestamp'],
         ]);
         $headers = Values::of(['X-Twilio-Webhook-Enabled' => $options['xTwilioWebhookEnabled'], ]);
 

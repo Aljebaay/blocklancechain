@@ -29,7 +29,7 @@ class JsonResponse extends Response
 
     // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
     // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
-    const DEFAULT_ENCODING_OPTIONS = 15;
+    public const DEFAULT_ENCODING_OPTIONS = 15;
 
     protected $encodingOptions = self::DEFAULT_ENCODING_OPTIONS;
 
@@ -42,6 +42,10 @@ class JsonResponse extends Response
     public function __construct($data = null, int $status = 200, array $headers = [], bool $json = false)
     {
         parent::__construct('', $status, $headers);
+
+        if ($json && !\is_string($data) && !is_numeric($data) && !\is_callable([$data, '__toString'])) {
+            throw new \TypeError(sprintf('"%s": If $json is set to true, argument $data must be a string or object implementing __toString(), "%s" given.', __METHOD__, get_debug_type($data)));
+        }
 
         if (null === $data) {
             $data = new \ArrayObject();
@@ -63,13 +67,9 @@ class JsonResponse extends Response
      * @param array $headers An array of response headers
      *
      * @return static
-     *
-     * @deprecated since Symfony 5.1, use __construct() instead.
      */
-    public static function create($data = null, int $status = 200, array $headers = [])
+    public static function create($data = null, $status = 200, $headers = [])
     {
-        trigger_deprecation('symfony/http-foundation', '5.1', 'The "%s()" method is deprecated, use "new %s()" instead.', __METHOD__, \get_called_class());
-
         return new static($data, $status, $headers);
     }
 
@@ -81,13 +81,13 @@ class JsonResponse extends Response
      *     return JsonResponse::fromJsonString('{"key": "value"}')
      *         ->setSharedMaxAge(300);
      *
-     * @param string|null $data    The JSON response string
-     * @param int         $status  The response status code
-     * @param array       $headers An array of response headers
+     * @param string $data    The JSON response string
+     * @param int    $status  The response status code
+     * @param array  $headers An array of response headers
      *
      * @return static
      */
-    public static function fromJsonString(string $data = null, int $status = 200, array $headers = [])
+    public static function fromJsonString($data, $status = 200, $headers = [])
     {
         return new static($data, $status, $headers, true);
     }
@@ -101,7 +101,7 @@ class JsonResponse extends Response
      *
      * @throws \InvalidArgumentException When the callback name is not valid
      */
-    public function setCallback(string $callback = null)
+    public function setCallback($callback = null)
     {
         if (null !== $callback) {
             // partially taken from https://geekality.net/2011/08/03/valid-javascript-identifier/
@@ -130,11 +130,11 @@ class JsonResponse extends Response
     /**
      * Sets a raw string containing a JSON document to be sent.
      *
-     * @return $this
+     * @param string $json
      *
-     * @throws \InvalidArgumentException
+     * @return $this
      */
-    public function setJson(string $json)
+    public function setJson($json)
     {
         $this->data = $json;
 
@@ -155,7 +155,7 @@ class JsonResponse extends Response
         try {
             $data = json_encode($data, $this->encodingOptions);
         } catch (\Exception $e) {
-            if ('Exception' === \get_class($e) && 0 === strpos($e->getMessage(), 'Failed calling ')) {
+            if ('Exception' === \get_class($e) && str_starts_with($e->getMessage(), 'Failed calling ')) {
                 throw $e->getPrevious() ?: $e;
             }
             throw $e;
@@ -185,11 +185,13 @@ class JsonResponse extends Response
     /**
      * Sets options used while encoding data to JSON.
      *
+     * @param int $encodingOptions
+     *
      * @return $this
      */
-    public function setEncodingOptions(int $encodingOptions)
+    public function setEncodingOptions($encodingOptions)
     {
-        $this->encodingOptions = $encodingOptions;
+        $this->encodingOptions = (int) $encodingOptions;
 
         return $this->setData(json_decode($this->data));
     }

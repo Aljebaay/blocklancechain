@@ -21,6 +21,7 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function close()
     {
         return true;
@@ -29,6 +30,7 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function validateId($sessionId)
     {
         return true;
@@ -37,7 +39,7 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doRead(string $sessionId)
+    protected function doRead($sessionId)
     {
         return '';
     }
@@ -45,6 +47,7 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function updateTimestamp($sessionId, $data)
     {
         return true;
@@ -53,7 +56,7 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doWrite(string $sessionId, string $data)
+    protected function doWrite($sessionId, $data)
     {
         return true;
     }
@@ -61,16 +64,17 @@ class NullSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doDestroy(string $sessionId)
+    protected function doDestroy($sessionId)
     {
         return true;
     }
 
     /**
-     * @return bool
+     * @return int|false
      */
+    #[\ReturnTypeWillChange]
     public function gc($maxlifetime)
     {
-        return true;
+        return 0;
     }
 }

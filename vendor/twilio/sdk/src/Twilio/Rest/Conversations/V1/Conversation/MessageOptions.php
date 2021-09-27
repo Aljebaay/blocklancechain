@@ -12,9 +12,6 @@ namespace Twilio\Rest\Conversations\V1\Conversation;
 use Twilio\Options;
 use Twilio\Values;
 
-/**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- */
 abstract class MessageOptions {
     /**
      * @param string $author The channel specific identifier of the message's
@@ -56,6 +53,14 @@ abstract class MessageOptions {
      */
     public static function delete(string $xTwilioWebhookEnabled = Values::NONE): DeleteMessageOptions {
         return new DeleteMessageOptions($xTwilioWebhookEnabled);
+    }
+
+    /**
+     * @param string $order The sort order of the returned messages
+     * @return ReadMessageOptions Options builder
+     */
+    public static function read(string $order = Values::NONE): ReadMessageOptions {
+        return new ReadMessageOptions($order);
     }
 }
 
@@ -303,5 +308,35 @@ class DeleteMessageOptions extends Options {
     public function __toString(): string {
         $options = \http_build_query(Values::of($this->options), '', ' ');
         return '[Twilio.Conversations.V1.DeleteMessageOptions ' . $options . ']';
+    }
+}
+
+class ReadMessageOptions extends Options {
+    /**
+     * @param string $order The sort order of the returned messages
+     */
+    public function __construct(string $order = Values::NONE) {
+        $this->options['order'] = $order;
+    }
+
+    /**
+     * The sort order of the returned messages. Can be: `asc` (ascending) or `desc` (descending), with `asc` as the default.
+     *
+     * @param string $order The sort order of the returned messages
+     * @return $this Fluent Builder
+     */
+    public function setOrder(string $order): self {
+        $this->options['order'] = $order;
+        return $this;
+    }
+
+    /**
+     * Provide a friendly representation
+     *
+     * @return string Machine friendly representation
+     */
+    public function __toString(): string {
+        $options = \http_build_query(Values::of($this->options), '', ' ');
+        return '[Twilio.Conversations.V1.ReadMessageOptions ' . $options . ']';
     }
 }

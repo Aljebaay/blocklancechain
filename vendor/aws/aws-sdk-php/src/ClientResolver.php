@@ -13,6 +13,7 @@ use Aws\Endpoint\PartitionEndpointProvider;
 use Aws\EndpointDiscovery\ConfigurationInterface;
 use Aws\EndpointDiscovery\ConfigurationProvider;
 use Aws\EndpointDiscovery\EndpointDiscoveryMiddleware;
+use Aws\Exception\InvalidRegionException;
 use Aws\Retry\ConfigurationInterface as RetryConfigInterface;
 use Aws\Retry\ConfigurationProvider as RetryConfigProvider;
 use Aws\Signature\SignatureProvider;
@@ -133,7 +134,7 @@ class ClientResolver
         'profile' => [
             'type'  => 'config',
             'valid' => ['string'],
-            'doc'   => 'Allows you to specify which profile to use when credentials are created from the AWS credentials file in your HOME directory. This setting overrides the AWS_PROFILE environment variable. Note: Specifying "profile" will cause the "credentials" key to be ignored.',
+            'doc'   => 'Allows you to specify which profile to use when credentials are created from the AWS credentials file in your HOME directory. This setting overrides the AWS_PROFILE environment variable. Note: Specifying "profile" will cause the "credentials" and "use_aws_shared_config_files" keys to be ignored.',
             'fn'    => [__CLASS__, '_apply_profile'],
         ],
         'credentials' => [
@@ -146,7 +147,7 @@ class ClientResolver
         'endpoint_discovery' => [
             'type'     => 'value',
             'valid'    => [ConfigurationInterface::class, CacheInterface::class, 'array', 'callable'],
-            'doc'      => 'Specifies settings for endpoint discovery. Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface, an instance Aws\CacheInterface, a callable that provides a promise for a Configuration object, or an associative array with the following keys: enabled: (bool) Set to true to enable endpoint discovery. Defaults to false; cache_limit: (int) The maximum number of keys in the endpoints cache. Defaults to 1000.',
+            'doc'      => 'Specifies settings for endpoint discovery. Provide an instance of Aws\EndpointDiscovery\ConfigurationInterface, an instance Aws\CacheInterface, a callable that provides a promise for a Configuration object, or an associative array with the following keys: enabled: (bool) Set to true to enable endpoint discovery, false to explicitly disable it. Defaults to false; cache_limit: (int) The maximum number of keys in the endpoints cache. Defaults to 1000.',
             'fn'       => [__CLASS__, '_apply_endpoint_discovery'],
             'default'  => [__CLASS__, '_default_endpoint_discovery_provider']
         ],
@@ -216,6 +217,12 @@ class ClientResolver
             'doc'       => 'Set to false to disable SDK to populate parameters that enabled \'idempotencyToken\' trait with a random UUID v4 value on your behalf. Using default value \'true\' still allows parameter value to be overwritten when provided. Note: auto-fill only works when cryptographically secure random bytes generator functions(random_bytes, openssl_random_pseudo_bytes or mcrypt_create_iv) can be found. You may also provide a callable source of random bytes.',
             'default'   => true,
             'fn'        => [__CLASS__, '_apply_idempotency_auto_fill']
+        ],
+        'use_aws_shared_config_files' => [
+            'type'      => 'value',
+            'valid'     => ['bool'],
+            'doc'       => 'Set to false to disable checking for shared aws config files usually located in \'~/.aws/config\' and \'~/.aws/credentials\'.  This will be ignored if you set the \'profile\' setting.',
+            'default'   => true,
         ],
     ];
 
@@ -530,6 +537,13 @@ class ClientResolver
                 ? $args['api']['metadata']['endpointPrefix']
                 : $args['service'];
 
+            // Check region is a valid host label when it is being used to
+            // generate an endpoint
+            if (!self::isValidRegion($args['region'])) {
+                throw new InvalidRegionException('Region must be a valid RFC'
+                    . ' host label.');
+            }
+
             // Invoke the endpoint provider and throw if it does not resolve.
             $result = EndpointProvider::resolve($value, [
                 'service' => $endpointPrefix,
@@ -581,7 +595,11 @@ class ClientResolver
     public static function _apply_debug($value, array &$args, HandlerList $list)
     {
         if ($value !== false) {
-            $list->interpose(new TraceMiddleware($value === true ? [] : $value));
+            $list->interpose(
+                new TraceMiddleware(
+                    $value === true ? [] : $value,
+                    $args['api'])
+            );
         }
     }
 
@@ -650,45 +668,80 @@ class ClientResolver
         );
     }
 
-    public static function _apply_user_agent($value, array &$args, HandlerList $list)
+    public static function _apply_user_agent($inputUserAgent, array &$args, HandlerList $list)
     {
-        if (!is_array($value)) {
-            $value = [$value];
-        }
+        //Add SDK version
+        $xAmzUserAgent = ['aws-sdk-php/' . Sdk::VERSION];
 
-        $value = array_map('strval', $value);
-
+        //If on HHVM add the HHVM version
         if (defined('HHVM_VERSION')) {
-            array_unshift($value, 'HHVM/' . HHVM_VERSION);
+            $xAmzUserAgent []= 'HHVM/' . HHVM_VERSION;
         }
-        array_unshift($value, 'aws-sdk-php/' . Sdk::VERSION);
-        $args['ua_append'] = $value;
 
-        $list->appendBuild(static function (callable $handler) use ($value) {
+        //Set up the updated user agent
+        $legacyUserAgent = $xAmzUserAgent;
+
+        //Add OS version
+        $disabledFunctions = explode(',', ini_get('disable_functions'));
+        if (function_exists('php_uname')
+            && !in_array('php_uname', $disabledFunctions, true)
+        ) {
+            $osName = "OS/" . php_uname('s') . '/' . php_uname('r');
+            if (!empty($osName)) {
+                $legacyUserAgent []= $osName;
+            }
+        }
+
+        //Add the language version
+        $legacyUserAgent []= 'lang/php/' . phpversion();
+
+        //Add exec environment if present
+        if ($executionEnvironment = getenv('AWS_EXECUTION_ENV')) {
+            $legacyUserAgent []= $executionEnvironment;
+        }
+
+        //Add the input to the end
+        if ($inputUserAgent){
+            if (!is_array($inputUserAgent)) {
+                $inputUserAgent = [$inputUserAgent];
+            }
+            $inputUserAgent = array_map('strval', $inputUserAgent);
+            $legacyUserAgent = array_merge($legacyUserAgent, $inputUserAgent);
+            $xAmzUserAgent = array_merge($xAmzUserAgent, $inputUserAgent);
+        }
+
+        $args['ua_append'] = $legacyUserAgent;
+
+        $list->appendBuild(static function (callable $handler) use (
+            $xAmzUserAgent,
+            $legacyUserAgent
+        ) {
             return function (
                 CommandInterface $command,
                 RequestInterface $request
-            ) use ($handler, $value) {
-                return $handler($command, $request->withHeader(
-                    'User-Agent',
-                    implode(' ', array_merge(
-                        $value,
-                        $request->getHeader('User-Agent')
-                    ))
-                ));
+            ) use ($handler, $legacyUserAgent, $xAmzUserAgent) {
+                return $handler(
+                    $command,
+                    $request->withHeader(
+                        'X-Amz-User-Agent',
+                        implode(' ', array_merge(
+                            $xAmzUserAgent,
+                            $request->getHeader('X-Amz-User-Agent')
+                        ))
+                    )->withHeader(
+                        'User-Agent',
+                        implode(' ', array_merge(
+                            $legacyUserAgent,
+                            $request->getHeader('User-Agent')
+                        ))
+                    )
+                );
             };
         });
     }
 
     public static function _apply_endpoint($value, array &$args, HandlerList $list)
     {
-        $parts = parse_url($value);
-        if (empty($parts['scheme']) || empty($parts['host'])) {
-            throw new IAE(
-                'Endpoints must be full URIs and include a scheme and host'
-            );
-        }
-
         $args['endpoint'] = $value;
     }
 
@@ -850,5 +903,16 @@ EOT;
             }
         }
         return $options;
+    }
+
+    /**
+     * Validates a region to be used for endpoint construction
+     *
+     * @param $region
+     * @return bool
+     */
+    private static function isValidRegion($region)
+    {
+        return is_valid_hostlabel($region);
     }
 }

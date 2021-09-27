@@ -28,9 +28,9 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
 {
-    const REQUIREMENT_MATCH = 0;
-    const REQUIREMENT_MISMATCH = 1;
-    const ROUTE_MATCH = 2;
+    public const REQUIREMENT_MATCH = 0;
+    public const REQUIREMENT_MISMATCH = 1;
+    public const ROUTE_MATCH = 2;
 
     /** @var RequestContext */
     protected $context;
@@ -81,7 +81,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
     /**
      * {@inheritdoc}
      */
-    public function match(string $pathinfo)
+    public function match($pathinfo)
     {
         $this->allow = $this->allowSchemes = [];
 
@@ -126,7 +126,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
      * @throws ResourceNotFoundException If the resource could not be found
      * @throws MethodNotAllowedException If the resource was found but the request method is not allowed
      */
-    protected function matchCollection(string $pathinfo, RouteCollection $routes)
+    protected function matchCollection($pathinfo, RouteCollection $routes)
     {
         // HEAD and GET are equivalent as per RFC
         if ('HEAD' === $method = $this->context->getMethod()) {
@@ -141,7 +141,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
             $requiredMethods = $route->getMethods();
 
             // check the static prefix of the URL first. Only use the more expensive preg_match when it matches
-            if ('' !== $staticPrefix && 0 !== strpos($trimmedPathinfo, $staticPrefix)) {
+            if ('' !== $staticPrefix && !str_starts_with($trimmedPathinfo, $staticPrefix)) {
                 continue;
             }
             $regex = $compiledRoute->getRegex();
@@ -192,7 +192,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
                 continue;
             }
 
-            return $this->getAttributes($route, $name, array_replace($matches, $hostMatches, isset($status[1]) ? $status[1] : []));
+            return $this->getAttributes($route, $name, array_replace($matches, $hostMatches, $status[1] ?? []));
         }
 
         return [];
@@ -205,9 +205,12 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
      * in matchers that do not have access to the matched Route instance
      * (like the PHP and Apache matcher dumpers).
      *
+     * @param string $name       The name of the route
+     * @param array  $attributes An array of attributes from the matcher
+     *
      * @return array An array of parameters
      */
-    protected function getAttributes(Route $route, string $name, array $attributes)
+    protected function getAttributes(Route $route, $name, array $attributes)
     {
         $defaults = $route->getDefaults();
         if (isset($defaults['_canonical_route'])) {
@@ -222,9 +225,12 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
     /**
      * Handles specific route requirements.
      *
+     * @param string $pathinfo The path
+     * @param string $name     The route name
+     *
      * @return array The first element represents the status, the second contains additional information
      */
-    protected function handleRouteRequirements(string $pathinfo, string $name, Route $route)
+    protected function handleRouteRequirements($pathinfo, $name, Route $route)
     {
         // expression condition
         if ($route->getCondition() && !$this->getExpressionLanguage()->evaluate($route->getCondition(), ['context' => $this->context, 'request' => $this->request ?: $this->createRequest($pathinfo)])) {
@@ -237,9 +243,12 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
     /**
      * Get merged default parameters.
      *
+     * @param array $params   The parameters
+     * @param array $defaults The defaults
+     *
      * @return array Merged default parameters
      */
-    protected function mergeDefaults(array $params, array $defaults)
+    protected function mergeDefaults($params, $defaults)
     {
         foreach ($params as $key => $value) {
             if (!\is_int($key) && null !== $value) {
@@ -253,7 +262,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
     protected function getExpressionLanguage()
     {
         if (null === $this->expressionLanguage) {
-            if (!class_exists('Symfony\Component\ExpressionLanguage\ExpressionLanguage')) {
+            if (!class_exists(ExpressionLanguage::class)) {
                 throw new \LogicException('Unable to use expressions as the Symfony ExpressionLanguage component is not installed.');
             }
             $this->expressionLanguage = new ExpressionLanguage(null, $this->expressionLanguageProviders);
@@ -267,7 +276,7 @@ class UrlMatcher implements UrlMatcherInterface, RequestMatcherInterface
      */
     protected function createRequest(string $pathinfo): ?Request
     {
-        if (!class_exists('Symfony\Component\HttpFoundation\Request')) {
+        if (!class_exists(Request::class)) {
             return null;
         }
 

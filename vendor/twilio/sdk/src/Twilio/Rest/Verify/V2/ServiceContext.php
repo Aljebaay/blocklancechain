@@ -104,7 +104,13 @@ class ServiceContext extends InstanceContext {
             'Psd2Enabled' => Serialize::booleanToString($options['psd2Enabled']),
             'DoNotShareWarningEnabled' => Serialize::booleanToString($options['doNotShareWarningEnabled']),
             'CustomCodeEnabled' => Serialize::booleanToString($options['customCodeEnabled']),
-            'Push' => Serialize::jsonObject($options['push']),
+            'Push.IncludeDate' => Serialize::booleanToString($options['pushIncludeDate']),
+            'Push.ApnCredentialSid' => $options['pushApnCredentialSid'],
+            'Push.FcmCredentialSid' => $options['pushFcmCredentialSid'],
+            'Totp.Issuer' => $options['totpIssuer'],
+            'Totp.TimeStep' => $options['totpTimeStep'],
+            'Totp.CodeLength' => $options['totpCodeLength'],
+            'Totp.Skew' => $options['totpSkew'],
         ]);
 
         $payload = $this->version->update('POST', $this->uri, [], $data);

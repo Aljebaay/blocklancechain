@@ -1,28 +1,6 @@
 CHANGELOG
 =========
 
-5.1.0
------
-
- * added the protected method `PhpFileLoader::callConfigurator()` as extension point to ease custom routing configuration
- * deprecated `RouteCollectionBuilder` in favor of `RoutingConfigurator`.
- * added "priority" option to annotated routes
- * added argument `$priority` to `RouteCollection::add()`
- * deprecated the `RouteCompiler::REGEX_DELIMITER` constant
- * added `ExpressionLanguageProvider` to expose extra functions to route conditions
- * added support for a `stateless` keyword for configuring route stateless in PHP, YAML and XML configurations.
- * added the "hosts" option to be able to configure the host per locale.
- * added `RequestContext::fromUri()` to ease building the default context
-
-5.0.0
------
-
- * removed `PhpGeneratorDumper` and `PhpMatcherDumper`
- * removed `generator_base_class`, `generator_cache_class`, `matcher_base_class` and `matcher_cache_class` router options
- * `Serializable` implementing methods for `Route` and `CompiledRoute` are final
- * removed referencing service route loaders with a single colon
- * Removed `ServiceRouterLoader` and `ObjectRouteLoader`.
-
 4.4.0
 -----
 
@@ -66,15 +44,15 @@ CHANGELOG
 3.3.0
 -----
 
-  * [DEPRECATION] Class parameters have been deprecated and will be removed in 4.0.
-    * router.options.generator_class
-    * router.options.generator_base_class
-    * router.options.generator_dumper_class
-    * router.options.matcher_class
-    * router.options.matcher_base_class
-    * router.options.matcher_dumper_class
-    * router.options.matcher.cache_class
-    * router.options.generator.cache_class
+ * [DEPRECATION] Class parameters have been deprecated and will be removed in 4.0.
+   * router.options.generator_class
+   * router.options.generator_base_class
+   * router.options.generator_dumper_class
+   * router.options.matcher_class
+   * router.options.matcher_base_class
+   * router.options.matcher_dumper_class
+   * router.options.matcher.cache_class
+   * router.options.generator.cache_class
 
 3.2.0
 -----

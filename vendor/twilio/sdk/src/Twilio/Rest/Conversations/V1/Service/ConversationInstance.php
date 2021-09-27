@@ -20,8 +20,6 @@ use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- *
  * @property string $accountSid
  * @property string $chatServiceSid
  * @property string $messagingServiceSid
@@ -35,6 +33,7 @@ use Twilio\Version;
  * @property array $timers
  * @property string $url
  * @property array $links
+ * @property array $bindings
  */
 class ConversationInstance extends InstanceResource {
     protected $_participants;
@@ -69,6 +68,7 @@ class ConversationInstance extends InstanceResource {
             'timers' => Values::array_get($payload, 'timers'),
             'url' => Values::array_get($payload, 'url'),
             'links' => Values::array_get($payload, 'links'),
+            'bindings' => Values::array_get($payload, 'bindings'),
         ];
 
         $this->solution = ['chatServiceSid' => $chatServiceSid, 'sid' => $sid ?: $this->properties['sid'], ];

@@ -108,9 +108,9 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
     /**
      * {@inheritdoc}
      */
-    public function setStrictRequirements(?bool $enabled)
+    public function setStrictRequirements($enabled)
     {
-        $this->strictRequirements = $enabled;
+        $this->strictRequirements = null === $enabled ? null : (bool) $enabled;
     }
 
     /**
@@ -124,7 +124,7 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
     /**
      * {@inheritdoc}
      */
-    public function generate(string $name, array $parameters = [], int $referenceType = self::ABSOLUTE_PATH)
+    public function generate($name, $parameters = [], $referenceType = self::ABSOLUTE_PATH)
     {
         $route = null;
         $locale = $parameters['_locale']
@@ -167,7 +167,7 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
      *
      * @return string
      */
-    protected function doGenerate(array $variables, array $defaults, array $requirements, array $tokens, array $parameters, string $name, int $referenceType, array $hostTokens, array $requiredSchemes = [])
+    protected function doGenerate($variables, $defaults, $requirements, $tokens, $parameters, $name, $referenceType, $hostTokens, array $requiredSchemes = [])
     {
         $variables = array_flip($variables);
         $mergedParams = array_replace($defaults, $this->context->getParameters(), $parameters);
@@ -188,7 +188,7 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
 
                 if (!$optional || $important || !\array_key_exists($varName, $defaults) || (null !== $mergedParams[$varName] && (string) $mergedParams[$varName] !== (string) $defaults[$varName])) {
                     // check requirement (while ignoring look-around patterns)
-                    if (null !== $this->strictRequirements && !preg_match('#^'.preg_replace('/\(\?(?:=|<=|!|<!)((?:[^()\\\\]+|\\\\.|\((?1)\))*)\)/', '', $token[2]).'$#i'.(empty($token[4]) ? '' : 'u'), $mergedParams[$token[3]])) {
+                    if (null !== $this->strictRequirements && !preg_match('#^'.preg_replace('/\(\?(?:=|<=|!|<!)((?:[^()\\\\]+|\\\\.|\((?1)\))*)\)/', '', $token[2]).'$#i'.(empty($token[4]) ? '' : 'u'), $mergedParams[$token[3]] ?? '')) {
                         if ($this->strictRequirements) {
                             throw new InvalidParameterException(strtr($message, ['{parameter}' => $varName, '{route}' => $name, '{expected}' => $token[2], '{given}' => $mergedParams[$varName]]));
                         }
@@ -221,9 +221,9 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
         // so we need to encode them as they are not used for this purpose here
         // otherwise we would generate a URI that, when followed by a user agent (e.g. browser), does not match this route
         $url = strtr($url, ['/../' => '/%2E%2E/', '/./' => '/%2E/']);
-        if ('/..' === substr($url, -3)) {
+        if (str_ends_with($url, '/..')) {
             $url = substr($url, 0, -2).'%2E%2E';
-        } elseif ('/.' === substr($url, -2)) {
+        } elseif (str_ends_with($url, '/.')) {
             $url = substr($url, 0, -1).'%2E';
         }
 
@@ -333,7 +333,7 @@ class UrlGenerator implements UrlGeneratorInterface, ConfigurableRequirementsInt
      *
      * @return string The relative target path
      */
-    public static function getRelativePath(string $basePath, string $targetPath)
+    public static function getRelativePath($basePath, $targetPath)
     {
         if ($basePath === $targetPath) {
             return '';
