@@ -109,6 +109,12 @@ $site_border_color = $row_general_settings->site_border_color;
         $_SESSION['search_query'] = $search_query;
         echo "<script>window.open('$site_url/search.php','_self')</script>";
       }
+
+      //clear search
+      if (!strpos($_SERVER['REQUEST_URI'], "search") && !isset($_POST['search'])) {
+        $_SESSION['search_query'] = "";
+      }
+
       ?>
       <ul class="account-nav apply-nav-height">
         <?php if (!isset($_SESSION["seller_user_name"])) { ?>
