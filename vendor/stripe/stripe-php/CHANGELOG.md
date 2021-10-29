@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.100.0 - 2021-10-11
+* [#1190](https://github.com/stripe/stripe-php/pull/1190) API Updates
+  * Add support for `klarna` on `PaymentMethod`.
+
+## 7.99.0 - 2021-10-11
+* [#1188](https://github.com/stripe/stripe-php/pull/1188) API Updates
+  * Add support for `list_payment_methods` method on resource `Customer`
+
+## 7.98.0 - 2021-10-07
+* [#1187](https://github.com/stripe/stripe-php/pull/1187) API Updates
+  * Add support for `phone_number_collection` on `Checkout.Session`
+  * Add support for new value `customer_id` on enum `Radar.ValueList.item_type`
+  * Add support for new value `bbpos_wisepos_e` on enum `Terminal.Reader.device_type`
+
 ## 7.97.0 - 2021-09-16
 * [#1181](https://github.com/stripe/stripe-php/pull/1181) API Updates
   * Add support for `full_name_aliases` on `Person`

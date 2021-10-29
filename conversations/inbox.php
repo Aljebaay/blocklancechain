@@ -32,7 +32,9 @@ require("includes/inboxFunctions.php");
   <script type="text/javascript" src="../js/sweat_alert.js"></script>
   <script type="text/javascript" src="../js/jquery.min.js"></script>
   <script src="https://checkout.stripe.com/checkout.js"></script>
-  <script src="../js/emoji.js<?= '?v='.mt_rand(); ?>"></script>
+  
+  <!-- include emoji in Inbox -->
+  <script src="../js/emoji.js<?= '?v='.mt_rand(); ?>"></script> 
   <?php if(!empty($site_favicon)){ ?>
     <link rel="shortcut icon" href="<?= $site_favicon; ?>" type="image/x-icon">
   <?php } ?>
