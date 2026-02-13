@@ -52,6 +52,29 @@ function dynamicUrl($url, $forceInternal = false){
    return $base . "/" . $url;
 }
 
+function categoryUrl($catUrl, $childUrl = ''){
+   global $site_url;
+
+   $base = rtrim($site_url, "/");
+   $catUrl = trim((string)$catUrl);
+   $childUrl = trim((string)$childUrl);
+   $isCliServer = (PHP_SAPI === "cli-server");
+
+   if($isCliServer){
+      $url = $base . "/categories/category.php?cat_url=" . rawurlencode($catUrl);
+      if($childUrl !== ""){
+         $url .= "&cat_child_url=" . rawurlencode($childUrl);
+      }
+      return $url;
+   }
+
+   $url = $base . "/categories/" . rawurlencode($catUrl);
+   if($childUrl !== ""){
+      $url .= "/" . rawurlencode($childUrl);
+   }
+   return $url;
+}
+
 function showPrice($price,$class='',$show_symbol=''){
 	
 	global $db;

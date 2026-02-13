@@ -88,7 +88,7 @@
             if($cat_id == @$_SESSION['cat_id']){ echo "active"; }
             if($cat_id == @$child_parent_id){ echo "active"; }
             ?>">     
-        <a href="<?= $site_url; ?>/categories/<?= $cat_url; ?>" class="text-success"> <?= $cat_title; ?></a> 
+        <a href="<?= categoryUrl($cat_url); ?>" class="text-success"> <?= $cat_title; ?></a> 
         <a class="h5 text-success float-right" data-toggle="collapse" data-target="#cat_<?= $cat_id; ?>">
         <i class="fa fa-arrow-circle-down"></i>
         </a>
@@ -105,7 +105,7 @@
               if(!empty($child_title)){
           ?>
           <li>
-            <a class="nav-link text-success <?php if($child_id == @$_SESSION['cat_child_id']){ echo "active"; } ?>" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+            <a class="nav-link text-success <?php if($child_id == @$_SESSION['cat_child_id']){ echo "active"; } ?>" href="<?= categoryUrl($cat_url, $child_url); ?>">
             <?= $child_title; ?>
             </a>
           </li>

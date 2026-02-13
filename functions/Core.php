@@ -18,6 +18,9 @@ class Core{
 	}
 
 	function checkPlugin($plugin,$site=""){
+		if(!is_object($this->db) || !method_exists($this->db, "select")){
+			return 0;
+		}
 		if($plugin=="videoPlugin" and $site=="site"){
 			$videoPlugin = $this->db->select("plugins",array("folder"=>$plugin,"status"=>1))->rowCount();
 			if($videoPlugin!=0){

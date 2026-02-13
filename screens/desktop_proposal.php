@@ -65,8 +65,8 @@
         <hr>
         <nav class="breadcrumbs h-text-truncate mb-2">
           <a href="../../">Home</a>
-          <a href="../../categories/<?= $proposal_cat_url; ?>"> <?= $proposal_cat_title; ?> </a> 
-          <a href="../../categories/<?= $proposal_cat_url; ?>/<?= $proposal_child_url; ?>">
+          <a href="<?= categoryUrl($proposal_cat_url); ?>"> <?= $proposal_cat_title; ?> </a> 
+          <a href="<?= categoryUrl($proposal_cat_url, $proposal_child_url); ?>">
           <?= $proposal_child_title; ?>
           </a>
         </nav>

@@ -1,6 +1,7 @@
 <?php 
 
-session_start();
+require_once __DIR__ . "/includes/session_bootstrap.php";
+blc_bootstrap_session();
 require_once("includes/db.php");
 $search = isset($_POST['q'])?$input->post('q'):'';
 $search = "%$search%";

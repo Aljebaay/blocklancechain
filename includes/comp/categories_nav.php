@@ -13,7 +13,7 @@
         ?>
         <li class="top-nav-item pt-xs-1 pb-xs-1 pl-xs-2 pr-xs-2 display-flex-xs align-items-center text-center" 
           data-linkable="true" data-ui="top-nav-category-link" data-node-id="c-<?= $cat_id; ?>">
-          <a href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+          <a href="<?= categoryUrl($cat_url); ?>">
           <?= @$cat_title; ?>
           </a>
         </li>
@@ -47,7 +47,7 @@
 
         <li class="top-nav-item pt-xs-1 pb-xs-1 pl-xs-2 pr-xs-2 display-flex-xs align-items-center text-center" 
           data-linkable="true" data-ui="top-nav-category-link" data-node-id="c-<?= $cat_id; ?>">
-          <a href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+          <a href="<?= categoryUrl($cat_url); ?>">
           <?= @$cat_title; ?>
           </a>
         </li>
@@ -84,7 +84,7 @@
               $child_title = $row_meta->child_title;
               ?>
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url, $child_url); ?>">
               <?= $child_title; ?>
               </a>
             </li>
@@ -101,7 +101,7 @@
             $child_title = $row_meta->child_title;
             ?>
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url, $child_url); ?>">
                 <?= $child_title; ?>
               </a>
             </li>
@@ -119,7 +119,7 @@
 
             ?>
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url, $child_url); ?>">
                 <?= $child_title; ?>
               </a>
             </li>
@@ -136,7 +136,7 @@
             $child_title = $row_meta->child_title;
             ?>
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url, $child_url); ?>">
                 <?= $child_title; ?>
               </a>
             </li>
@@ -168,7 +168,7 @@
             ?>
 
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url); ?>">
                 <?= @$cat_title; ?>
               </a>
             </li>
@@ -194,7 +194,7 @@
             ?>
 
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url); ?>">
                 <?= @$cat_title; ?>
               </a>
             </li>
@@ -221,7 +221,7 @@
             ?>
 
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="<?= categoryUrl($cat_url); ?>">
                 <?= @$cat_title; ?>
               </a>
             </li>

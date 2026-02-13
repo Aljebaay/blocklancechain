@@ -1,6 +1,39 @@
 <?php
 
-session_start();
+require_once __DIR__ . "/../includes/session_bootstrap.php";
+blc_bootstrap_session();
+
+if (PHP_SAPI === "cli-server" && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] === "/admin/index.php") {
+	$uriPath = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+	$uriPath = $uriPath ?: "/admin";
+	$docRoot = dirname(__DIR__);
+	$fullPath = $docRoot . $uriPath;
+
+	if (strpos($uriPath, "/admin/") === 0 && $uriPath !== "/admin/" && $uriPath !== "/admin/index" && $uriPath !== "/admin/index.php") {
+		if (
+			preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|webm|pdf|json)$/i', $uriPath) &&
+			!is_file($fullPath)
+		) {
+			http_response_code(404);
+			echo "Not Found";
+			exit;
+		}
+
+		$subPath = trim(substr($uriPath, strlen("/admin/")), "/");
+		if ($subPath !== "") {
+			$candidate = __DIR__ . "/" . $subPath . ".php";
+			if (is_file($candidate)) {
+				require $candidate;
+				exit;
+			}
+			if (strpos($subPath, "/") === false && preg_match('/^[0-9a-zA-Z_-]+$/', $subPath)) {
+				$_GET[$subPath] = "";
+				$_REQUEST = array_merge($_REQUEST, $_GET);
+			}
+		}
+	}
+}
+
 include("includes/db.php");
 include("../functions/mailer.php");
 if(!isset($_SESSION['admin_email'])){

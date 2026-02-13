@@ -1,6 +1,51 @@
 <?php
 
-session_start();
+require_once __DIR__ . "/includes/session_bootstrap.php";
+blc_bootstrap_session();
+
+if (PHP_SAPI === "cli-server" && isset($_SERVER["SCRIPT_NAME"]) && $_SERVER["SCRIPT_NAME"] === "/index.php") {
+	$uriPath = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+	$uriPath = $uriPath ?: "/";
+	$docRoot = __DIR__;
+	$fullPath = $docRoot . $uriPath;
+
+	if ($uriPath !== "/" && $uriPath !== "/index.php") {
+		if (
+			preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|webm|pdf|json)$/i', $uriPath) &&
+			!is_file($fullPath)
+		) {
+			http_response_code(404);
+			echo "Not Found";
+			exit;
+		}
+
+		$phpPath = $docRoot . rtrim($uriPath, "/") . ".php";
+		if (is_file($phpPath)) {
+			require $phpPath;
+			exit;
+		}
+
+		$segments = explode("/", trim($uriPath, "/"));
+
+		if (!empty($segments) && $segments[0] === "categories" && isset($segments[1])) {
+			$_GET["cat_url"] = urldecode($segments[1]);
+			if (isset($segments[2])) {
+				$_GET["cat_child_url"] = urldecode($segments[2]);
+			}
+			$_REQUEST = array_merge($_REQUEST, $_GET);
+			require $docRoot . "/categories/category.php";
+			exit;
+		}
+
+		if (count($segments) === 1 && preg_match('/^[0-9a-zA-Z_-]+$/', $segments[0])) {
+			$_GET["slug"] = $segments[0];
+			$_REQUEST = array_merge($_REQUEST, $_GET);
+			require $docRoot . "/handler.php";
+			exit;
+		}
+	}
+}
+
 require_once("includes/db.php");
 require_once("functions/functions.php");
 if(strpos($_SERVER["REQUEST_URI"], 'index') !== false){

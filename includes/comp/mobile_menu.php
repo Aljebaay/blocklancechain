@@ -109,7 +109,7 @@
           <div class="mobile-subnav bg-white animated" id="mobile-sub-catnav-content-1<?= $cat_id; ?>">
             <ul class="mobile-sub-catnav-container list-unstyled mobile-catnav-margin display-none">
               <li class="p-xs-1 bb-xs-1 text-body-larger strong subnav-item a11y-focus-only">
-                <a class="p-xs-1 text-gray display-inline-block width-full text-underline" href="<?= $site_url; ?>/categories/<?= $cat_url; ?>">
+                <a class="p-xs-1 text-gray display-inline-block width-full text-underline" href="<?= categoryUrl($cat_url); ?>">
                 View All <?= $cat_title; ?>
                 </a>
               </li>
@@ -126,7 +126,7 @@
 
                 ?>
               <li class="p-xs-2 bb-xs-1 text-body-larger subnav-item a11y-focus-only">
-                <a href="<?= $site_url; ?>/categories/<?= $cat_url; ?>/<?= $child_url; ?>">
+                <a href="<?= categoryUrl($cat_url, $child_url); ?>">
                   <div class="flag">
                     <div class="flag-body"><?= $child_title; ?></div>
                   </div>

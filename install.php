@@ -1,5 +1,6 @@
 <?php
-  session_start();
+  require_once __DIR__ . "/includes/session_bootstrap.php";
+  blc_bootstrap_session();
   require_once("includes/config.php");
   require_once("libs/input.php");
   if(!empty(DB_HOST) and !empty(DB_USER) and !empty(DB_NAME)){
