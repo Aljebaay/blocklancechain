@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/../session_bootstrap.php';
 	
-	@session_start();
+	blc_bootstrap_session();
 	require_once("../db.php");
 
 	$get_payment_settings = $db->select("payment_settings");

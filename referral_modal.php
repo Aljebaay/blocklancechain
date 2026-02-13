@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/includes/session_bootstrap.php';
 
-session_start();
+blc_bootstrap_session();
 require_once("includes/db.php");
 
 $proposal_id = $input->post('proposal_id');

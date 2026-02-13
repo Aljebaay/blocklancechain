@@ -1,5 +1,6 @@
 <?php
-@session_start();
+require_once __DIR__ . '/../includes/session_bootstrap.php';
+blc_bootstrap_session();
 if(!isset($_SESSION['admin_email']) & !isset($_SESSION['helper_email'])){
 echo "<script>window.open('login.php','_self');</script>";
 }else{

@@ -1,7 +1,7 @@
 <?php
+require_once __DIR__ . '/session_bootstrap.php';
 
-session_start();
-
+blc_bootstrap_session();
 require_once("db.php");
 
 if(isset($_SESSION['seller_user_name'])){
