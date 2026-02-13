@@ -1,7 +1,7 @@
 <?php
+require_once __DIR__ . '/../includes/session_bootstrap.php';
 
-session_start();
-
+blc_bootstrap_session();
 if(!isset($_SESSION['seller_user_name'])){
 	header("Location: ../login");
 }

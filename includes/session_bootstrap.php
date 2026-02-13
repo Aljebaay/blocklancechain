@@ -6,16 +6,23 @@ if (!function_exists('blc_bootstrap_session')) {
 			return;
 		}
 
-		$sessionDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.sessions';
-		if (!is_dir($sessionDir)) {
-			@mkdir($sessionDir, 0777, true);
-		}
+		$baseDir = dirname(__DIR__);
+		$sessionDirs = array(
+			$baseDir . DIRECTORY_SEPARATOR . '.sessions',
+			rtrim(sys_get_temp_dir(), "\\/") . DIRECTORY_SEPARATOR . 'blocklancechain_sessions',
+		);
 
-		if (is_dir($sessionDir) && is_writable($sessionDir)) {
-			session_save_path($sessionDir);
+		foreach ($sessionDirs as $sessionDir) {
+			if (!is_dir($sessionDir)) {
+				@mkdir($sessionDir, 0777, true);
+			}
+
+			if (is_dir($sessionDir) && is_writable($sessionDir)) {
+				session_save_path($sessionDir);
+				break;
+			}
 		}
 
 		session_start();
 	}
 }
-

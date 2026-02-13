@@ -1,5 +1,6 @@
 <?php
-@session_start();
+require_once __DIR__ . '/../session_bootstrap.php';
+blc_bootstrap_session();
 if(isset($_POST['seller_id'])){
 	@require_once("../db.php");
 	$seller_id = $input->post('seller_id');

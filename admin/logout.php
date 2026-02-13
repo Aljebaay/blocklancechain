@@ -1,7 +1,7 @@
 <?php
+require_once __DIR__ . '/../includes/session_bootstrap.php';
 
-session_start();
-
+blc_bootstrap_session();
 unset($_SESSION['admin_email']);
 
 if(isset($_GET['session_expired'])){
