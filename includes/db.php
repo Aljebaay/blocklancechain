@@ -8,7 +8,7 @@ if(isset($_SESSION['sessionStart'])){
 }
 
 if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
-	echo "<script>window.open('install','_self'); </script>";
+	echo "<script>window.open('install.php','_self'); </script>";
 	exit();
 }else{
 	

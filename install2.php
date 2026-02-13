@@ -5,11 +5,11 @@
   require_once("libs/input.php");
   require_once ("libs/flash.php");
   if(!empty(DB_HOST) and !empty(DB_USER) and !empty(DB_NAME)){
-  echo "<script>window.open('index','_self'); </script>";
+  echo "<script>window.open('index.php','_self'); </script>";
   exit();
   }
   if(!isset($_SESSION["db_host"])){
-    echo "<script>window.open('install','_self'); </script>";
+    echo "<script>window.open('install.php','_self'); </script>";
   }
   $form_data = Flash::render("form_data");
   ?>
@@ -304,7 +304,7 @@
 
           session_destroy();
 
-          echo "<script>window.open('install3', '_self');</script>";
+          echo "<script>window.open('install3.php', '_self');</script>";
 
         }
 

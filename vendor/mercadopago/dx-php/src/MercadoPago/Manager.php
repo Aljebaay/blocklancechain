@@ -84,7 +84,7 @@ class Manager
 
         $this->_setDefaultHeaders($configuration->query);
         $this->_setCustomHeaders($entity, $configuration->query);
-        //$this->_setIdempotencyHeader($configuration->query, $configuration, $method);
+        $this->_setIdempotencyHeader($configuration->query, $method);
         $this->setQueryParams($entity);
         
         return $this->_client->{$method}($configuration->url, $configuration->query);
@@ -95,16 +95,7 @@ class Manager
         $configuration_vars = $this->_config->all();
 
         foreach($options as $option => $value) {
-            switch ($option) {
-                case "custom_access_token":
-                if (array_key_exists($value, $configuration_vars)) {
-                    $configuration->query["url_query"]["access_token"] = $configuration_vars[$value];
-                } else {
-                    $configuration->query["url_query"]["access_token"] = $value;
-                }
-                default:
-                    $configuration->query["url_query"][$option] = $value;
-            }
+            $configuration->query["url_query"][$option] = $value;
         }
     }
 
@@ -161,7 +152,7 @@ class Manager
             } elseif (!empty($entity->$key)) {
                 $url = str_replace($match, $entity->$key, $url);
             } else {
-                $url = str_replace($match, $entity->{$key}, $url);
+                $url = str_replace($match, $entity->{$key} ?? '', $url);
             }
         }
         $this->_entityConfiguration[$className]->url = $url;
@@ -273,23 +264,20 @@ class Manager
     public function setQueryParams($entity, $urlParams = [])
     {
         $configuration = $this->_getEntityConfiguration($entity);
-        $params = [];
-
-       
 
         if (!isset($configuration->query) || !isset($configuration->query['url_query'])) {
-            $configuration->query['url_query'] = $params;
+            $configuration->query['url_query'] = [];
         }
+
+        $params = [];
         if (isset($configuration->params)) {
             foreach ($configuration->params as $value) {
                 $params[$value] = $this->_config->get(strtoupper($value));
             }
-            if (count($params) > 0) {
-                $arrayMerge = array_merge($urlParams, $params, $configuration->query['url_query']);
-                $configuration->query['url_query'] = $arrayMerge;
-            }
         }
-        
+
+        $arrayMerge = array_merge($urlParams, $params, $configuration->query['url_query']);
+        $configuration->query['url_query'] = $arrayMerge;
     }
     /**
      * @param $entity
@@ -421,17 +409,12 @@ class Manager
      * @param        $configuration
      * @param string $method
      */
-    protected function _setIdempotencyHeader(&$query, $configuration, $method)
+    protected function _setIdempotencyHeader(&$query, $method)
     {
-        if (!isset($configuration->methods[$method])) {
-            return;
-        }
-        $fields = '';
-        if ($configuration->methods[$method]['idempotency']) {
-            $fields = $this->_getIdempotencyAttributes($configuration->attributes);
-        }
-        if ($fields != '') {
-            $query['headers']['x-idempotency-key'] = hash(self::$CIPHER, $fields);
+        if ($method != 'get' && $method != 'delete') {
+            if (array_key_exists('headers', array_change_key_case($query)) && !array_key_exists('x-idempotency-key', array_change_key_case($query['headers']))){
+                $query['headers']['x-idempotency-key'] = $this->_generateUUID();
+            }
         }
     }
     /**
@@ -439,14 +422,30 @@ class Manager
      *
      * @return string
      */
-    protected function _getIdempotencyAttributes($attributes)
+    protected function _generateUUID()
     {
-        $result = [];
-        foreach ($attributes as $key => $value) {
-            if ($value['idempotency']) {
-                $result[] = $key;
-            }
-        }
-        return implode('&', $result);
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            // 32 bits for "time_low"
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+
+            // 16 bits for "time_mid"
+            mt_rand(0, 0xffff),
+
+            // 16 bits for "time_hi_and_version",
+            // four most significant bits holds version number 4
+            mt_rand(0, 0x0fff) | 0x4000,
+
+            // 16 bits, 8 bits for "clk_seq_hi_res",
+            // 8 bits for "clk_seq_low",
+            // two most significant bits holds zero and one for variant DCE1.1
+            mt_rand(0, 0x3fff) | 0x8000,
+
+            // 48 bits for "node"
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
     }
 }

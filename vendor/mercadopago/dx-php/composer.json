@@ -1,38 +1,27 @@
 {
   "name": "mercadopago/dx-php",
+  "description": "Mercado Pago PHP SDK",
   "type": "library",
-  "homepage": "https://github.com/mercadopago/dx-php",
+  "homepage": "https://github.com/mercadopago/sdk-php",
   "license": "MIT",
-  "version": "2.0.0",
+  "version": "2.6.2",
   "config": {
     "platform": {
         "php": "7.1"
     }
   },
-  "authors": [
-    {
-      "name": "imasson",
-      "role": "Developer",
-      "homepage": "https://github.com/imasson"
-    },
-    {
-      "name": "joelibaceta",
-      "role": "Developer",
-      "homepage": "https://github.com/joelibaceta"
-    }
-  ],
   "require": {
     "php": ">=7.1.0",
-    "doctrine/common": "^2.6",
+    "doctrine/common": "^2.6 || ^3.0",
     "doctrine/annotations": "^1.8"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5",
+    "phpunit/phpunit": "^7",
     "symfony/yaml": "~2.5",
     "phpmd/phpmd": "@stable",
-    "squizlabs/php_codesniffer": "2.3.*",
-    "sebastian/phpcpd": "*", 
-    "doctrine/orm": "~2.3",
+    "squizlabs/php_codesniffer": "2.8.1",
+    "sebastian/phpcpd": "*",
+    "doctrine/orm": "^2.3",
     "vlucas/phpdotenv": "^2.5"
   },
   "autoload": {
@@ -45,5 +34,15 @@
         "src/MercadoPago/Entities/Shared/"
       ]
     }
-  }
+  },
+  "scripts": {
+    "test": "./vendor/bin/phpunit --testdox --colors=auto tests"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packagist.org"
+    },
+    { "packagist": false }
+  ]
 }

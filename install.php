@@ -3,11 +3,11 @@
   require_once("includes/config.php");
   require_once("libs/input.php");
   if(!empty(DB_HOST) and !empty(DB_USER) and !empty(DB_NAME)){
-    echo "<script>window.open('index','_self'); </script>";
+    echo "<script>window.open('index.php','_self'); </script>";
     exit();
   }
   if(isset($_SESSION["db_host"])){
-    echo "<script>window.open('install2','_self'); </script>";
+    echo "<script>window.open('install2.php','_self'); </script>";
   }
 ?>
 <!DOCTYPE html>
@@ -128,7 +128,7 @@ if(isset($_POST["install"])){
       $_SESSION["db_username"] = $uname;
       $_SESSION["db_pass"] = $pass;
       $_SESSION["db_name"] = $database;
-      echo "<script>window.open('install2','_self'); </script>";
+      echo "<script>window.open('install2.php','_self'); </script>";
     }
   }catch(PDOException $ex){
     echo "<h2 class='text-white text-center mb-3'>Something Wrong In Fields</h2>";  

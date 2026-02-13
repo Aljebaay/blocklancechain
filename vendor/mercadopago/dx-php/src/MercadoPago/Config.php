@@ -54,14 +54,14 @@ class Config
     /**
      * Config constructor.
      *
-     * @param null $path
+     * @param string|null $path
      * @param null $restClient
      */
     public function __construct($path = null, $restClient = null)
     {
         $this->data = [];
         $this->_restclient = $restClient;
-        if (is_file($path)) {
+        if (is_file($path ?? '')) {
             $info = pathinfo($path);
             $parts = explode('.', $info['basename']);
             $extension = array_pop($parts);
@@ -137,16 +137,13 @@ class Config
     /** 
      * @return mixed
      */
-    public function getUserId($access_token)
+    public function getUserId()
     {
         if (!$this->_restclient) {
             $this->_restclient = new RestClient();
             $this->_restclient->setHttpParam('address', $this->get('base_url'));
         }
-        $response = $this->_restclient->get("/users/me", array(
-                "url_query" => array("access_token" => $access_token)
-            )
-        );  
+        $response = $this->_restclient->get("/users/me");
 
         return $response["body"];
     }
@@ -190,5 +187,7 @@ class Config
         return $response['body'];
     }
 
-
+    public function getData(){
+        return $this->data;
+    }
 }
