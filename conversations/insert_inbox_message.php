@@ -55,7 +55,7 @@ $time = time();
 $insert_message = $db->insert("inbox_messages",array("message_sender" => $login_seller_id,"message_receiver" => $receiver_seller_id,"message_group_id" => $message_group_id,"message_desc" => $message,"message_file" => $file,"isS3"=>$enable_s3,"message_date" => $message_date,"dateAgo" => $dateAgo,"bell" => 'active',"message_status" => $message_status));
 $last_message_id = $db->lastInsertId();
 
-// Added by Pixinal Studio for inbox push notification
+// Added by gig-zone Studio for inbox push notification
 $mesg_push_url = "$site_url/api/v1/inbox-notification/".$last_message_id;
 $curl = curl_init();
 curl_setopt_array($curl, array(

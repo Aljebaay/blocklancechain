@@ -56,7 +56,7 @@ body {
           <!-- form Starts -->
           <h3>Welcome</h3>
           <hr>
-          <p>Welcome to the gigzenoScript installer. Finish all 3 steps in about 2 minutes, and start using the best freelance marketplace script in the world. All fields with (<span class="text-danger">*</span>) must be filled. For guidance refer to <a target="_blank" href="http://help.gigzenoscript.com/knowledge/details/4/.html" class="text-success">How To?</a> </p>
+          <p>Welcome to the gig-zone installer. Finish all 3 steps in about 2 minutes, and start using the best freelance marketplace script in the world. All fields with (<span class="text-danger">*</span>) must be filled. For guidance refer to <a target="_blank" href="http://help.gig-zone.com/knowledge/details/4/.html" class="text-success">How To?</a> </p>
           <h3>Database Information</h3>
           <hr>
           <p>Before getting started, we need some database information in order to proceed.</p>
@@ -118,7 +118,7 @@ if(isset($_POST["install"])){
   $pass = $input->post("db_pass");
   $database = $input->post("db_name"); //Change Your Database Name
   //ENTER THE RELEVANT INFO BELOW
-  $filename ='gigzeno.sql';
+  $filename ='gig-zone.sql';
   $command = file_get_contents($filename);
   try{
     $pdo = new PDO("mysql:host=$host;dbname=$database",$uname,$pass);

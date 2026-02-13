@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `gigzeno-install`
+-- Database: `gig-zone-install`
 --
 
 -- --------------------------------------------------------
@@ -596,7 +596,7 @@ CREATE TABLE `contact_support` (
 --
 
 INSERT INTO `contact_support` (`contact_id`, `contact_email`) VALUES
-(1, 'admin-demo@pixinal.com');
+(1, 'admin-demo@gig-zone.com');
 
 -- --------------------------------------------------------
 
@@ -1376,12 +1376,12 @@ CREATE TABLE `home_cards` (
 --
 
 INSERT INTO `home_cards` (`card_id`, `language_id`, `card_title`, `card_desc`, `card_link`, `card_image`, `isS3`) VALUES
-(1, 1, 'Logo Design', 'Build Your Brand', 'https://www.gigzeno.com/categories/graphics-design/logo-design', '1.jpg', 0),
-(2, 1, 'Social Media', 'Reach More Customers', 'https://www.gigzeno.com/categories/digital-marketing/social-media-marketing', '2.jpg', 0),
-(3, 1, 'Voice Talent', 'The Perfect Voiceover', 'https://www.gigzeno.com/categories/video-animation', '7.jpg', 0),
-(4, 1, 'Translation', 'Go Global.', 'https://www.gigzeno.com/categories/writing-translation/translation', '4.jpg', 0),
-(5, 1, 'Illustration', 'Color Your Dreams', 'https://www.gigzeno.com/categories/graphics-design/illustration', '5.jpg', 0),
-(6, 1, 'Photoshop Expert', 'Hire A Designer', 'https://www.gigzeno.com/categories/graphics-design/photoshop-editing', '6.jpg', 0);
+(1, 1, 'Logo Design', 'Build Your Brand', 'https://www.gig-zone.com/categories/graphics-design/logo-design', '1.jpg', 0),
+(2, 1, 'Social Media', 'Reach More Customers', 'https://www.gig-zone.com/categories/digital-marketing/social-media-marketing', '2.jpg', 0),
+(3, 1, 'Voice Talent', 'The Perfect Voiceover', 'https://www.gig-zone.com/categories/video-animation', '7.jpg', 0),
+(4, 1, 'Translation', 'Go Global.', 'https://www.gig-zone.com/categories/writing-translation/translation', '4.jpg', 0),
+(5, 1, 'Illustration', 'Color Your Dreams', 'https://www.gig-zone.com/categories/graphics-design/illustration', '5.jpg', 0),
+(6, 1, 'Photoshop Expert', 'Hire A Designer', 'https://www.gig-zone.com/categories/graphics-design/photoshop-editing', '6.jpg', 0);
 
 -- --------------------------------------------------------
 
@@ -2138,7 +2138,7 @@ CREATE TABLE `section_boxes` (
 INSERT INTO `section_boxes` (`box_id`, `language_id`, `box_title`, `box_desc`, `box_image`, `isS3`) VALUES
 (4, 1, 'Your Terms', 'Whatever you need to simplify your to do list, no&lt;br&gt; matter your budget.\r\n', 'time.png', 0),
 (5, 1, 'Your Timeline', 'Find services based on your goals and deadlines,&lt;br&gt; its that simple.', 'desk.png', 0),
-(6, 1, 'Your Safety', 'Your payment is always secure, gigzeno is built to protect your peace of mind.', 'tv.png', 0);
+(6, 1, 'Your Safety', 'Your payment is always secure, gig-zone is built to protect your peace of mind.', 'tv.png', 0);
 
 -- --------------------------------------------------------
 
@@ -2394,9 +2394,9 @@ CREATE TABLE `slider` (
 --
 
 INSERT INTO `slider` (`slide_id`, `language_id`, `slide_name`, `slide_desc`, `slide_image`, `slide_url`, `isS3`) VALUES
-(27, 1, '', '', 'cover-boy.png', 'https://www.pixinal.com', 0),
-(32, 1, '', '', 'art-artist-canvas-374054.jpg', 'https://www.pixinal.com', 0),
-(33, 1, '', '', 'art-dark-ethnic-1038041.jpg', 'https://www.gigzeno.com', 0);
+(27, 1, '', '', 'cover-boy.png', 'https://www.gig-zone.com', 0),
+(32, 1, '', '', 'art-artist-canvas-374054.jpg', 'https://www.gig-zone.com', 0),
+(33, 1, '', '', 'art-dark-ethnic-1038041.jpg', 'https://www.gig-zone.com', 0);
 
 -- --------------------------------------------------------
 

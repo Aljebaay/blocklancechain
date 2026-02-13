@@ -164,7 +164,7 @@ function sendPushMessage($notification_id){
 
    global $site_url;
    
-   /// Added by Pixinal Studio For Push Notification
+   /// Added by gig-zone Studio For Push Notification
    $curl = curl_init();
    curl_setopt_array($curl, array(
       CURLOPT_URL => "$site_url/api/v1/single-notification/".$notification_id,

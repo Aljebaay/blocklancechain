@@ -70,7 +70,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Title </div>
                   <div class="col-md-8">
                     <input type="text" name="site_title" class="form-control" placeholder="Site Title" value="<?= @$form_data['site_title']; ?>" required>
-                    <small>E.g. gigzeno - Freelance MarketPlace</small>
+                    <small>E.g. gig-zone - Freelance MarketPlace</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -79,7 +79,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Url </div>
                   <div class="col-md-8">
                     <input type="text" name="site_url" class="form-control" placeholder="Site Url" value="<?= @$form_data['site_url']; ?>" required>
-                    <small>E.g https://www.gigzeno.com (include the protocol "http://")</small>
+                    <small>E.g https://www.gig-zone.com (include the protocol "http://")</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -95,7 +95,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Name <span class="text-danger">*</span> </div>
                   <div class="col-md-8">
                     <input type="text" name="site_name" class="form-control" placeholder="Enter Site Name" value="<?= @$form_data['site_name']; ?>" required>
-                    <small>E.g. gigzeno</small>
+                    <small>E.g. gig-zone</small>
                   </div>
                 </div><!-- form-group row Ends -->
                 <div class="form-group row "><!-- form-group row Starts -->
@@ -110,7 +110,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> JwPlayer Code <small class="text-muted">(Optional)</small> </div>
                   <div class="col-md-8">
                     <input type="text" name="jwplayer_code" placeholder="JwPlayer Code" value="<?= @$form_data['jwplayer_code']; ?>" class="form-control">
-                    <small> <a href="http://help.gigzenoscript.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
+                    <small> <a href="http://help.gig-zone.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
                   </div>
                 </div>
 

@@ -1,1 +1,1 @@
-$('body').append('<section class="clearfix post_footer">@ Copyright gigzenoScript 2020. Pixinal Studio. </section>');
+$('body').append('<section class="clearfix post_footer">@ Copyright gig-zone 2026. </section>');
