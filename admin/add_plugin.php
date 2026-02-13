@@ -115,7 +115,7 @@ $current_version = $row_app->version;
         @$readme = file_get_contents("updator/readme.txt");
         $pluginName = getStringBetween($readme,"Plugin Name: ","\n");
         $folderName = getStringBetween($readme,"Folder: ","\n");
-        $c_version = getStringBetween($readme,"Compatible blocklancechain Version: ","\n");
+        $c_version = getStringBetween($readme,"Compatible gigzeno Version: ","\n");
         
         if(!file_exists("updator/plugin.sql") or !file_exists("updator/files.zip")){
 
@@ -151,7 +151,7 @@ $current_version = $row_app->version;
               }
 
             }else{
-              echo "<script>alert_success('This Plugin Will Only Work On blocklancechain $c_version And Above $c_version','index?plugins');</script>"; 
+              echo "<script>alert_success('This Plugin Will Only Work On gigzeno $c_version And Above $c_version','index?plugins');</script>"; 
             }
 
           }else{

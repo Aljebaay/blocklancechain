@@ -186,15 +186,12 @@ echo "<script>window.open('login','_self');</script>";
                 $per_page = 8;
 
                 if(isset($_GET['view_sellers'])){
-                    
-                    $page = $input->get('view_sellers');
-
-                    if($page == 0){ $page = 1; }
-                    
+                    $page = (int) $input->get('view_sellers');
+                    if($page < 1){
+                        $page = 1;
+                    }
                 }else{
-                    
                     $page = 1;
-                    
                 }
 
                 $i = ($page*$per_page)-8;

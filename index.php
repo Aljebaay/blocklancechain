@@ -20,25 +20,25 @@ $site_title = $row_general_settings->site_title;
 	<meta name="keywords" content="<?= $site_keywords; ?>">
 	<meta name="author" content="<?= $site_author; ?>">
   	<link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,300,100" rel="stylesheet">
-	<link href="styles/bootstrap.css" rel="stylesheet">
-  	<link href="styles/custom.css" rel="stylesheet"> <!-- Custom css code from modified in admin panel --->
-	<link href="styles/styles.css" rel="stylesheet">
-	<link href="styles/categories_nav_styles.css" rel="stylesheet">
-	<link href="font_awesome/css/font-awesome.css" rel="stylesheet">
-	<link href="styles/owl.carousel.css" rel="stylesheet">
-	<link href="styles/owl.theme.default.css" rel="stylesheet">
-	<link href="styles/sweat_alert.css" rel="stylesheet">
-	<link href="styles/animate.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/bootstrap.css" rel="stylesheet">
+  	<link href="<?= $site_url; ?>/styles/custom.css" rel="stylesheet"> <!-- Custom css code from modified in admin panel --->
+	<link href="<?= $site_url; ?>/styles/styles.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/categories_nav_styles.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/font_awesome/css/font-awesome.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/owl.carousel.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/owl.theme.default.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/sweat_alert.css" rel="stylesheet">
+	<link href="<?= $site_url; ?>/styles/animate.css" rel="stylesheet">
   	<?php if($row_general_settings->knowledge_bank == 'yes'): ?>
-		<link href="styles/knowledge_bank.css" rel="stylesheet">
+		<link href="<?= $site_url; ?>/styles/knowledge_bank.css" rel="stylesheet">
 	<?php endif ?>
 	<?php if(!empty($site_favicon)){ ?>
 		<link rel="shortcut icon" href="<?= $site_favicon; ?>" type="image/x-icon" />
 	<?php } ?>
 	<!-- Optional: include a polyfill for ES6 Promises for IE11 and Android browser -->
-	<script src="js/ie.js"></script>
-	<script type="text/javascript" src="js/sweat_alert.js"></script>
-	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script src="<?= $site_url; ?>/js/ie.js"></script>
+	<script type="text/javascript" src="<?= $site_url; ?>/js/sweat_alert.js"></script>
+	<script type="text/javascript" src="<?= $site_url; ?>/js/jquery.min.js"></script>
 	<style>.swal2-popup .swal2-styled.swal2-confirm{background-color: #28a745;}</style>
 </head>
 <body class="is-responsive">
@@ -102,7 +102,7 @@ $site_title = $row_general_settings->site_title;
 	<i class="close-popup fa fa-remove"></i>
 </a>
 <script>var site_url='<?= $site_url; ?>';</script>
-<script type="text/javascript" src="js/knowledge-bank.js"></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/knowledge-bank.js"></script>
 <?php endif; ?>
 
 </body>

@@ -362,7 +362,7 @@ require 'timezones.php';
 </div>
 <small class="form-text text-muted">
 <span class="text-danger font-weight-bold">NB:</span>
-  Enter the complete url. Ex: https://www.blocklancechain.com
+  Enter the complete url. Ex: https://www.gigzeno.com
 </small>
 </div>
 </div><!--- form-group row Ends --->
@@ -431,7 +431,7 @@ require 'timezones.php';
 
 <div class="form-group row"><!--- form-group row Starts --->
 <label class="col-md-3 control-label"> Google Recaptcha Site Key : <br/>
-<small><a target="_blank" href=https://help.blocklancechainscript.com/knowledge/details/12/Steps%20on%20Getting%20Google%20reCaptcha%20key%20%20secret.html" class="text-success">How To?</a></small>    
+<small><a target="_blank" href=https://help.gigzenoscript.com/knowledge/details/12/Steps%20on%20Getting%20Google%20reCaptcha%20key%20%20secret.html" class="text-success">How To?</a></small>    
 </label>
 <div class="col-md-6">
 <div class="input-group">
@@ -443,7 +443,7 @@ require 'timezones.php';
 
 <div class="form-group row"><!--- form-group row Starts --->
 <label class="col-md-3 control-label"> Google Re captcha Secret Key  : <br/>
-<small><a target="_blank" href="https://help.blocklancechainscript.com/knowledge/details/12/Steps%20on%20Getting%20Google%20reCaptcha%20key%20%20secret.html" class="text-success">How To?</a></small>
+<small><a target="_blank" href="https://help.gigzenoscript.com/knowledge/details/12/Steps%20on%20Getting%20Google%20reCaptcha%20key%20%20secret.html" class="text-success">How To?</a></small>
 </label>
 <div class="col-md-6">
 <div class="input-group">
@@ -945,7 +945,7 @@ Enable or disable social media on the website.
 <div class="form-group row">
 <!--- form-group row Starts --->
 <label class="col-md-3 control-label"> Facebook App Id :
-<small><a target="_blank" href="http://help.blocklancechainscript.com/knowledge/details/6/.html" class="text-success">How To?</a></small>
+<small><a target="_blank" href="http://help.gigzenoscript.com/knowledge/details/6/.html" class="text-success">How To?</a></small>
 </label>
 <div class="col-md-6">
 <div class="input-group">
@@ -973,7 +973,7 @@ Enable or disable social media on the website.
 <div class="form-group row">
 <!--- form-group row Starts --->
 <label class="col-md-3 control-label"> Google Client Id : 
-<small><a target="_blank" href="http://help.blocklancechainscript.com/knowledge/details/7/.html" class="text-success">How To?</a></small>
+<small><a target="_blank" href="http://help.gigzenoscript.com/knowledge/details/7/.html" class="text-success">How To?</a></small>
 </label>
 <div class="col-md-6">
 <div class="input-group">

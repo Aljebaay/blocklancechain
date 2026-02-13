@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `blocklancechain-install`
+-- Database: `gigzeno-install`
 --
 
 -- --------------------------------------------------------
@@ -195,24 +195,6 @@ INSERT INTO `app_info` (`id`, `version`, `r_date`) VALUES
 (1, '1.5.4', '25 December 2020');
 
 -- --------------------------------------------------------
-
---
--- Table structure for table `app_license`
---
-
-CREATE TABLE `app_license` (
-  `id` int(100) NOT NULL,
-  `purchase_code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `license_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `website` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `app_license`
---
-
-INSERT INTO `app_license` (`id`, `purchase_code`, `license_type`, `website`) VALUES
-(1, '', '', '');
 
 -- --------------------------------------------------------
 
@@ -1359,7 +1341,7 @@ CREATE TABLE `general_settings` (
 --
 
 INSERT INTO `general_settings` (`id`, `site_title`, `site_www`, `site_name`, `site_favicon`, `site_logo_type`, `site_logo_text`, `site_logo_image`, `enable_mobile_logo`, `site_mobile_logo`, `site_logo`, `site_favicon_s3`, `site_logo_image_s3`, `site_mobile_logo_s3`, `site_logo_s3`, `site_watermark`, `google_analytics`, `site_color`, `site_hover_color`, `site_border_color`, `site_desc`, `site_keywords`, `site_author`, `site_url`, `site_email_address`, `site_copyright`, `site_timezone`, `language_switcher`, `enable_google_translate`, `tinymce_api_key`, `recaptcha_site_key`, `recaptcha_secret_key`, `google_app_link`, `apple_app_link`, `enable_social_login`, `fb_app_id`, `fb_app_secret`, `g_client_id`, `g_client_secret`, `jwplayer_code`, `level_one_rating`, `level_one_orders`, `level_two_rating`, `level_two_orders`, `level_top_rating`, `level_top_orders`, `approve_proposals`, `edited_proposals`, `disable_local_video`, `proposal_email`, `revisions_list`, `enable_unlimited_revisions`, `signup_email`, `relevant_requests`, `enable_referrals`, `knowledge_bank`, `referral_money`, `site_currency`, `currency_position`, `currency_format`, `enable_maintenance_mode`, `make_phone_number_required`, `order_auto_complete`, `wish_do_manual_payouts`, `payouts_date`, `payouts_anyday`, `enable_websocket`, `websocket_address`, `mobileApp_apiKey`) VALUES
-(1, '', 1, '', 'blocklancechainFav.ico', 'image', '', 'logo1.png', 1, 'mobile-logo.png', 'logo1.png', 0, 0, 0, 0, 'watermark.png', '', '#2ca35b', '#2ca35b', '#2ca35b', '', '', '', '', '', '', 'America/Chicago', 1, 0, '', '', '', '', '', 'no', '', '', '', '', '', 85, 10, 95, 25, 100, 50, 'yes', 0, 0, 'yes', '', 0, 'yes', 'yes', 'yes', 'yes', 1, '22', 'left', 'us', 'no', 0, 2, 1, '', 0, 0, '', '');
+(1, '', 1, '', 'gigzenoFav.ico', 'image', '', 'logo1.png', 1, 'mobile-logo.png', 'logo1.png', 0, 0, 0, 0, 'watermark.png', '', '#2ca35b', '#2ca35b', '#2ca35b', '', '', '', '', '', '', 'America/Chicago', 1, 0, '', '', '', '', '', 'no', '', '', '', '', '', 85, 10, 95, 25, 100, 50, 'yes', 0, 0, 'yes', '', 0, 'yes', 'yes', 'yes', 'yes', 1, '22', 'left', 'us', 'no', 0, 2, 1, '', 0, 0, '', '');
 
 -- --------------------------------------------------------
 
@@ -1394,12 +1376,12 @@ CREATE TABLE `home_cards` (
 --
 
 INSERT INTO `home_cards` (`card_id`, `language_id`, `card_title`, `card_desc`, `card_link`, `card_image`, `isS3`) VALUES
-(1, 1, 'Logo Design', 'Build Your Brand', 'https://www.blocklancechain.com/categories/graphics-design/logo-design', '1.jpg', 0),
-(2, 1, 'Social Media', 'Reach More Customers', 'https://www.blocklancechain.com/categories/digital-marketing/social-media-marketing', '2.jpg', 0),
-(3, 1, 'Voice Talent', 'The Perfect Voiceover', 'https://www.blocklancechain.com/categories/video-animation', '7.jpg', 0),
-(4, 1, 'Translation', 'Go Global.', 'https://www.blocklancechain.com/categories/writing-translation/translation', '4.jpg', 0),
-(5, 1, 'Illustration', 'Color Your Dreams', 'https://www.blocklancechain.com/categories/graphics-design/illustration', '5.jpg', 0),
-(6, 1, 'Photoshop Expert', 'Hire A Designer', 'https://www.blocklancechain.com/categories/graphics-design/photoshop-editing', '6.jpg', 0);
+(1, 1, 'Logo Design', 'Build Your Brand', 'https://www.gigzeno.com/categories/graphics-design/logo-design', '1.jpg', 0),
+(2, 1, 'Social Media', 'Reach More Customers', 'https://www.gigzeno.com/categories/digital-marketing/social-media-marketing', '2.jpg', 0),
+(3, 1, 'Voice Talent', 'The Perfect Voiceover', 'https://www.gigzeno.com/categories/video-animation', '7.jpg', 0),
+(4, 1, 'Translation', 'Go Global.', 'https://www.gigzeno.com/categories/writing-translation/translation', '4.jpg', 0),
+(5, 1, 'Illustration', 'Color Your Dreams', 'https://www.gigzeno.com/categories/graphics-design/illustration', '5.jpg', 0),
+(6, 1, 'Photoshop Expert', 'Hire A Designer', 'https://www.gigzeno.com/categories/graphics-design/photoshop-editing', '6.jpg', 0);
 
 -- --------------------------------------------------------
 
@@ -2156,7 +2138,7 @@ CREATE TABLE `section_boxes` (
 INSERT INTO `section_boxes` (`box_id`, `language_id`, `box_title`, `box_desc`, `box_image`, `isS3`) VALUES
 (4, 1, 'Your Terms', 'Whatever you need to simplify your to do list, no&lt;br&gt; matter your budget.\r\n', 'time.png', 0),
 (5, 1, 'Your Timeline', 'Find services based on your goals and deadlines,&lt;br&gt; its that simple.', 'desk.png', 0),
-(6, 1, 'Your Safety', 'Your payment is always secure, blocklancechain is built to protect your peace of mind.', 'tv.png', 0);
+(6, 1, 'Your Safety', 'Your payment is always secure, gigzeno is built to protect your peace of mind.', 'tv.png', 0);
 
 -- --------------------------------------------------------
 
@@ -2414,7 +2396,7 @@ CREATE TABLE `slider` (
 INSERT INTO `slider` (`slide_id`, `language_id`, `slide_name`, `slide_desc`, `slide_image`, `slide_url`, `isS3`) VALUES
 (27, 1, '', '', 'cover-boy.png', 'https://www.pixinal.com', 0),
 (32, 1, '', '', 'art-artist-canvas-374054.jpg', 'https://www.pixinal.com', 0),
-(33, 1, '', '', 'art-dark-ethnic-1038041.jpg', 'https://www.blocklancechain.com', 0);
+(33, 1, '', '', 'art-dark-ethnic-1038041.jpg', 'https://www.gigzeno.com', 0);
 
 -- --------------------------------------------------------
 
@@ -2671,13 +2653,6 @@ ALTER TABLE `api_settings`
 ALTER TABLE `app_info`
   ADD PRIMARY KEY (`id`);
 
---
--- Indexes for table `app_license`
---
-ALTER TABLE `app_license`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Indexes for table `archived_messages`
 --
 ALTER TABLE `archived_messages`
@@ -3281,13 +3256,6 @@ ALTER TABLE `api_settings`
 ALTER TABLE `app_info`
   MODIFY `id` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
---
--- AUTO_INCREMENT for table `app_license`
---
-ALTER TABLE `app_license`
-  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
 -- AUTO_INCREMENT for table `archived_messages`
 --
 ALTER TABLE `archived_messages`

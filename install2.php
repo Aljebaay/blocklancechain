@@ -69,7 +69,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Title </div>
                   <div class="col-md-8">
                     <input type="text" name="site_title" class="form-control" placeholder="Site Title" value="<?= @$form_data['site_title']; ?>" required>
-                    <small>E.g. blocklancechain - Freelance MarketPlace</small>
+                    <small>E.g. gigzeno - Freelance MarketPlace</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -78,7 +78,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Url </div>
                   <div class="col-md-8">
                     <input type="text" name="site_url" class="form-control" placeholder="Site Url" value="<?= @$form_data['site_url']; ?>" required>
-                    <small>E.g https://www.blocklancechain.com (include the protocol "http://")</small>
+                    <small>E.g https://www.gigzeno.com (include the protocol "http://")</small>
                   </div>
                 </div>
                 <!-- form-group row Ends -->
@@ -94,7 +94,7 @@
                   <div class="col-md-3 control-label h5 mt-2"> Site Name <span class="text-danger">*</span> </div>
                   <div class="col-md-8">
                     <input type="text" name="site_name" class="form-control" placeholder="Enter Site Name" value="<?= @$form_data['site_name']; ?>" required>
-                    <small>E.g. blocklancechain</small>
+                    <small>E.g. gigzeno</small>
                   </div>
                 </div><!-- form-group row Ends -->
                 <div class="form-group row "><!-- form-group row Starts -->
@@ -109,21 +109,10 @@
                   <div class="col-md-3 control-label h5 mt-2"> JwPlayer Code <small class="text-muted">(Optional)</small> </div>
                   <div class="col-md-8">
                     <input type="text" name="jwplayer_code" placeholder="JwPlayer Code" value="<?= @$form_data['jwplayer_code']; ?>" class="form-control">
-                    <small> <a href="http://help.blocklancechainscript.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
+                    <small> <a href="http://help.gigzenoscript.com/knowledge/details/3/How-to-get-the-JwPlayer-code-.html" target="_blank" class="text-success">How To?</a></small>
                   </div>
                 </div>
 
-                <div class="form-group row ">
-                  <!-- form-group row Starts -->
-                  <div class="col-md-3 control-label h5 mt-2"> Purchase Code <small class="text-danger">(Required)</small> </div>
-                  <div class="col-md-8">
-                    <input type="text" name="purchase_code" class="form-control" placeholder="Purchase Code" value="<?= @$form_data['purchase_code']; ?>"/>
-                    <small>
-                      If you purchased blocklancechain from Codecanyon, please use your purchase code from codecanyon to proceed. However, if you purchased the script from Codester, Pixinal Store or Alkanyx, please <a href="https://tawk.to/chat/5eae3327203e206707f9075a/default" target="_blank" class="text-primary">click this link</a> to request a purchase code.
-                    </small>
-                  </div>
-                </div>
-                <!-- form-group row Ends -->
                 <h3>Admin Panel</h3>
                 <hr>
                 <div class="form-group row ">
@@ -177,45 +166,6 @@
     <!-- container Ends -->
     <?php 
       
-      function verify_purchase($purchase_code,$site_url){
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-          CURLOPT_URL => "https://www.blocklancechain.com/purchase-code-management-system/admin/verify_purchase/",
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_ENCODING => "",
-          CURLOPT_MAXREDIRS => 10,
-          CURLOPT_TIMEOUT => 0,
-          CURLOPT_FOLLOWLOCATION => true,
-          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-          CURLOPT_CUSTOMREQUEST => "POST",
-          CURLOPT_POSTFIELDS => array('purchase_code' => $purchase_code,'site_url' => $site_url),
-        ));
-
-        $response = curl_exec($curl);
-
-        curl_close($curl);
-
-        return json_decode($response);
-        
-      }
-
-
-      // Check if we are in a local environment
-      function is_localhost(){
-        
-        // set the array for testing the local environment
-        $whitelist = array( '127.0.0.1', '::1' );
-        
-        // check if the server is in the array
-        if (in_array( $_SERVER['REMOTE_ADDR'],$whitelist)){
-          // this is a local environment
-          return true;
-        }
-        
-      }
-
       $host = $_SESSION["db_host"];
       $uname = $_SESSION["db_username"];
       $pass = $_SESSION["db_pass"];
@@ -229,84 +179,38 @@
         $site_name = $input->post('site_name');
         $site_email_address = $input->post('site_email_address');
         $jwplayer_code = $input->post('jwplayer_code');
-        $purchase_code = $input->post('purchase_code');
+        $admin_name = $input->post('admin_name');
+        $admin_email = $input->post('admin_email');
+        $admin_pass = $input->post('admin_pass');
+        $encrypt_password = password_hash($admin_pass, PASSWORD_DEFAULT);
 
-        $verify_purchase = verify_purchase($purchase_code,$site_url);
+        $update_general_settings = $db->update("general_settings",array("site_title"=>$site_title,"site_url"=>$site_url,"site_desc"=>$site_desc,"site_name"=>$site_name,"site_email_address"=>$site_email_address,"jwplayer_code"=>$jwplayer_code));
+        
+        $update_admin = $db->update("admins",array("admin_name"=>$admin_name,"admin_email"=> $admin_email,"admin_pass"=> $encrypt_password));
 
-        if(is_localhost()){
-          $verify_purchase->status = "valid";
-        }
-
-        if($verify_purchase->status == "already_used"){
-
-          echo "
-          <script>
-            swal({
-              type: 'error',
-              text: 'The Purchase Code That You Enter Is Already Used By You Or By Another User.',
-            });
-          </script>";
-
-          Flash::add("form_data",$_POST);
-
-        }elseif($verify_purchase->status == "invalid"){
-
-          echo "
-          <script>
-            swal({
-              type: 'error',
-              text: 'The Purchase Code That You Enter Is Not Valid.',
-            });
-          </script>";
-
-          Flash::add("form_data",$_POST);
-
-        }elseif ($verify_purchase->status == "valid") {
-
-          $admin_name = $input->post('admin_name');
-          $admin_email = $input->post('admin_email');
-          $admin_pass = $input->post('admin_pass');
-          $encrypt_password = password_hash($admin_pass, PASSWORD_DEFAULT);
-      
-          $update_general_settings = $db->update("general_settings",array("site_title"=>$site_title,"site_url"=>$site_url,"site_desc"=>$site_desc,"site_name"=>$site_name,"site_email_address"=>$site_email_address,"jwplayer_code"=>$jwplayer_code));
-          
-          $update_admin = $db->update("admins",array("admin_name"=>$admin_name,"admin_email"=> $admin_email,"admin_pass"=> $encrypt_password));
-
-          if(is_localhost()){
-          
-          }else{
-            $app_license = $db->update("app_license",[
-              "purchase_code" => $verify_purchase->purchase_code,
-              "license_type" => $verify_purchase->license_type,
-              "website" => $verify_purchase->website,
-            ]);
-          }
-      
-          $config_file = "includes/config.php";
-          $newData = "<?php
+        $config_file = "includes/config.php";
+        $newData = "<?php
           ini_set('display_errors', 0);
           ini_set('display_startup_errors', 0);
           @define('DB_HOST', '$host');
           @define('DB_USER', '$uname');
           @define('DB_PASS', '$pass');
           @define('DB_NAME', '$database');"; 
-          
-          $handle = fopen($config_file, "w"); 
-          fwrite($handle, $newData); 
-          fclose($handle);
+        
+        $handle = fopen($config_file, "w"); 
+        fwrite($handle, $newData); 
+        fclose($handle);
 
-          $apis_db = file_get_contents('apis/application/config/database.php');
-          $apis_db = str_replace('db_host', $host, $apis_db);
-          $apis_db = str_replace('db_user', $uname, $apis_db);
-          $apis_db = str_replace('db_pass', $pass, $apis_db);
-          $apis_db = str_replace('db_name', $database, $apis_db);
-          file_put_contents('apis/application/config/database.php', $apis_db);
+        $apis_db = file_get_contents('apis/application/config/database.php');
+        $apis_db = str_replace('db_host', $host, $apis_db);
+        $apis_db = str_replace('db_user', $uname, $apis_db);
+        $apis_db = str_replace('db_pass', $pass, $apis_db);
+        $apis_db = str_replace('db_name', $database, $apis_db);
+        file_put_contents('apis/application/config/database.php', $apis_db);
 
-          session_destroy();
+        session_destroy();
 
-          echo "<script>window.open('install3.php', '_self');</script>";
-
-        }
+        echo "<script>window.open('install3.php', '_self');</script>";
 
       }
     

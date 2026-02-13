@@ -61,9 +61,9 @@
           <p>
             
             You have successfully completed the installation process. Now you're all set! You can start using our script. If you have any questions or face any issues, open a ticket on our 
-            <a target="_blank" class="text-success" href="http://help.blocklancechainscript.com">Support Help Desk</a> 
-            and someone will get to you ASAP. If you want customizations on this script, or need help on any other project, email us at info@pixinal.com or info@blocklancechainScript.com. Please like us on 
-            <a target="_blank" href="https://www.facebook.com/blocklancechainscript" class="text-success">Facebook.</a>
+            <a target="_blank" class="text-success" href="http://help.gigzenoscript.com">Support Help Desk</a> 
+            and someone will get to you ASAP. If you want customizations on this script, or need help on any other project, email us at info@pixinal.com or info@gigzenoScript.com. Please like us on 
+            <a target="_blank" href="https://www.facebook.com/gigzenoscript" class="text-success">Facebook.</a>
 
             <br>
           </p>

@@ -53,7 +53,7 @@ $site_border_color = $row_general_settings->site_border_color;
 <div id="gnav-header" class="gnav-header global-nav clear gnav-3">
   <header id="gnav-header-inner" class="gnav-header-inner clear apply-nav-height col-group has-svg-icons body-max-width">
     <div class="col-xs-12">
-      <div id="blocklancechain-logo" class="apply-nav-height blocklancechain-logo-svg blocklancechain-logo-svg-logged-in <?php if(isset($_SESSION["seller_user_name"])){echo"loggedInLogo";} ?>">
+      <div id="gigzeno-logo" class="apply-nav-height gigzeno-logo-svg gigzeno-logo-svg-logged-in <?php if(isset($_SESSION["seller_user_name"])){echo"loggedInLogo";} ?>">
         <a href="<?= $site_url; ?>">
           <?php if($site_logo_type == "image"){ ?>
             <img class="desktop" src="<?= $site_logo_image; ?>" width="150">
@@ -68,7 +68,7 @@ $site_border_color = $row_general_settings->site_border_color;
       <button id="mobilemenu" class="unstyled-button mobile-catnav-trigger apply-nav-height icon-b-1 tablet-catnav-enabled <?= ($enable_mobile_logo == 0)?"left":""; ?>">
         <span class="screen-reader-only"></span>
         <div class="text-gray-lighter text-body-larger">
-          <span class="blocklancechain-icon hamburger-icon nav-icon">
+          <span class="gigzeno-icon hamburger-icon nav-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M20,6H4A1,1,0,1,1,4,4H20A1,1,0,0,1,20,6Z" />
               <path d="M20,13H4a1,1,0,0,1,0-2H20A1,1,0,0,1,20,13Z" />

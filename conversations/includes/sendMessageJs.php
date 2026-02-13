@@ -72,6 +72,8 @@ var seller_id = "<?= $seller_id; ?>";
 var message_group_id = "<?= $message_group_id ?>";
 
 var scroll = 0;
+var TYPING_STATUS_INTERVAL = 3000;
+var MESSAGE_REFRESH_INTERVAL = 6000;
 
 $(document).off('submit').on('submit','#insert-message-form', function(event){
 	event.preventDefault();
@@ -172,6 +174,7 @@ $("#send-offer").click(function(){
 var seller_id = "<?= $seller_id; ?>";
 
 setInterval(function(){
+	if(document.hidden){ return; }
 	$.ajax({
 		method: "POST",
 		url: "seller_typing_status",
@@ -186,7 +189,7 @@ setInterval(function(){
 		}
 
 	});
-}, 500);
+}, TYPING_STATUS_INTERVAL);
 
 // Javascript Jquery Code To Reload User Typing Status Every half second Code Ends //
 
@@ -254,6 +257,7 @@ function ShowSingleMessage(data){
 
 if(enable_websocket == 0){
 	setInterval(function(){
+		if(document.hidden){ return; }
 		$.ajax({
 			method: "POST",
 			url: "includes/display_messages",
@@ -269,7 +273,7 @@ if(enable_websocket == 0){
 			}
 
 		});
-	}, 2000);
+	}, MESSAGE_REFRESH_INTERVAL);
 }
 
 </script>

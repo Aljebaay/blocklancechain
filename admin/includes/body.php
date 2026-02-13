@@ -66,10 +66,6 @@
 		include("app_update.php");
 		}
 
-		if(isset($_GET['app_license'])){
-			include("app_license.php");
-		}
-		
 	}
 
 	/// Plugins

@@ -89,7 +89,7 @@ $slide_image = $row_slides->slide_image;
           $card_title = $row_cards->card_title;
           $card_desc = $row_cards->card_desc;
           $card_image = getImageUrl("home_cards",$row_cards->card_image); 
-          $card_link = $row_cards->card_link;
+          $card_link = dynamicUrl($row_cards->card_link, true);
         ?>
         <div class="card-box">
           <div>

@@ -2,7 +2,54 @@
 
 function base_url($url=''){
 	global $site_url;
-	echo $site_url."/".$url;
+	echo rtrim($site_url, "/")."/".ltrim($url, "/");
+}
+
+function dynamicUrl($url, $forceInternal = false){
+   global $site_url;
+
+   $base = rtrim($site_url, "/");
+   $url = trim((string)$url);
+
+   if($url === ""){
+      return $base;
+   }
+
+   if(preg_match('/^(#|mailto:|tel:|javascript:)/i', $url)){
+      return $url;
+   }
+
+   $parts = parse_url($url);
+   if($parts === false){
+      return $url;
+   }
+
+   $hasScheme = isset($parts['scheme']);
+   $hasHost = isset($parts['host']);
+
+   if($hasScheme || $hasHost){
+      if(!$forceInternal){
+         return $url;
+      }
+
+      $path = isset($parts['path']) ? $parts['path'] : "/";
+      $normalized = $base . (strpos($path, "/") === 0 ? $path : "/" . $path);
+
+      if(isset($parts['query']) && $parts['query'] !== ""){
+         $normalized .= "?" . $parts['query'];
+      }
+      if(isset($parts['fragment']) && $parts['fragment'] !== ""){
+         $normalized .= "#" . $parts['fragment'];
+      }
+
+      return $normalized;
+   }
+
+   if(strpos($url, "/") === 0){
+      return $base . $url;
+   }
+
+   return $base . "/" . $url;
 }
 
 function showPrice($price,$class='',$show_symbol=''){
@@ -11,6 +58,10 @@ function showPrice($price,$class='',$show_symbol=''){
    global $s_currency;
 	global $currency_position;
 	global $currency_format;
+
+   if($price === null || $price === ''){
+      $price = 0;
+   }
 
    if($show_symbol == ''){
       $show_symbol = 'yes';
@@ -24,7 +75,7 @@ function showPrice($price,$class='',$show_symbol=''){
       $currency_id = $row->currency_id;
       $currency_position = $row->position;
       $currency_format = $row->format;
-      $rate = $_SESSION['conversionRate'];
+      $rate = isset($_SESSION['conversionRate']) ? $_SESSION['conversionRate'] : 1;
 
       $get_currencies = $db->select("currencies",array("id" => $currency_id));
       $row_currencies = $get_currencies->fetch();
@@ -123,35 +174,8 @@ function is_localhost(){
 }
 
 
-/// Check Purchase Code
-
 function check_purchase(){
-
-   global $db;
-
-   $get_app_license = $db->select("app_license");
-   $row_app_license = $get_app_license->fetch();
-   $purchase_code = $row_app_license->purchase_code;
-   $license_type = $row_app_license->license_type;
-   $website = $row_app_license->website;
-
-   $curl = curl_init();
-   curl_setopt_array($curl, array(
-      CURLOPT_URL => "https://www.blocklancechain.com/purchase-code-management-system/admin/check_purchase/",
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => "",
-      CURLOPT_MAXREDIRS => 10,
-      CURLOPT_TIMEOUT => 0,
-      CURLOPT_FOLLOWLOCATION => true,
-      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-      CURLOPT_CUSTOMREQUEST => "POST",
-      CURLOPT_POSTFIELDS => array('purchase_code' => $purchase_code,'license_type' => $license_type,'website' => $website),
-   ));
-
-   $response = curl_exec($curl);
-   curl_close($curl);
-   
-   return $response;
-
+   // Open-source mode: licensing checks are intentionally disabled.
+   return 1;
 }
 

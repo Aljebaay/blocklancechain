@@ -22,7 +22,18 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
    $row_general_settings = $get_general_settings->fetch();
    $site_email_address = $row_general_settings->site_email_address;
    $site_email_address = $row_general_settings->site_email_address;
-   $site_url = $row_general_settings->site_url;
+   $site_url = rtrim($row_general_settings->site_url, "/");
+   if(!empty($_SERVER['HTTP_HOST'])){
+      $scheme = "http";
+      if(
+         (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+         (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ||
+         (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+      ){
+         $scheme = "https";
+      }
+      $site_url = $scheme . "://" . $_SERVER['HTTP_HOST'];
+   }
    $tinymce_api_key = $row_general_settings->tinymce_api_key;
    $site_name = $row_general_settings->site_name;
    $site_keywords = $row_general_settings->site_keywords;

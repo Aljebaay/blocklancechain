@@ -35,6 +35,15 @@ $config = array(
 	"region" => $s3_region
 );
 
+$s3 = null;
+$s3_ready = (
+	(int)$enable_s3 === 1 &&
+	!empty($config["key"]) &&
+	!empty($config["secret"]) &&
+	!empty($config["bucket"]) &&
+	!empty($config["region"])
+);
+
 $allowedExtensions = array("jpg", "jpeg", "png", "gif", "webp", "eps", "svg", "pdf", "txt", "docx", "pptx", "zip", "rar", "tar");
 
 $allowedImageExtensions = array("jpg", "jpeg", "png", "gif", "webp", "svg");
@@ -143,12 +152,22 @@ function getMainFolderName($folder,$table){
 
 }
 
+function buildMediaUrl($site_url, $main_folder, $folder, $key){
+	$base = rtrim($site_url, "/");
+	$parts = array($main_folder, $folder, $key);
+	$parts = array_filter($parts, function($part){
+		return $part !== null && $part !== "";
+	});
+	return $base . "/" . implode("/", $parts);
+}
+
 function getImageUrl($table,$key,$column=''){
 
 	global $db;
 	global $s3_bucket;
 	global $s3_domain;
 	global $site_url;
+	$site_url = rtrim($site_url, "/");
 
 	if(empty($column)){
 		$column = getImageColumn($table);
@@ -157,7 +176,10 @@ function getImageUrl($table,$key,$column=''){
 	
 	$select_table = $db->select("$table",["$column"=>$key]);
 	$row_table = $select_table->fetch();
-	$isS3 = $row_table->isS3;
+	$isS3 = 0;
+	if($row_table && isset($row_table->isS3)){
+		$isS3 = $row_table->isS3;
+	}
 
 	if($isS3 == 1){
 
@@ -174,7 +196,7 @@ function getImageUrl($table,$key,$column=''){
 		if(empty($key)){ $key = "empty-image.png"; }
 		$main_folder = getMainFolderName($folder,$table);
 		$key = rawurlencode($key);
-		return "$site_url/"."$main_folder/$folder/$key";
+		return buildMediaUrl($site_url, $main_folder, $folder, $key);
 
 	}
 
@@ -186,6 +208,7 @@ function getImageUrl2($table,$field,$key){
 	global $s3_bucket;
 	global $s3_domain;
 	global $site_url;
+	$site_url = rtrim($site_url, "/");
 
 	$field2 = $field.'_s3';
 	$folder = getFolderName($table);
@@ -196,7 +219,10 @@ function getImageUrl2($table,$field,$key){
 
 	$select_table = $db->select("$table",["$field"=>$key]);
 	$row_table = $select_table->fetch();
-	$isS3 = $row_table->$field2;
+	$isS3 = 0;
+	if($row_table && isset($row_table->$field2)){
+		$isS3 = $row_table->$field2;
+	}
 
 	if($isS3 == 1){
 		return "$s3_domain/$folder/$key";
@@ -208,30 +234,28 @@ function getImageUrl2($table,$field,$key){
 
 		$key = rawurlencode($key);
 
-		return "$site_url/$main_folder/$folder/$key"; 
+		return buildMediaUrl($site_url, $main_folder, $folder, $key); 
 
 	}
 
 }
 
-// Connect to AWS
-try {
-
-$s3 = S3Client::factory(
-	array(
-		'credentials' => array(
-			'key' => $config["key"],
-			'secret' => $config["secret"]
-		),
-		'version' => 'latest',
-		'region'  => $config['region']
-	)
-);
-
-// $buckets = $s3->listBuckets();
-
-} catch(Exception $error){
-	return false;
+// Connect to AWS only when S3 is enabled and fully configured.
+if($s3_ready){
+	try {
+		$s3 = S3Client::factory(
+			array(
+				'credentials' => array(
+					'key' => $config["key"],
+					'secret' => $config["secret"]
+				),
+				'version' => 'latest',
+				'region'  => $config['region']
+			)
+		);
+	} catch(Exception $error){
+		$s3 = null;
+	}
 }
 
 function uploadToS3($KeyFile,$fileTmp,$fileContent="",$private=''){
@@ -242,8 +266,13 @@ function uploadToS3($KeyFile,$fileTmp,$fileContent="",$private=''){
 	global $s3_access_key;
 	global $s3_access_sceret;
 	global $s3_bucket;
+	global $s3_region;
 
-	if($enable_s3 == 1 and (!empty($s3_access_key) and !empty($s3_access_sceret) and !empty($s3_bucket))) {
+	if(
+		$enable_s3 == 1 &&
+		(!empty($s3_access_key) && !empty($s3_access_sceret) && !empty($s3_bucket) && !empty($s3_region)) &&
+		$s3 instanceof S3Client
+	) {
 
       if(strpos($KeyFile,'order_files') !== false){
 			$ACL = "private";
@@ -300,7 +329,7 @@ function deleteFromS3($KeyFile){
 	global $config;
 	global $s3;
 
-	if ($s3->doesObjectExist($config["bucket"], $KeyFile)){
+	if ($s3 instanceof S3Client && $s3->doesObjectExist($config["bucket"], $KeyFile)){
 	 // Delete file from the s3 bucket.
 	 $s3->deleteObject([
 	   'Bucket' => $config["bucket"],
@@ -319,7 +348,7 @@ function getObjectUrl($key){
 	global $site_url;
 	global $s3_domain;
 	
-	if($s3->doesObjectExist($config["bucket"], $key)){
+	if($s3 instanceof S3Client && $s3->doesObjectExist($config["bucket"], $key)){
 		if(empty($s3_domain)){
 			return $s3->getObjectUrl($config["bucket"], $key);
 		} else {

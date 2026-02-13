@@ -1,0 +1,34 @@
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+
+# Local runtime
+.sessions/
+*.log
+*.tmp
+*.cache
+
+# Environment / local secrets
+.env
+.env.*
+includes/config.php
+apis/application/config/database.php
+
+# Dependencies (install via Composer)
+vendor/
+!composer.json
+!composer.lock
+
+# Build / package artifacts
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Test / coverage artifacts
+coverage/
+.phpunit.result.cache

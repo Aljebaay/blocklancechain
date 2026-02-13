@@ -128,6 +128,7 @@
 	
 			if(options.autoPlay == true) {
 				var AP = setInterval(function(){
+					if(document.hidden){ return; }
 					nextSlide();
 				},options.delay);
 			}

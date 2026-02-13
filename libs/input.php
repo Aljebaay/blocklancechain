@@ -8,16 +8,27 @@ class Input{
 
 	public function get($key=''){
 		if(!empty($key)){ 
-			if(is_array($_GET[$key])){
+			if(isset($_GET[$key]) && is_array($_GET[$key])){
 				$array = $this->secure($_GET[$key]);
 				return filter_var_array($array, FILTER_SANITIZE_STRING);
 			}else{
-				return htmlspecialchars(filter_input(INPUT_GET, $key), ENT_COMPAT, 'UTF-8');
+				$value = filter_input(INPUT_GET, $key);
+				if($value === null && isset($_GET[$key])){
+					$value = $_GET[$key];
+				}
+				if($value === null){
+					return null;
+				}
+				return htmlspecialchars((string) $value, ENT_COMPAT, 'UTF-8');
 			}
 		}else{
 		 $values = [];
 	    foreach($_GET as $key => $value){
-	      $values["$key"] = htmlspecialchars(filter_input(INPUT_GET, $key), ENT_COMPAT, 'UTF-8');
+	      $value = filter_input(INPUT_GET, $key);
+	      if($value === null){
+	      	$value = $_GET[$key];
+	      }
+	      $values["$key"] = htmlspecialchars((string) $value, ENT_COMPAT, 'UTF-8');
 	    }
     	return $values;
     }

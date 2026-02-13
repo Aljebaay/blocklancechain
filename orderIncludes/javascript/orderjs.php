@@ -16,6 +16,7 @@ function matchWords(input){
 }
 
 $(document).ready(function(){
+var ORDER_CHAT_REFRESH_INTERVAL = 8000;
 
 // Sticky Code start //
 $("#order-status-bar").sticky({ topSpacing:0,zIndex:500});
@@ -75,6 +76,7 @@ $('#insert-message-form').submit(function(e){
 });
 
 setInterval(function(){
+  if(document.hidden){ return; }
   order_id = "<?= $order_id; ?>";
   $.ajax({
     method: "GET",
@@ -84,7 +86,7 @@ setInterval(function(){
     $("#order-conversations").empty();
     $("#order-conversations").append(data);
   });
-}, 1000); 
+}, ORDER_CHAT_REFRESH_INTERVAL); 
 
 });
 </script>

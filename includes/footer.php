@@ -16,6 +16,7 @@
 						$link_id = $row_footer_links->link_id;
 						$link_title = $row_footer_links->link_title;
 						$link_url = $row_footer_links->link_url;
+						$link_url = dynamicUrl($link_url, true);
 						?>
 						<li class="list-unstyled-item"><a href="<?= $link_url; ?>"><?= $link_title; ?></a></li>
 						<?php } ?>
@@ -32,6 +33,7 @@
 						$icon_class = $row_footer_links->icon_class;
 						$link_title = $row_footer_links->link_title;
 						$link_url = $row_footer_links->link_url;
+						$link_url = dynamicUrl($link_url, true);
 						?>
 						<li class="list-unstyled-item"><a href="<?= $link_url; ?>"><i class="fa <?= $icon_class; ?>"></i> <?= $link_title; ?></a></li>
 						<?php } ?>
@@ -72,6 +74,7 @@
 					$link_id = $row_footer_links->link_id;
 					$icon_class = $row_footer_links->icon_class;
 					$link_url = $row_footer_links->link_url;
+					$link_url = dynamicUrl($link_url, false);
 					?>
 					<li class="list-inline-item"><a href="<?= $link_url; ?>"><i class="fa <?= $icon_class; ?>"></i></a></li>
 					<?php } ?>

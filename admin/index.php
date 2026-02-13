@@ -4,14 +4,16 @@ session_start();
 include("includes/db.php");
 include("../functions/mailer.php");
 if(!isset($_SESSION['admin_email'])){
-	echo "<script>window.open('login','_self');</script>";
+	echo "<script>window.open('login.php','_self');</script>";
+	exit();
 }
 
-if((time() - $_SESSION['loggedin_time']) > 9800){
-	echo "<script>window.open('logout?session_expired','_self');</script>";
+if(!isset($_SESSION['loggedin_time']) || (time() - $_SESSION['loggedin_time']) > 9800){
+	echo "<script>window.open('logout.php?session_expired','_self');</script>";
+	exit();
 }
 
-if(!$_SESSION['adminLanguage']){
+if(!isset($_SESSION['adminLanguage']) || !$_SESSION['adminLanguage']){
 	$_SESSION['adminLanguage'] = 1;
 }
 
@@ -22,6 +24,10 @@ $admin_email = $_SESSION['admin_email'];
 
 $get_admin = $db->query("select * from admins where admin_email=:a_email OR admin_user_name=:a_user_name",array("a_email"=>$admin_email,"a_user_name"=>$admin_email));
 $row_admin = $get_admin->fetch();
+if(!$row_admin){
+	echo "<script>window.open('logout.php','_self');</script>";
+	exit();
+}
 $admin_id = $row_admin->admin_id;
 $login_admin_id = $row_admin->admin_id;
 $admin_name = $row_admin->admin_name;
@@ -34,6 +40,42 @@ $admin_about = $row_admin->admin_about;
 
 $get_rights = $db->select("admin_rights",array("admin_id" => $admin_id));
 $row_rights = $get_rights->fetch();
+if(!$row_rights){
+	$row_rights = (object) array(
+		"settings" => 1,
+		"plugins" => 1,
+		"pages" => 1,
+		"blog" => 1,
+		"feedback" => 1,
+		"video_schedules" => 1,
+		"proposals" => 1,
+		"accounting" => 1,
+		"payouts" => 1,
+		"reports" => 1,
+		"inbox" => 1,
+		"reviews" => 1,
+		"buyer_requests" => 1,
+		"restricted_words" => 1,
+		"notifications" => 1,
+		"cats" => 1,
+		"delivery_times" => 1,
+		"seller_languages" => 1,
+		"seller_skills" => 1,
+		"seller_levels" => 1,
+		"customer_support" => 1,
+		"coupons" => 1,
+		"slides" => 1,
+		"sellers" => 1,
+		"terms" => 1,
+		"orders" => 1,
+		"referrals" => 1,
+		"files" => 1,
+		"knowledge_bank" => 1,
+		"currencies" => 1,
+		"languages" => 1,
+		"admins" => 1
+	);
+}
 $a_settings = $row_rights->settings;
 $a_plugins = $row_rights->plugins;
 $a_pages = $row_rights->pages;
@@ -68,12 +110,6 @@ $a_currencies = $row_rights->currencies;
 $a_languages = $row_rights->languages;
 $a_admins = $row_rights->admins;
 
-$get_app_license = $db->select("app_license");
-$row_app_license = $get_app_license->fetch();
-$purchase_code = $row_app_license->purchase_code;
-$license_type = $row_app_license->license_type;
-$website = $row_app_license->website;
-
 $count_sellers = $db->count("sellers");
 $count_notifications = $db->count("admin_notifications",array("status" => "unread"));
 $count_orders = $db->count("orders",array("order_active" => "yes"));
@@ -104,8 +140,8 @@ if($notifierPlugin == 1){
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>Admin Panel - Control Your Entire Site.</title>
-	<meta name="description" content="With the blocklancechainScript admin panel, controlling your website has never been eassier.">
-	<meta name="author" content="blocklancechainScript">
+	<meta name="description" content="With the gigzenoScript admin panel, controlling your website has never been eassier.">
+	<meta name="author" content="gigzenoScript">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="apple-touch-icon" href="apple-icon.png">
 	<link rel="stylesheet" href="assets/css/normalize.css">
@@ -184,8 +220,6 @@ if($notifierPlugin == 1){
 
   <script id="minimal" src="assets/js/minimal.js"></script>
 
-  <!-- <script id="minimal" src="assets/js/minimal.js" data-purchase-code="<?= $purchase_code; ?>" data-license="<?= $license_type; ?>"data-website="<?= $website; ?>"></script> -->
-
   <!-- Left Panel -->
   <aside id="left-panel" class="d-none-on-backend-precessing left-panel">
 		<nav class="navbar navbar-expand-sm navbar-default">
@@ -219,19 +253,7 @@ if($notifierPlugin == 1){
 
 	<?php
 
-	if((empty($purchase_code) or empty($license_type) or empty($website)) AND is_localhost() == false){
-		include("proceed.php");
-	}else{
-
-		$check_purchase = check_purchase();
-		
-		if($check_purchase == 0 AND is_localhost() == false){
-			include("proceed.php");
-		}else{
-			include("includes/body.php");
-		}
-
-	}
+	include("includes/body.php");
 
 	?>
     

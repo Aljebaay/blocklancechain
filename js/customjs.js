@@ -37,7 +37,7 @@ $(document).ready(function(){
 	$(".cookies_footer .btn").click(function(){
 		$.ajax({
 		method: "POST",
-		url: base_url+"/includes/close_cookies_footer",
+		url: base_url+"/includes/close_cookies_footer.php",
 		data: {close : 'close_cookies'}
 		}).done(function(data){
 		  $(".cookies_footer").fadeOut();
@@ -48,7 +48,7 @@ $(document).ready(function(){
 		time = $("#announcement_bar .time").text();
 		$.ajax({
 		method: "POST",
-		url: base_url+"/includes/close_cookies_footer",
+		url: base_url+"/includes/close_cookies_footer.php",
 		data: {close: 'close_announcement',time:time}
 		}).done(function(data){
 		  $("#announcement_bar").fadeOut();
@@ -190,10 +190,14 @@ $(document).ready(function(){
 	});
 
 	if(seller_id != 0){
+		var ACTIVITY_INTERVAL = 60000; // 1 min
+		var LIGHT_POLL_INTERVAL = 30000; // 30 sec
+		var POPUP_POLL_INTERVAL = 45000; // 45 sec
 		
 		setInterval(function(){
+			if(document.hidden){ return; }
 	    	update_last_activity();
-	    }, 5000);
+	    }, ACTIVITY_INTERVAL);
 
 		function update_last_activity(){
 			$.ajax({
@@ -259,6 +263,7 @@ $(document).ready(function(){
 
 		// messages-bells
 		setInterval(function(){
+			if(document.hidden){ return; }
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/comp/messages-bells",
@@ -274,9 +279,13 @@ $(document).ready(function(){
 					}
 				}
 			});
-		}, 2500);
+		}, LIGHT_POLL_INTERVAL);
 
 		var c_favorites = function(){
+			if(document.hidden){
+				setTimeout(c_favorites, LIGHT_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 				method: "POST",
 				url: base_url+"/includes/comp/c-favorites",
@@ -288,13 +297,17 @@ $(document).ready(function(){
 				}else{ 
 					$(".c-favorites").html(""); 
 				}
-				setTimeout(c_favorites, 1000);
+				setTimeout(c_favorites, LIGHT_POLL_INTERVAL);
 			});
 		}
 		c_favorites();
 
 		// c_messages_header
 		var c_messages_header = function(){
+			if(document.hidden){
+				setTimeout(c_messages_header, LIGHT_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/comp/c-messages-header",
@@ -305,13 +318,17 @@ $(document).ready(function(){
 				}else{ 
 					$(".c-messages-header").html(""); 
 				}
-				setTimeout(c_messages_header, 1000);
+				setTimeout(c_messages_header, LIGHT_POLL_INTERVAL);
 			});
 		}
 		c_messages_header();
 
 		// c_messages_body
 		var c_messages_body = function(){
+			if(document.hidden){
+				setTimeout(c_messages_body, LIGHT_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/comp/c-messages-body",
@@ -330,12 +347,16 @@ $(document).ready(function(){
 				html += "<div class='mt-2'><center class='pl-2 pr-2'><a href='"+base_url+"/conversations/inbox' class='ml-0 btn btn-success btn-block'>"+result.see_all+"</a></center></div>";
 				}
 				$('.messages-dropdown').html(html);
-				setTimeout(c_messages_body, 1000);
+				setTimeout(c_messages_body, LIGHT_POLL_INTERVAL);
 			});
 		} 
 		c_messages_body();
 
 		var c_notifications_header = function(){
+			if(document.hidden){
+				setTimeout(c_notifications_header, LIGHT_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/comp/c-notifications-header",
@@ -346,12 +367,16 @@ $(document).ready(function(){
 				}else{ 
 					$(".c-notifications-header").html(""); 
 				}
-				setTimeout(c_notifications_header, 1000);
+				setTimeout(c_notifications_header, LIGHT_POLL_INTERVAL);
 			});
 		}
 		c_notifications_header();
 
 		var c_notifications_body = function(){
+			if(document.hidden){
+				setTimeout(c_notifications_body, LIGHT_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/comp/c-notifications-body",
@@ -370,19 +395,23 @@ $(document).ready(function(){
 					html += "<div class='mt-2'><center class='pl-2 pr-2'><a href='"+base_url+"/notifications' class='ml-0 btn btn-success btn-block'>"+result.see_all+"</a></center></div>";
 				}
 				$('.notifications-dropdown').html(html);
-				setTimeout(c_notifications_body, 1000);
+				setTimeout(c_notifications_body, LIGHT_POLL_INTERVAL);
 			});
 		}
 		c_notifications_body();
 			
 		// messagePopup
 		var messagePopup = function(){
+			if(document.hidden){
+				setTimeout(messagePopup, POPUP_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/messagePopup",
 			data: {seller_id: seller_id}
 			}).done(function(data){
-				if(enable_notifications == 1 & disable_messages == 0){
+				if(enable_notifications == 1 && disable_messages == 0){
 					result = $.parseJSON(data);
 					html = '';
 					for(i in result){
@@ -390,12 +419,16 @@ $(document).ready(function(){
 					}
 					$('.messagePopup').prepend(html);
 				}
-				setTimeout(messagePopup, 2000);
+				setTimeout(messagePopup, POPUP_POLL_INTERVAL);
 			});
 		}
 		messagePopup();
 	
 		var notificationsPopup = function(){
+			if(document.hidden){
+				setTimeout(notificationsPopup, POPUP_POLL_INTERVAL);
+				return;
+			}
 			$.ajax({
 			method: "POST",
 			url: base_url+"/includes/notificationsPopup",
@@ -412,7 +445,7 @@ $(document).ready(function(){
 					}
 					$('.messagePopup').prepend(html);
 				}
-				setTimeout(notificationsPopup, 2000);
+				setTimeout(notificationsPopup, POPUP_POLL_INTERVAL);
 				setTimeout(stop_audio, 2000);
 			});
 		}
