@@ -5,10 +5,9 @@ Thumbs.db
 Desktop.ini
 .idea/
 .vscode/
-.sessions
 
 # Local runtime
-.sessions/
+.sessions/*
 *.log
 *.tmp
 *.cache
@@ -33,3 +32,4 @@ vendor/
 # Test / coverage artifacts
 coverage/
 .phpunit.result.cache
+.sessions
