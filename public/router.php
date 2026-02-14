@@ -15,7 +15,7 @@ if ($uriPath !== '/' && is_file($fullPath)) {
     return false;
 }
 
-if (str_starts_with($uriPath, $bridgePrefix)) {
+if (strncmp($uriPath, $bridgePrefix, strlen($bridgePrefix)) === 0) {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
