@@ -11,6 +11,11 @@ class ProposalPricingCheckController extends Controller
 {
     public function __invoke(Request $request)
     {
+        $forceFail = filter_var(env('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL', false), FILTER_VALIDATE_BOOLEAN);
+        if ($forceFail) {
+            throw new \RuntimeException('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL triggered');
+        }
+
         $script = base_path('..' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'proposals' . DIRECTORY_SEPARATOR . 'ajax' . DIRECTORY_SEPARATOR . 'check' . DIRECTORY_SEPARATOR . 'pricing.php');
         $result = $this->runLegacyScriptIsolated(
             $script,

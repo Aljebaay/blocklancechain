@@ -42,7 +42,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'record-snapshots', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'force-fallback-pricing', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -90,6 +90,7 @@ if (!in_array($modeOption, $validModeOptions, true)) {
     fwrite(STDERR, "Invalid --mode value. Use legacy, laravel, or both.\n");
     exit(1);
 }
+$forcePricingFallback = array_key_exists('force-fallback-pricing', $options) || filter_var(getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 $snapshotsDir = $basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'snapshots';
 if (!is_dir($snapshotsDir)) {
@@ -108,6 +109,7 @@ $checks = [
     ['id' => 'laravel-system-info', 'path' => '/_app/system/info', 'expectedStatuses' => [200], 'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"']],
     ['id' => 'laravel-migrate-fetch-subcategory', 'method' => 'POST', 'path' => '/_app/migrate/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['<option', "window.open('../login"]],
     ['id' => 'laravel-migrate-proposal-pricing', 'method' => 'POST', 'path' => '/_app/migrate/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['true', 'false', "window.open('../login", 'install.php']],
+    ['id' => 'laravel-migrate-proposal-pricing-alias', 'method' => 'POST', 'path' => '/_app/migrate/proposal/pricing_check', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['true', 'false', "window.open('../login", 'install.php']],
     ['id' => 'laravel-migrate-apis-index', 'path' => '/_app/migrate/apis/index.php?/apis/register', 'expectedStatuses' => [200], 'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found']],
     ['id' => 'laravel-migrate-pause-request', 'path' => '/_app/migrate/requests/pause_request?request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
     ['id' => 'laravel-migrate-active-request', 'path' => '/_app/migrate/requests/active_request', 'expectedStatuses' => [200], 'bodyContainsAny' => ['request', "window.open('../login", '<html', '<title'], 'dbDependent' => true],
@@ -115,6 +117,7 @@ $checks = [
     ['id' => 'requests-active', 'path' => '/requests/active_request', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['request', "window.open('../login", "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'requests-fetch-subcategory', 'method' => 'POST', 'path' => '/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", '<option', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'proposal-pricing-check', 'method' => 'POST', 'path' => '/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'proposal-pricing-check-alias', 'method' => 'POST', 'path' => '/proposal/pricing_check', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'apis-index', 'path' => '/apis/index.php?/apis/register', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'], 'dbDependent' => true],
     ['id' => 'requests-pause-request', 'path' => '/requests/pause_request?request_id=0', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
     ['id' => 'admin-include-sanitize', 'path' => '/admin/includes/sanitize_url.php', 'expectedStatuses' => [200]],
@@ -142,12 +145,23 @@ if ($forceFallback) {
     ];
 }
 
+if ($forcePricingFallback) {
+    foreach ($checks as &$check) {
+        if (($check['id'] ?? '') === 'laravel-migrate-proposal-pricing' || ($check['id'] ?? '') === 'laravel-migrate-proposal-pricing-alias') {
+            $check['expectedStatuses'] = [500];
+            unset($check['bodyContainsAny']);
+        }
+    }
+    unset($check);
+}
+
 $originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
 $originalActiveToggle = getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST');
 $originalForceFallback = getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL');
+$originalForcePricingFallback = getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL');
 
 $passes = [];
 switch ($modeOption) {
@@ -216,6 +230,16 @@ foreach ($passes as $pass) {
                 putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=' . $originalForceFallback);
                 $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
                 $_SERVER['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
+            }
+
+            if ($forcePricingFallback && $passLabel === 'laravel') {
+                putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=true');
+                $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = 'true';
+                $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = 'true';
+            } elseif ($originalForcePricingFallback !== false) {
+                putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=' . $originalForcePricingFallback);
+                $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
+                $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
             }
 
             ensureLegacyWriteEnv($basePath);
@@ -353,6 +377,11 @@ if ($originalForceFallback !== false) {
     putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=' . $originalForceFallback);
     $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
     $_SERVER['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
+}
+if ($originalForcePricingFallback !== false) {
+    putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=' . $originalForcePricingFallback);
+    $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
+    $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
 }
 
 if ($exitCode !== 0) {

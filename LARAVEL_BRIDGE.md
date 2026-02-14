@@ -62,3 +62,9 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 - Router buffers Laravel response (status==200 & body non-empty) before serving; otherwise falls back to legacy public/requests/active_request.php.
 - Mirror route: GET /_app/migrate/requests/active_request (isolated runner executes legacy script for parity).
 - Smoke: --mode=legacy|laravel|both covers toggle off/on; legacy markers must remain identical.
+
+## Phase 8 pricing_check toggle
+- Endpoint: /proposal/pricing_check (alias of /proposals/ajax/check/pricing) guarded by MIGRATE_PROPOSAL_PRICING_CHECK (default false).
+- Router buffers Laravel response; serves only when status==200 and body non-empty; otherwise falls back to legacy public/proposals/ajax/check/pricing.php.
+- Laravel route: POST /_app/migrate/proposal/pricing_check (isolated runner).
+- Testing: smoke --mode=legacy|laravel|both; optional --force-fallback-pricing (or env FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=true) forces Laravel failure to confirm fallback.

@@ -60,3 +60,9 @@
 - Toggle MIGRATE_REQUESTS_ACTIVE_REQUEST (default false) with buffered router delegation; fallback to legacy on exception/non-200/empty body.
 - Smoke expanded with legacy/laravel mode probes for active_request; dual-mode runs remain green.
 - No schema or business logic changes; legacy response preserved (login redirect and active request page HTML).
+
+## 2026-02-14 — Phase 8: migrate proposal pricing_check endpoint
+- Added Laravel mirror for POST /proposal/pricing_check (aliasing /proposals/ajax/check/pricing) under /_app/migrate/proposal/pricing_check using isolated legacy runner.
+- Toggle MIGRATE_PROPOSAL_PRICING_CHECK delegates to Laravel with buffered response; fallback to legacy on exception, non-200, or empty output; exact-path match only.
+- Smoke extended with legacy/laravel mode probes and optional FORCE_LARAVEL_PROPOSAL_PRICING_FAIL fallback simulation; all passes green.
+- No schema or auth changes; JSON shape preserved (status 200, Content-Type application/json).
