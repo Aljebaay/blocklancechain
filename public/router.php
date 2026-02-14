@@ -12,6 +12,7 @@ $laravelPublicPath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_S
 $bridgePrefix = '/_app';
 $migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migrateProposalsToggle = filter_var(getenv('MIGRATE_PROPOSALS') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateRequestsModuleToggle = filter_var(getenv('MIGRATE_REQUESTS_MODULE') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 // Deprecated per-endpoint overrides (kept for safe rollback): a false value forces legacy even if module toggle is on; true enables a single endpoint when module toggle is off.
 $requestsToggleOverrides = [
@@ -148,7 +149,7 @@ if ($uriPath === '/requests/fetch_subcategory') {
     }
 }
 
-if ($migratePricingToggle && $uriPath === '/proposals/ajax/check/pricing') {
+if (($migrateProposalsToggle || $migratePricingToggle) && $uriPath === '/proposals/ajax/check/pricing') {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
@@ -162,7 +163,7 @@ if ($migratePricingToggle && $uriPath === '/proposals/ajax/check/pricing') {
     }
 }
 
-if ($migratePricingToggle && $uriPath === '/proposal/pricing_check') {
+if (($migrateProposalsToggle || $migratePricingToggle) && $uriPath === '/proposal/pricing_check') {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';

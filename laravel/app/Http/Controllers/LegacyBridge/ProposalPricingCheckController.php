@@ -4,154 +4,160 @@ namespace App\Http\Controllers\LegacyBridge;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\DB;
 
 class ProposalPricingCheckController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $forceFail = filter_var(env('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL', false), FILTER_VALIDATE_BOOLEAN);
-        if ($forceFail) {
-            throw new \RuntimeException('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL triggered');
-        }
-
-        $script = base_path('..' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'proposals' . DIRECTORY_SEPARATOR . 'ajax' . DIRECTORY_SEPARATOR . 'check' . DIRECTORY_SEPARATOR . 'pricing.php');
-        $result = $this->runLegacyScriptIsolated(
-            $script,
-            $request,
-            '/proposals/ajax/check/pricing'
-        );
-
-        if ($result === null || $result['status'] !== 200 || $result['body'] === '') {
+        if (filter_var(env('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL', false), FILTER_VALIDATE_BOOLEAN)) {
             return response('', 500);
         }
 
-        $contentType = str_starts_with(ltrim($result['body']), '<script') ? 'text/html; charset=UTF-8' : 'application/json; charset=UTF-8';
+        $this->bootstrapLegacySession();
 
-        return response($result['body'], $result['status'], [
-            'Content-Type' => $contentType,
-        ]);
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+
+        if (!isset($_SESSION['seller_user_name']) || $_SESSION['seller_user_name'] === '') {
+            return $this->loginRedirect();
+        }
+
+        try {
+            $settings = DB::connection('legacy')
+                ->table('general_settings')
+                ->select('edited_proposals')
+                ->first();
+        } catch (\Throwable $e) {
+            return response('', 500);
+        }
+
+        if ($settings && (int) $settings->edited_proposals === 0) {
+            return $this->jsonFalse();
+        }
+
+        $proposalId = $request->input('proposal_id');
+        if (!is_numeric($proposalId)) {
+            return $this->jsonFalse();
+        }
+        $proposalId = (int) $proposalId;
+
+        try {
+            $proposal = DB::connection('legacy')
+                ->table('proposals')
+                ->select('proposal_status', 'proposal_price', 'delivery_id', 'proposal_revisions')
+                ->where('proposal_id', $proposalId)
+                ->first();
+        } catch (\Throwable $e) {
+            return response('', 500);
+        }
+
+        if (!$proposal) {
+            return $this->jsonFalse();
+        }
+
+        if (in_array($proposal->proposal_status, ['pending', 'draft', 'modification'], true)) {
+            return $this->jsonFalse();
+        }
+
+        $diff = false;
+
+        if ($request->has('proposal_price')) {
+            $data = [
+                'proposal_price' => $request->input('proposal_price'),
+                'proposal_revisions' => $request->input('proposal_revisions'),
+                'delivery_id' => $request->input('delivery_id'),
+            ];
+
+            $current = [
+                'proposal_price' => (string) $proposal->proposal_price,
+                'proposal_revisions' => (string) $proposal->proposal_revisions,
+                'delivery_id' => (string) $proposal->delivery_id,
+            ];
+
+            if (array_diff_assoc($current, $data) || array_diff_assoc($data, $current)) {
+                $diff = true;
+            }
+        }
+
+        if ($request->has('proposal_packages')) {
+            $packages = $request->input('proposal_packages');
+            if (is_array($packages)) {
+                $packages = array_values($packages);
+                try {
+                    $dbPackages = DB::connection('legacy')
+                        ->table('proposal_packages')
+                        ->select('package_id', 'description', 'revisions', 'delivery_time', 'price')
+                        ->where('proposal_id', $proposalId)
+                        ->orderBy('package_id')
+                        ->get()
+                        ->map(function ($row) {
+                            return [
+                                'package_id' => (int) $row->package_id,
+                                'description' => (string) $row->description,
+                                'revisions' => (string) $row->revisions,
+                                'delivery_time' => (string) $row->delivery_time,
+                                'price' => (string) $row->price,
+                            ];
+                        })
+                        ->values()
+                        ->toArray();
+                } catch (\Throwable $e) {
+                    return response('', 500);
+                }
+
+                $count = min(count($dbPackages), count($packages));
+                for ($i = 0; $i < $count; $i++) {
+                    $posted = $packages[$i];
+                    $current = $dbPackages[$i] ?? [];
+                    $normalizedPosted = [
+                        'description' => isset($posted['description']) ? (string) $posted['description'] : '',
+                        'revisions' => isset($posted['revisions']) ? (string) $posted['revisions'] : '',
+                        'delivery_time' => isset($posted['delivery_time']) ? (string) $posted['delivery_time'] : '',
+                        'price' => isset($posted['price']) ? (string) $posted['price'] : '',
+                    ];
+                    $normalizedCurrent = [
+                        'description' => $current['description'] ?? '',
+                        'revisions' => $current['revisions'] ?? '',
+                        'delivery_time' => $current['delivery_time'] ?? '',
+                        'price' => $current['price'] ?? '',
+                    ];
+                    if (array_diff_assoc($normalizedCurrent, $normalizedPosted) || array_diff_assoc($normalizedPosted, $normalizedCurrent)) {
+                        $diff = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return response(json_encode($diff), 200, ['Content-Type' => 'application/json; charset=UTF-8']);
     }
 
-    /**
-     * Execute the legacy script in an isolated PHP process so exit/die cannot kill the bridge.
-     */
-    private function runLegacyScriptIsolated(string $scriptPath, Request $request, string $legacyUri): ?array
+    private function bootstrapLegacySession(): void
     {
-        if (!is_file($scriptPath)) {
-            return null;
+        $legacyBase = realpath(base_path('..'));
+        $bootstrap = $legacyBase !== false
+            ? $legacyBase . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php'
+            : null;
+
+        if ($bootstrap && is_file($bootstrap) && !function_exists('blc_bootstrap_session')) {
+            require_once $bootstrap;
         }
 
-        $server = array_merge($_SERVER, [
-            'REQUEST_METHOD' => $request->method(),
-            'REQUEST_URI' => $legacyUri . ($request->getQueryString() ? '?' . $request->getQueryString() : ''),
-            'QUERY_STRING' => $request->getQueryString() ?: http_build_query($request->query()),
-            'HTTP_HOST' => $request->getHost(),
-            'HTTPS' => $request->isSecure() ? 'on' : 'off',
-            'DOCUMENT_ROOT' => realpath(base_path('..' . DIRECTORY_SEPARATOR . 'public')) ?: null,
-            'SCRIPT_NAME' => $legacyUri,
-            'PHP_SELF' => $legacyUri,
-            'SCRIPT_FILENAME' => $scriptPath,
-        ]);
-
-        $env = array_merge($_ENV, [
-            'LEGACY_SERVER' => json_encode($server),
-            'LEGACY_GET' => json_encode($request->query->all()),
-            'LEGACY_POST' => json_encode($request->request->all()),
-            'LEGACY_SCRIPT' => $scriptPath,
-            'LEGACY_CWD' => dirname($scriptPath),
-            'LEGACY_STATUS_DEFAULT' => '200',
-        ]);
-
-        $runner = tempnam(sys_get_temp_dir(), 'legacy_runner_');
-        if ($runner === false) {
-            return null;
+        if (function_exists('blc_bootstrap_session')) {
+            blc_bootstrap_session();
         }
-
-        $phpCode = <<<'PHP'
-<?php
-$server = json_decode(getenv('LEGACY_SERVER') ?: '[]', true) ?: [];
-$get = json_decode(getenv('LEGACY_GET') ?: '[]', true) ?: [];
-$post = json_decode(getenv('LEGACY_POST') ?: '[]', true) ?: [];
-$script = getenv('LEGACY_SCRIPT');
-$cwd = getenv('LEGACY_CWD') ?: null;
-$defaultStatus = (int) (getenv('LEGACY_STATUS_DEFAULT') ?: 200);
-
-if ($cwd && is_dir($cwd)) {
-    chdir($cwd);
-}
-
-$_SERVER = array_merge($_SERVER, $server);
-$_GET = $get;
-$_POST = $post;
-$_REQUEST = array_merge($_GET, $_POST);
-http_response_code($defaultStatus);
-
-ob_start();
-register_shutdown_function(function (): void {
-    $status = http_response_code();
-    if ($status === false) {
-        $status = 200;
-    }
-    $captured = ob_get_contents();
-    if ($captured !== false) {
-        ob_end_clean();
-    }
-    echo 'STATUS:' . $status . "\n";
-    if ($captured !== false) {
-        echo $captured;
-    }
-});
-
-require $script;
-PHP;
-        file_put_contents($runner, $phpCode);
-
-        $process = new Process([PHP_BINARY, $runner]);
-        $process->setWorkingDirectory(dirname($scriptPath));
-        $process->setEnv($env);
-        $process->setTimeout(20);
-        $process->run();
-
-        $output = $process->getOutput();
-        @unlink($runner);
-
-        if ($output === '') {
-            $this->logRunnerFailure($scriptPath, $process);
-            return null;
-        }
-
-        $markerPos = strrpos($output, 'STATUS:');
-        if ($markerPos === false) {
-            $this->logRunnerFailure($scriptPath, $process, $output);
-            return null;
-        }
-        $newlinePos = strpos($output, "\n", $markerPos);
-        if ($newlinePos === false) {
-            $this->logRunnerFailure($scriptPath, $process, $output);
-            return null;
-        }
-
-        $statusLine = substr($output, $markerPos + strlen('STATUS:'), $newlinePos - ($markerPos + strlen('STATUS:')));
-        $body = substr($output, $newlinePos + 1);
-        $status = (int) trim($statusLine);
-
-        return [
-            'status' => $status,
-            'body' => $body,
-        ];
     }
 
-    private function logRunnerFailure(string $scriptPath, Process $process, string $output = ''): void
+    private function loginRedirect()
     {
-        $logPath = base_path('storage' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'legacy_runner.log');
-        $context = [
-            'script' => $scriptPath,
-            'exit_code' => $process->getExitCode(),
-            'error_output' => $process->getErrorOutput(),
-            'raw_output' => $output === '' ? $process->getOutput() : $output,
-        ];
-        @file_put_contents($logPath, '[' . date('c') . '] ' . json_encode($context) . PHP_EOL, FILE_APPEND);
+        $body = "<script>window.open('../login','_self')</script>";
+        return response($body, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    private function jsonFalse()
+    {
+        return response(json_encode(false), 200, ['Content-Type' => 'application/json; charset=UTF-8']);
     }
 }
