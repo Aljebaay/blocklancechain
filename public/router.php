@@ -11,6 +11,45 @@ $platformBasePath = realpath(
 $laravelPublicPath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public');
 $bridgePrefix = '/_app';
 $migrateFetchToggle = filter_var(getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+
+function blc_require_laravel(string $laravelIndex, string $targetUri): array
+{
+    $oldUri = $_SERVER['REQUEST_URI'] ?? $targetUri;
+    $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+    $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
+    $oldCwd = getcwd();
+    $buffer = '';
+    $status = 500;
+
+    ob_start();
+    try {
+        $_SERVER['REQUEST_URI'] = $targetUri;
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['PHP_SELF'] = '/index.php';
+        chdir(dirname($laravelIndex));
+        require $laravelIndex;
+        $buffer = (string) ob_get_contents();
+        $status = http_response_code();
+        if ($status === false) {
+            $status = 200;
+        }
+    } catch (Throwable $bridgeException) {
+        $buffer = '';
+        $status = 500;
+    } finally {
+        ob_end_clean();
+        if ($oldCwd !== false) {
+            chdir($oldCwd);
+        }
+        $_SERVER['REQUEST_URI'] = $oldUri;
+        $_SERVER['SCRIPT_NAME'] = $oldScript;
+        $_SERVER['PHP_SELF'] = $oldPhpSelf;
+    }
+
+    return ['status' => $status, 'body' => $buffer];
+}
 
 if ($uriPath !== '/' && is_file($fullPath)) {
     return false;
@@ -60,82 +99,41 @@ if ($migrateFetchToggle && $uriPath === '/requests/fetch_subcategory') {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
-    $legacyFetchPath = $docRoot . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'fetch_subcategory.php';
-
     if (is_file($laravelIndex)) {
-        $oldUri = $_SERVER['REQUEST_URI'] ?? $uriPath;
-        $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
-        $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
-        $oldCwd = getcwd();
-        $bufferLevel = ob_get_level();
-        $laravelOutput = '';
-        $laravelStatus = 500;
-        $dispatchCompleted = false;
-        $routeHandled = false;
-
-        $restoreServerContext = function () use ($oldUri, $oldScript, $oldPhpSelf): void {
-            $_SERVER['REQUEST_URI'] = $oldUri;
-            $_SERVER['SCRIPT_NAME'] = $oldScript;
-            $_SERVER['PHP_SELF'] = $oldPhpSelf;
-        };
-
-        $fallbackToLegacy = function () use ($legacyFetchPath, $docRoot, $oldCwd, $restoreServerContext): bool {
-            $restoreServerContext();
-            if ($oldCwd !== false) {
-                chdir($oldCwd);
-            } else {
-                chdir($docRoot);
-            }
-            http_response_code(200);
-            require $legacyFetchPath;
-            return true;
-        };
-
-        $shutdownHandler = function () use (&$routeHandled, $bufferLevel, $fallbackToLegacy): void {
-            if ($routeHandled) {
-                return;
-            }
-            $error = error_get_last();
-            if ($error === null) {
-                return;
-            }
-            while (ob_get_level() > $bufferLevel) {
-                ob_end_clean();
-            }
-            $routeHandled = true;
-            $fallbackToLegacy();
-        };
-        register_shutdown_function($shutdownHandler);
-
-        ob_start();
-        try {
-            $_SERVER['REQUEST_URI'] = '/_app/migrate/requests/fetch_subcategory';
-            $_SERVER['SCRIPT_NAME'] = '/index.php';
-            $_SERVER['PHP_SELF'] = '/index.php';
-            chdir(dirname($laravelIndex));
-            require $laravelIndex;
-            $dispatchCompleted = true;
-        } catch (Throwable $bridgeException) {
-            $dispatchCompleted = false;
-        } finally {
-            $laravelOutput = ob_get_clean();
-            $laravelStatus = http_response_code();
-            $restoreServerContext();
-            chdir($oldCwd ?: $docRoot);
-        }
-
-        $routeHandled = true;
-
-        if ($dispatchCompleted && $laravelStatus === 200 && $laravelOutput !== '') {
-            echo $laravelOutput;
+        $targetUri = '/_app/migrate/requests/fetch_subcategory' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        if ($result['status'] === 200 && $result['body'] !== '') {
+            echo $result['body'];
             return true;
         }
+    }
+}
 
-        while (ob_get_level() > $bufferLevel) {
-            ob_end_clean();
+if ($migratePricingToggle && $uriPath === '/proposals/ajax/check/pricing') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+    if (is_file($laravelIndex)) {
+        $targetUri = '/_app/migrate/proposals/ajax/check/pricing' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        if ($result['status'] === 200 && $result['body'] !== '') {
+            echo $result['body'];
+            return true;
         }
+    }
+}
 
-        return $fallbackToLegacy();
+if ($migrateApisToggle && $uriPath === '/apis/index.php') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+    if (is_file($laravelIndex)) {
+        $targetUri = '/_app/migrate/apis/index.php' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        if ($result['status'] === 200 && $result['body'] !== '') {
+            echo $result['body'];
+            return true;
+        }
     }
 }
 

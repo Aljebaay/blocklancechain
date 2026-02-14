@@ -30,3 +30,14 @@
 - Response shape preserved (HTML <option> list; login redirect if not authenticated).
 - Smoke extended with Laravel migrate probe; legacy probe retained.
 
+
+## 2026-02-14 — Phase 5: migrate proposal pricing_check and apis index
+- Added Laravel mirror routes under /_app/migrate:
+  - POST /_app/migrate/proposals/ajax/check/pricing (runs legacy pricing_check script via isolated runner)
+  - GET/POST /_app/migrate/apis/index.php (runs legacy APIs front controller via isolated runner)
+- Added toggles (default false) in public/router.php with guarded fallback:
+  - MIGRATE_PROPOSAL_PRICING_CHECK for /proposals/ajax/check/pricing
+  - MIGRATE_APIS_INDEX for /apis/index.php
+- Router forwards to Laravel when toggle on; falls back to legacy if Laravel reply is empty/non-200/exception.
+- Smoke tests extended (toggle off/on passes) covering both migrated endpoints; total checks now 19 per pass.
+- No database or response shape changes; outputs are streamed from the legacy scripts to preserve behavior.

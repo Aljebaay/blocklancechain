@@ -161,6 +161,26 @@ $checks = [
         ],
     ],
     [
+        'id' => 'laravel-migrate-proposal-pricing',
+        'method' => 'POST',
+        'path' => '/_app/migrate/proposals/ajax/check/pricing',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => [
+            'true',
+            'false',
+            "window.open('../login",
+            'install.php',
+        ],
+    ],
+    [
+        'id' => 'laravel-migrate-apis-index',
+        'path' => '/_app/migrate/apis/index.php?/apis/register',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found'],
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
         'expectedStatuses' => [200, 302],
@@ -236,6 +256,8 @@ $checks = [
 ];
 
 $originalToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
+$originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
+$originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $passes = [];
 switch ($toggleOption) {
     case 'on':
@@ -273,6 +295,12 @@ foreach ($passes as $pass) {
             putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $envValue);
             $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
             $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
+            putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $envValue);
+            $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $envValue;
+            $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $envValue;
+            putenv('MIGRATE_APIS_INDEX=' . $envValue);
+            $_ENV['MIGRATE_APIS_INDEX'] = $envValue;
+            $_SERVER['MIGRATE_APIS_INDEX'] = $envValue;
 
             $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
             if ($port <= 0) {
@@ -281,7 +309,7 @@ foreach ($passes as $pass) {
                 break;
             }
 
-            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$envValue}...\n";
+            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$envValue}, MIGRATE_PROPOSAL_PRICING_CHECK={$envValue}, MIGRATE_APIS_INDEX={$envValue}...\n";
             [$serverProcess, $serverLogs] = startPhpServer($basePath, $host, $port);
             $baseUrl = "http://{$host}:{$port}";
             echo "Started local server: {$baseUrl}\n";
@@ -384,6 +412,16 @@ if ($originalToggle !== false) {
     putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $originalToggle);
     $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
     $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
+}
+if ($originalPricingToggle !== false) {
+    putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
+    $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+    $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+}
+if ($originalApisToggle !== false) {
+    putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
+    $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+    $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
 }
 
 if ($exitCode !== 0) {
