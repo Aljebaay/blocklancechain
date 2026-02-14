@@ -88,3 +88,9 @@
 - Router toggles/fallback unchanged; controllers return 500 on failure to trigger legacy fallback.
 - Smoke updated to check manage/active markers in both modes and forced-fallback path.
 
+
+## 2026-02-14 — Phase 11: native Laravel for Requests write endpoints
+- /requests/pause_request, /requests/resume_request, /requests/create_request, /requests/update_request now use native Laravel controllers (no LegacyScriptRunner).
+- Writes use legacy_write connection inside transactions; unauthenticated requests still return legacy login script.
+- Router toggles/fallback unchanged; controllers return 500 on failure to trigger legacy fallback; SMOKE_ALLOW_WRITES defaults false to avoid unintended writes.
+

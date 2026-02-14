@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\LegacyBridge;
 
 use App\Http\Controllers\Controller;
-use App\Support\LegacyScriptRunner;
+use App\Support\LegacyWriteConnection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RequestsResumeRequestController extends Controller
 {
@@ -14,14 +15,124 @@ class RequestsResumeRequestController extends Controller
             return response('', 500);
         }
 
-        $script = base_path('..' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'resume_request.php');
-        $result = LegacyScriptRunner::run($request, $script, '/requests/resume_request');
+        $this->bootstrapLegacySession($request);
 
-        if ($result === null || $result['status'] !== 200 || $result['body'] === '') {
+        $sellerUserName = $_SESSION['seller_user_name'] ?? null;
+        if (!is_string($sellerUserName) || $sellerUserName === '') {
+            return $this->loginRedirect();
+        }
+
+        $requestId = $this->sanitizeRequestId($request->query('request_id'));
+        if ($requestId === null) {
+            return $this->manageRedirect(false);
+        }
+
+        try {
+            $legacyRead = DB::connection('legacy');
+            $sellerRow = $legacyRead
+                ->table('sellers')
+                ->select('seller_id')
+                ->where('seller_user_name', $sellerUserName)
+                ->first();
+        } catch (\Throwable $exception) {
             return response('', 500);
         }
 
-        return response($result['body'], $result['status'], [
+        if (!$sellerRow || !isset($sellerRow->seller_id)) {
+            return $this->loginRedirect();
+        }
+
+        $sellerId = (int) $sellerRow->seller_id;
+
+        try {
+            $connection = LegacyWriteConnection::connection();
+            $affected = $connection->transaction(function () use ($connection, $requestId, $sellerId) {
+                return $connection->update(
+                    'update buyer_requests set request_status = ? where request_id = ? and seller_id = ?',
+                    ['active', $requestId, $sellerId]
+                );
+            });
+        } catch (\Throwable $exception) {
+            return response('', 500);
+        }
+
+        if ((int) $affected === 1) {
+            $body = "<script>alert('One request has been activated.');</script>";
+            $body .= "<script>window.open('manage_requests','_self')</script>";
+            return response($body, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        }
+
+        return $this->manageRedirect(false);
+    }
+
+    private function bootstrapLegacySession(Request $request): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE && session_name() === 'PHPSESSID') {
+            return;
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        $_SESSION = [];
+
+        @ini_set('session.use_strict_mode', '1');
+        @ini_set('session.use_only_cookies', '1');
+
+        session_name('PHPSESSID');
+        $legacyCookieId = $request->cookies->get('PHPSESSID');
+        if (is_string($legacyCookieId) && $legacyCookieId !== '') {
+            @session_id($legacyCookieId);
+        } else {
+            unset($_COOKIE['PHPSESSID']);
+            session_id(session_create_id());
+        }
+
+        $legacyBootstrap = base_path('..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php');
+        if (is_file($legacyBootstrap)) {
+            require_once $legacyBootstrap;
+            if (function_exists('blc_bootstrap_session')) {
+                blc_bootstrap_session();
+            }
+        }
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+    }
+
+    private function sanitizeRequestId(mixed $input): ?int
+    {
+        if ($input === null) {
+            return null;
+        }
+        if (is_numeric($input)) {
+            $value = (int) $input;
+            return $value >= 0 ? $value : null;
+        }
+
+        return null;
+    }
+
+    private function loginRedirect()
+    {
+        $body = "<script>window.open('../login','_self')</script>";
+
+        return response($body, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+        ]);
+    }
+
+    private function manageRedirect(bool $showAlert)
+    {
+        $body = '';
+        if ($showAlert) {
+            $body .= "<script>alert('One request has been activated.');</script>";
+        }
+        $body .= "<script>window.open('manage_requests','_self')</script>";
+
+        return response($body, 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
         ]);
     }
