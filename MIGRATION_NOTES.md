@@ -108,6 +108,11 @@
 - Smoke harness updates prepare module-on validation by setting MIGRATE_PROPOSALS=true in Laravel mode; pricing probes remain green; artisan tests unchanged.
 - Remaining Proposals P0 (proposal view/sections) still pending; rollback by setting MIGRATE_PROPOSALS=false or endpoint override false.
 
+## 2026-02-14 — Phase 14A: proposals view/sections routed via Laravel runner
+- Added Laravel controllers for proposal view and sections using LegacyScriptRunner under MIGRATE_PROPOSALS toggle (default false); buffered router delegation with fallback to legacy on non-200/empty/error.
+- Routes: /_app/migrate/proposals/{username}/{slug?} and /_app/migrate/proposals/sections/* mirror legacy proposal.php and sections/*.php without changing public URLs.
+- Smoke remains green in legacy/laravel modes; no behavior change while toggle is off. Rollback: set MIGRATE_PROPOSALS=false.
+
 ## 2026-02-14 — Phase 13: inventory, priorities, and migration matrix
 - Added MIGRATION_MATRIX.md summarizing all modules: endpoint counts (native/runner/unmigrated), priorities (P0/P1/P2), toggles, and fallback status.
 - Identified top P0 endpoints and assigned to upcoming phases: Phase 14 (Proposals), Phase 15 (Orders/Payments), Phase 16 (Messages/Offers), Phase 17 (Admin/APIs with /apis/index.php kept behind toggle).

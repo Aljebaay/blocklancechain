@@ -401,6 +401,36 @@ if (!empty($segments) && $segments[0] === 'categories' && isset($segments[1])) {
     return true;
 }
 
+if ($migrateProposalsToggle && !empty($segments) && $segments[0] === 'proposals') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+
+    if (is_file($laravelIndex)) {
+        if (isset($segments[1]) && $segments[1] === 'sections') {
+            $sectionPath = implode('/', array_slice($segments, 2));
+            $targetUri = '/_app/migrate/proposals/sections/' . $sectionPath;
+            $result = blc_require_laravel($laravelIndex, $targetUri);
+            if ($result['status'] === 200 && $result['body'] !== '') {
+                echo $result['body'];
+                return true;
+            }
+        } elseif (count($segments) >= 2) {
+            $reserved = ['proposal_files', 'ajax', 'sections', 'coupons'];
+            if (!in_array($segments[1], $reserved, true)) {
+                $username = $segments[1];
+                $slug = implode('/', array_slice($segments, 2));
+                $targetUri = '/_app/migrate/proposals/' . rawurlencode($username) . ($slug !== '' ? '/' . $slug : '');
+                $result = blc_require_laravel($laravelIndex, $targetUri);
+                if ($result['status'] === 200 && $result['body'] !== '') {
+                    echo $result['body'];
+                    return true;
+                }
+            }
+        }
+    }
+}
+
 if (!empty($segments) && $segments[0] === 'proposals' && count($segments) >= 3) {
     $reserved = ['proposal_files', 'ajax', 'sections', 'coupons'];
     if (!in_array($segments[1], $reserved, true)) {

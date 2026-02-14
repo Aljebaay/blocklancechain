@@ -13,6 +13,8 @@ use App\Http\Controllers\LegacyBridge\RequestsResumeRequestController;
 use App\Http\Controllers\LegacyBridge\RequestsCreateRequestController;
 use App\Http\Controllers\LegacyBridge\RequestsUpdateRequestController;
 use App\Http\Controllers\LegacyBridge\ProposalPricingCheckController as LegacyProposalPricingCheckController;
+use App\Http\Controllers\LegacyBridge\ProposalViewController;
+use App\Http\Controllers\LegacyBridge\ProposalSectionsController;
 
 Route::prefix('/_app')->group(function () {
     Route::get('/health', HealthController::class);
@@ -24,6 +26,8 @@ Route::prefix('/_app')->group(function () {
     Route::post('/migrate/requests/update_request', RequestsUpdateRequestController::class);
     Route::post('/migrate/proposals/ajax/check/pricing', ProposalPricingCheckController::class);
     Route::post('/migrate/proposal/pricing_check', LegacyProposalPricingCheckController::class);
+    Route::match(['get', 'post'], '/migrate/proposals/sections/{path}', ProposalSectionsController::class)->where('path', '.*');
+    Route::match(['get', 'post'], '/migrate/proposals/{username}/{slug?}', ProposalViewController::class)->where('slug', '.*');
     Route::match(['get', 'post'], '/migrate/apis/index.php', ApisIndexController::class);
     Route::get('/migrate/requests/pause_request', RequestsPauseRequestController::class);
     Route::get('/migrate/requests/active_request', RequestsActiveRequestController::class);
