@@ -1,11 +1,14 @@
 <?php
 
-$basePath = dirname(__DIR__, 4);
-$envBootstrap = $basePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+$basePath = dirname(__DIR__ , 4);
+$envBootstrap = $basePath . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+if (!is_file($envBootstrap)) {
+    $envBootstrap = $basePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+}
 if (is_file($envBootstrap)) {
     require_once $envBootstrap;
     if (function_exists('blc_load_env')) {
-        blc_load_env($basePath);
+        blc_load_env($basePath . DIRECTORY_SEPARATOR . 'laravel');
     }
 }
 

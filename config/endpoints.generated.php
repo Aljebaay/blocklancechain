@@ -662,6 +662,11 @@ return array (
     'path' => 'admin/includes/body.php',
     'handler' => 'app/Modules/Platform/admin/includes/body.php',
   ),
+  'admin.includes.csrf' => 
+  array (
+    'path' => 'admin/includes/csrf.php',
+    'handler' => 'app/Modules/Platform/admin/includes/csrf.php',
+  ),
   'admin.includes.db' => 
   array (
     'path' => 'admin/includes/db.php',
