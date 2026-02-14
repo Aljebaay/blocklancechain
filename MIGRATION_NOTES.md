@@ -94,3 +94,11 @@
 - Writes use legacy_write connection inside transactions; unauthenticated requests still return legacy login script.
 - Router toggles/fallback unchanged; controllers return 500 on failure to trigger legacy fallback; SMOKE_ALLOW_WRITES defaults false to avoid unintended writes.
 
+
+## 2026-02-14 — Phase 12: default Laravel Requests module and deprecated overrides
+- MIGRATE_REQUESTS_MODULE now defaults to true in env samples; Laravel handles Requests by default with fallback intact.
+- Per-endpoint Requests toggles retained only as deprecated overrides (endpoint=false forces legacy; endpoint=true enables single endpoint when module is off).
+- Router remains exact-path buffered; fallback to legacy on error/non-200/empty unchanged.
+- Smoke includes laravel-only Requests sanity probe; forced fallback remains available via FORCE_LARAVEL_REQUESTS_MODULE_FAIL.
+- Rollback: set MIGRATE_REQUESTS_MODULE=false or set specific endpoint override to false.
+

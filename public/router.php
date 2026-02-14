@@ -13,6 +13,7 @@ $bridgePrefix = '/_app';
 $migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateRequestsModuleToggle = filter_var(getenv('MIGRATE_REQUESTS_MODULE') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+// Deprecated per-endpoint overrides (kept for safe rollback): a false value forces legacy even if module toggle is on; true enables a single endpoint when module toggle is off.
 $requestsToggleOverrides = [
     'fetch' => getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY') === false ? null : filter_var(getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
     'active' => getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST') === false ? null : filter_var(getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),

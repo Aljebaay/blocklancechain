@@ -76,3 +76,9 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 - Force simulation: FORCE_LARAVEL_REQUESTS_MODULE_FAIL=true makes Laravel handlers return 500 so fallback can be verified via smoke.
 - Smoke: use --mode=legacy|laravel|both; SMOKE_ALLOW_WRITES=false by default skips write-dependent checks; --force-fallback-requests tests fallback path.
 
+
+## Phase 12: Requests module default and overrides
+- Default: MIGRATE_REQUESTS_MODULE=true (Requests served by Laravel).
+- Overrides (deprecated): MIGRATE_REQUESTS_<ENDPOINT>; use false to force legacy, true to enable a single endpoint when module is off. Behavior unchanged; fallback still buffered on error/non-200/empty.
+- Rollback: set module toggle to false or set endpoint override false; restart built-in server/supervisor accordingly.
+
