@@ -15,6 +15,7 @@ use App\Http\Controllers\LegacyBridge\RequestsUpdateRequestController;
 use App\Http\Controllers\LegacyBridge\ProposalPricingCheckController as LegacyProposalPricingCheckController;
 use App\Http\Controllers\LegacyBridge\ProposalViewController;
 use App\Http\Controllers\LegacyBridge\ProposalSectionsController;
+use App\Support\LegacyScriptRunner;
 
 /**
  * Delegate any non-/_app request to the legacy router.php in the root public directory.
@@ -77,24 +78,15 @@ function legacy_passthrough(string $path)
         abort(404);
     }
 
-    // Align REQUEST_URI for legacy router
-    $_SERVER['REQUEST_URI'] = $path === '' ? '/' : $path;
-    $_SERVER['PHP_SELF'] = $path;
-    $_SERVER['SCRIPT_NAME'] = $path;
-
-    ob_start();
-    $legacyStatus = 200;
-    try {
-        require $router;
-    } catch (\Throwable $e) {
-        ob_end_clean();
+    // Run legacy router in isolated process to capture output even if it calls exit/die.
+    $result = LegacyScriptRunner::run(request(), $router, $path === '' ? '/' : $path);
+    if (!$result) {
         abort(500);
     }
-    $body = ob_get_clean();
-    $status = http_response_code();
-    if (!is_int($status) || $status <= 0) {
-        $status = $legacyStatus;
+    $status = isset($result['status']) ? (int) $result['status'] : 200;
+    $body = $result['body'] ?? '';
+    if ($body === '' || $status === 0) {
+        abort(500);
     }
-
     return response($body, $status);
 }
