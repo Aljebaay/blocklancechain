@@ -6,8 +6,9 @@ Document the bridge patterns for incremental Laravel adoption alongside the lega
 ## Legacy DB Connection (read-only)
 - Connection name: `legacy`
 - Driver: mysql
-- Config source: `LEGACY_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD`; falls back to `DB_*` if the LEGACY_* vars are absent.
+- Config source: `LEGACY_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD` (no fallback to `DB_*`).
 - Charset/collation: utf8mb4 / utf8mb4_unicode_ci
+- Use a dedicated **read-only** DB user; writes are blocked at the model layer for legacy tables.
 - No migrations run against legacy tables; usage is read-only in this phase.
 
 ## Bridge Prefix

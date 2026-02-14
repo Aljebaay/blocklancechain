@@ -1,4 +1,4 @@
-# Laravel 12 Bridge – Developer Guide
+# Laravel 12 Bridge - Developer Guide
 
 ## What is this?
 A Laravel 12 app under `laravel/` runs side-by-side with the legacy platform. The legacy runtime stays primary; only the `/_app` prefix goes to Laravel via `public/router.php`.
@@ -40,7 +40,8 @@ npm run dev   # or npm run build
 
 ## Environment
 - APP_URL: http://127.0.0.1:8080/_app
-- DB: matches legacy (`DB_HOST=127.0.0.1`, `DB_PORT=3307`, `DB_DATABASE=gig-zone`, `DB_USERNAME=root`, `DB_PASSWORD=root`)
+- Primary DB: matches legacy (DB_HOST=127.0.0.1, DB_PORT=3307, DB_DATABASE=gig-zone, DB_USERNAME=root, DB_PASSWORD=root)
+- Legacy read-only DB: configure LEGACY_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD with a dedicated **read-only** user; there is no fallback to DB_*.
 - SESSION_DRIVER=file, CACHE_STORE=file, QUEUE_CONNECTION=sync (no migrations required)
 
 ## Endpoints (Phase 2)
