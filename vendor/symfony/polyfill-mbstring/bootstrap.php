@@ -12,7 +12,13 @@
 use Symfony\Polyfill\Mbstring as p;
 
 if (\PHP_VERSION_ID >= 80000) {
-    return require __DIR__.'/bootstrap80.php';
+    $bootstrap80 = __DIR__.'/bootstrap80.php';
+    if (is_file($bootstrap80)) {
+        return require $bootstrap80;
+    }
+
+    // Graceful fallback when vendor contents are incomplete in CI checkouts:
+    // continue with the legacy bootstrap definitions below.
 }
 
 if (!function_exists('mb_convert_encoding')) {
