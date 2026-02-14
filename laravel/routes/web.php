@@ -16,6 +16,7 @@ use App\Http\Controllers\LegacyBridge\ProposalPricingCheckController as LegacyPr
 use App\Http\Controllers\LegacyBridge\ProposalViewController;
 use App\Http\Controllers\LegacyBridge\ProposalSectionsController;
 use App\Support\LegacyScriptRunner;
+use App\Http\Controllers\Debug\DbCheckController;
 
 /**
  * Delegate any non-/_app request to the legacy router.php in the root public directory.
@@ -55,6 +56,8 @@ Route::prefix('/_app')->group(function () {
             })->values(),
         ]);
     });
+
+    Route::get('/debug/db', DbCheckController::class);
 });
 
 // Fallback: delegate all other requests to legacy public/router.php to mirror legacy routes when using `php artisan serve`.
@@ -80,13 +83,41 @@ function legacy_passthrough(string $path)
 
     // Run legacy router in isolated process to capture output even if it calls exit/die.
     $result = LegacyScriptRunner::run(request(), $router, $path === '' ? '/' : $path);
-    if (!$result) {
-        abort(500);
-    }
-    $status = isset($result['status']) ? (int) $result['status'] : 200;
+    $status = isset($result['status']) ? (int) $result['status'] : 0;
     $body = $result['body'] ?? '';
+
+    // Fallback: if router returned empty, try serving the target PHP file directly.
+    if (($body === '' || $status === 0) && $path !== '/') {
+        $docRoot = realpath(base_path('..' . DIRECTORY_SEPARATOR . 'public'));
+        if ($docRoot !== false) {
+            $direct = realpath($docRoot . $path);
+            if ($direct !== false && is_file($direct)) {
+                ob_start();
+                $legacyStatus = 200;
+                try {
+                    require $direct;
+                } catch (\Throwable $e) {
+                    ob_end_clean();
+                    abort(500);
+                }
+                $body = ob_get_clean();
+                $status = http_response_code();
+                if (!is_int($status) || $status <= 0) {
+                    $status = $legacyStatus;
+                }
+            }
+        }
+    }
+
     if ($body === '' || $status === 0) {
         abort(500);
     }
-    return response($body, $status);
+
+    // Bypass Laravel response stack to avoid autoloader conflicts with legacy Symfony versions.
+    if (!headers_sent()) {
+        http_response_code($status);
+        header('Content-Type: text/html; charset=UTF-8');
+    }
+    echo $body;
+    exit;
 }
