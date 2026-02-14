@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 '/_app/migrate/proposals/ajax/check/pricing',
                 '/_app/migrate/apis/index.php',
                 '/_app/migrate/requests/pause_request',
+                '/_app/migrate/requests/active_request',
             ]
         );
     })

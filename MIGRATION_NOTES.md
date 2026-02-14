@@ -54,3 +54,9 @@
 - Added FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL to simulate failures and verify fallback.
 - Smoke now runs legacy and Laravel modes (and fallback when forced) via --mode flag; snapshots remain per-pass.
 - Bridge docs updated; no business logic or schema changes.
+
+## 2026-02-14 — Phase 8: migrate active_request read-only endpoint
+- Added Laravel mirror for GET /requests/active_request under /_app/migrate/requests/active_request using isolated legacy runner.
+- Toggle MIGRATE_REQUESTS_ACTIVE_REQUEST (default false) with buffered router delegation; fallback to legacy on exception/non-200/empty body.
+- Smoke expanded with legacy/laravel mode probes for active_request; dual-mode runs remain green.
+- No schema or business logic changes; legacy response preserved (login redirect and active request page HTML).

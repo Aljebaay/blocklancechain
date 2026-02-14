@@ -14,6 +14,7 @@ $migrateFetchToggle = filter_var(getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY') ?:
 $migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migratePauseToggle = filter_var(getenv('MIGRATE_REQUESTS_PAUSE_REQUEST') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migrateActiveToggle = filter_var(getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 function blc_require_laravel(string $laravelIndex, string $targetUri): array
 {
@@ -183,6 +184,66 @@ if ($migratePauseToggle && $uriPath === '/requests/pause_request') {
             echo $result['body'];
             return true;
         }
+    }
+}
+
+if ($migrateActiveToggle && $uriPath === '/requests/active_request') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+    $legacyPath = __DIR__ . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'active_request.php';
+    if (is_file($laravelIndex)) {
+        $oldUri = $_SERVER['REQUEST_URI'] ?? '/';
+        $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+        $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
+        $oldCwd = getcwd();
+        $failed = false;
+        $output = '';
+        $status = 500;
+
+        ob_start();
+        try {
+            $_SERVER['REQUEST_URI'] = '/_app/migrate/requests/active_request' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+            $_SERVER['SCRIPT_NAME'] = '/index.php';
+            $_SERVER['PHP_SELF'] = '/index.php';
+            http_response_code(200);
+            chdir(dirname($laravelIndex));
+            require $laravelIndex;
+            $output = (string) ob_get_contents();
+            $status = http_response_code();
+            if ($status === false) {
+                $status = 200;
+            }
+        } catch (Throwable $bridgeException) {
+            $failed = true;
+        } finally {
+            ob_end_clean();
+            if ($oldCwd !== false) {
+                chdir($oldCwd);
+            }
+            $_SERVER['REQUEST_URI'] = $oldUri;
+            $_SERVER['SCRIPT_NAME'] = $oldScript;
+            $_SERVER['PHP_SELF'] = $oldPhpSelf;
+        }
+
+        if (!$failed && $status === 200 && $output !== '') {
+            echo $output;
+            return true;
+        }
+    }
+
+    if (is_file($legacyPath)) {
+        $oldCwd = getcwd();
+        header_remove();
+        http_response_code(200);
+        chdir(dirname($legacyPath));
+        require $legacyPath;
+        header('HTTP/1.1 200 OK', true, 200);
+        http_response_code(200);
+        if ($oldCwd !== false) {
+            chdir($oldCwd);
+        }
+        return true;
     }
 }
 

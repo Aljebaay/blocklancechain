@@ -56,3 +56,9 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 - When enabled, router buffers Laravel response and only serves it if status==200 and body is non-empty; otherwise it falls back to legacy public/requests/fetch_subcategory.php.
 - FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=true forces the Laravel handler to throw, exercising the fallback path.
 - Smoke: use --mode=legacy|laravel|both (default both). In laravel mode with --force-fallback (or env flag), the same probe must still pass via legacy output.
+
+## Phase 8 toggle pattern
+- /requests/active_request now guarded by MIGRATE_REQUESTS_ACTIVE_REQUEST (default false).
+- Router buffers Laravel response (status==200 & body non-empty) before serving; otherwise falls back to legacy public/requests/active_request.php.
+- Mirror route: GET /_app/migrate/requests/active_request (isolated runner executes legacy script for parity).
+- Smoke: --mode=legacy|laravel|both covers toggle off/on; legacy markers must remain identical.
