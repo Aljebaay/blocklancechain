@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="ui-toolkit">
+<head>
+	<title>Gig-Zeno - Freelance Services Marketplace</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="Gig-Zeno - Freelance Services Marketplace">
+	<meta name="keywords" content="">
+	<meta name="author" content="">
+  	<link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,300,100" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/bootstrap.css" rel="stylesheet">
+  	<link href="http://127.0.0.1:8080/styles/custom.css" rel="stylesheet"> <!-- Custom css code from modified in admin panel --->
+	<link href="http://127.0.0.1:8080/styles/styles.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/categories_nav_styles.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/font_awesome/css/font-awesome.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/owl.carousel.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/owl.theme.default.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/sweat_alert.css" rel="stylesheet">
+	<link href="http://127.0.0.1:8080/styles/animate.css" rel="stylesheet">
+  			<link href="http://127.0.0.1:8080/styles/knowledge_bank.css" rel="stylesheet">
+				<link rel="shortcut icon" href="http://127.0.0.1:8080/images/gigzenoFav.ico" type="image/x-icon" />
+		<!-- Optional: include a polyfill for ES6 Promises for IE11 and Android browser -->
+	<script src="http://127.0.0.1:8080/js/ie.js"></script>
+	<script type="text/javascript" src="http://127.0.0.1:8080/js/sweat_alert.js"></script>
+	<script type="text/javascript" src="http://127.0.0.1:8080/js/jquery.min.js"></script>
+	<style>.swal2-popup .swal2-styled.swal2-confirm{background-color: #28a745;}</style>
+</head>
+<body class="is-responsive">
+<link href="http://127.0.0.1:8080/styles/scoped_responsive_and_nav.css" rel="stylesheet">
+<link href="http://127.0.0.1:8080/styles/vesta_homepage.css" re

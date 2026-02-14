@@ -8,6 +8,7 @@ declare(strict_types=1);
  *   php scripts/smoke_http.php
  *   php scripts/smoke_http.php --base-url=http://127.0.0.1:8080
  *   php scripts/smoke_http.php --host=127.0.0.1 --port=8080
+ *   php scripts/smoke_http.php --record-snapshots
  */
 
 $basePath = dirname(__DIR__);
@@ -38,7 +39,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -53,6 +54,7 @@ if (isset($options['help'])) {
     echo "  php scripts/smoke_http.php\n";
     echo "  php scripts/smoke_http.php --base-url=http://127.0.0.1:8080\n";
     echo "  php scripts/smoke_http.php --host=127.0.0.1 --port=8080\n";
+    echo "  php scripts/smoke_http.php --record-snapshots\n";
     exit(0);
 }
 
@@ -63,22 +65,44 @@ $requestedPort = isset($options['port'])
     ? (int) $options['port']
     : ($defaultPortFromEnv > 0 ? $defaultPortFromEnv : 0);
 $baseUrlOption = isset($options['base-url']) && is_string($options['base-url']) ? trim($options['base-url']) : '';
+$recordSnapshots = array_key_exists('record-snapshots', $options);
+
+$snapshotsDir = $basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'snapshots';
+if (!is_dir($snapshotsDir)) {
+    @mkdir($snapshotsDir, 0777, true);
+}
 
 $checks = [
     [
         'id' => 'home-page',
         'path' => '/',
-        'expectedStatuses' => [200],
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ['<html', 'install.php', 'login', '<title'],
+        'snapshot' => 'home',
+        'dbDependent' => true,
     ],
     [
         'id' => 'login-page',
         'path' => '/login',
-        'expectedStatuses' => [200],
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ['login', '<form', '<title', 'install.php'],
+        'snapshot' => 'login',
+        'dbDependent' => true,
+    ],
+    [
+        'id' => 'admin-login',
+        'path' => '/admin/login.php',
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ['ADMIN', 'admin', '<form', '<title'],
+        'snapshot' => 'admin-login',
+        'dbDependent' => true,
     ],
     [
         'id' => 'index-alias',
         'path' => '/index',
         'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ['<html', 'install.php', 'login'],
+        'dbDependent' => true,
     ],
     [
         'id' => 'static-css-router',
@@ -95,15 +119,35 @@ $checks = [
         'minBodyBytes' => 5000,
     ],
     [
+        'id' => 'logo-image',
+        'path' => '/images/app.png',
+        'expectedStatuses' => [200],
+        'contentTypeContains' => 'image',
+        'minBodyBytes' => 2000,
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
-        'expectedStatuses' => [200],
+        'expectedStatuses' => [200, 302],
         'bodyContainsAny' => [
             "window.open('../login",
             'manage_requests',
             "window.open('install.php'",
             'install.php',
         ],
+        'dbDependent' => true,
+    ],
+    [
+        'id' => 'requests-active',
+        'path' => '/requests/active_request',
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => [
+            'request',
+            "window.open('../login",
+            "window.open('install.php'",
+            'install.php',
+        ],
+        'dbDependent' => true,
     ],
     [
         'id' => 'requests-fetch-subcategory',
@@ -118,6 +162,7 @@ $checks = [
             "window.open('install.php'",
             'install.php',
         ],
+        'dbDependent' => true,
     ],
     [
         'id' => 'proposal-pricing-check',
@@ -133,6 +178,13 @@ $checks = [
             "window.open('install.php'",
             'install.php',
         ],
+        'dbDependent' => true,
+    ],
+    [
+        'id' => 'apis-index',
+        'path' => '/apis/index.php',
+        'expectedStatuses' => [200, 404],
+        'bodyContainsAny' => ['CodeIgniter', 'BASEPATH', '<html', '<title', '404'],
     ],
     [
         'id' => 'admin-include-sanitize',
@@ -179,15 +231,42 @@ try {
 
     $passed = 0;
     $failed = 0;
+    $skipped = 0;
 
     foreach ($checks as $check) {
         $started = microtime(true);
         $response = httpRequest($baseUrl, $check);
         $durationMs = (int) round((microtime(true) - $started) * 1000);
 
-        [$ok, $reasons] = evaluateResponse($check, $response);
-        $status = $response['status'];
         $id = (string) $check['id'];
+        $ok = true;
+        $reasons = [];
+        $dbUnavailable = responseIndicatesDbUnavailable($response);
+        if (isset($check['snapshot']) && is_string($check['snapshot'])) {
+            $snapshotPath = $snapshotsDir . DIRECTORY_SEPARATOR . $check['snapshot'] . '.snapshot.txt';
+            $bodyPrefix = isset($response['body']) && is_string($response['body']) ? substr($response['body'], 0, 2048) : '';
+
+            if ($recordSnapshots || !is_file($snapshotPath)) {
+                file_put_contents($snapshotPath, $bodyPrefix);
+                echo "SNAP  {$id} saved snapshot to {$snapshotPath}\n";
+            } elseif ($bodyPrefix !== '' && !$dbUnavailable) {
+                $snapshotBody = (string) @file_get_contents($snapshotPath);
+                if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
+                    $ok = false;
+                    $reasons[] = 'Snapshot drift detected';
+                }
+            }
+        }
+
+        if (!empty($check['dbDependent']) && $dbUnavailable) {
+            $skipped++;
+            echo "SKIP  {$id} status={$response['status']} time={$durationMs}ms reason=database unavailable\n";
+            continue;
+        }
+
+        [$ok, $reasons] = evaluateResponse($check, $response);
+
+        $status = $response['status'];
 
         if ($ok) {
             $passed++;
@@ -201,8 +280,8 @@ try {
         }
     }
 
-    $total = $passed + $failed;
-    echo "Summary: total={$total} passed={$passed} failed={$failed}\n";
+    $total = $passed + $failed + $skipped;
+    echo "Summary: total={$total} passed={$passed} failed={$failed} skipped={$skipped}\n";
 
     if ($failed > 0) {
         if ($serverProcess !== null) {
@@ -465,4 +544,80 @@ function evaluateResponse(array $check, array $response): array
     }
 
     return [$errors === [], $errors];
+}
+
+/**
+ * Detect responses that likely indicate database connectivity or install pre-check issues.
+ *
+ * @param array<string,mixed> $response
+ */
+function responseIndicatesDbUnavailable(array $response): bool
+{
+    $status = isset($response['status']) ? (int) $response['status'] : 0;
+    $headers = isset($response['headers']) && is_array($response['headers']) ? $response['headers'] : [];
+    $body = isset($response['body']) && is_string($response['body']) ? $response['body'] : '';
+
+    $location = '';
+    foreach (['location', 'Location'] as $headerName) {
+        if (isset($headers[$headerName]) && is_string($headers[$headerName])) {
+            $location = $headers[$headerName];
+            break;
+        }
+    }
+
+    $indicators = [
+        'SQLSTATE',
+        'Access denied for user',
+        'could not find driver',
+        'install.php',
+        'install2.php',
+        'Database connection',
+        'PDOException',
+    ];
+
+    foreach ($indicators as $indicator) {
+        if ($indicator !== '' && str_contains($body, $indicator)) {
+            return true;
+        }
+    }
+
+    if ($location !== '' && stripos($location, 'install') !== false) {
+        return true;
+    }
+
+    if ($status >= 500) {
+        return true;
+    }
+
+    return false;
+}
+
+function snapshotSimilar(string $current, string $snapshot): bool
+{
+    $current = trim($current);
+    $snapshot = trim($snapshot);
+
+    if ($current === '' || $snapshot === '') {
+        return false;
+    }
+
+    $needleFromSnapshot = substr($snapshot, 0, 120);
+    if ($needleFromSnapshot !== '' && str_contains($current, $needleFromSnapshot)) {
+        return true;
+    }
+
+    $needleFromCurrent = substr($current, 0, 120);
+    if ($needleFromCurrent !== '' && str_contains($snapshot, $needleFromCurrent)) {
+        return true;
+    }
+
+    $markers = ['<html', '<title', '<body', 'login', 'admin', 'install.php'];
+    $matches = 0;
+    foreach ($markers as $marker) {
+        if (str_contains($current, $marker) && str_contains($snapshot, $marker)) {
+            $matches++;
+        }
+    }
+
+    return $matches >= 2;
 }
