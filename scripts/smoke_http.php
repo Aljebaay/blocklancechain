@@ -121,6 +121,7 @@ $checks = [
         'expectedStatuses' => [200],
         'contentTypeContains' => 'text/css',
         'minBodyBytes' => 5000,
+        'headerMissing' => ['x-smoke-router'],
     ],
     [
         'id' => 'asset-proxy-css',
@@ -141,6 +142,13 @@ $checks = [
         'path' => '/_app/health',
         'expectedStatuses' => [200],
         'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
+    ],
+    [
+        'id' => 'smoke-router-header',
+        'path' => '/_app/health',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
+        'headerContains' => ['x-smoke-router' => '1'],
     ],
     [
         'id' => 'laravel-system-info',
@@ -480,16 +488,21 @@ function startPhpServer(string $basePath, string $host, int $port): array
     $stamp = date('Ymd_His');
     $stdout = $logDir . DIRECTORY_SEPARATOR . "smoke_server_{$stamp}.out.log";
     $stderr = $logDir . DIRECTORY_SEPARATOR . "smoke_server_{$stamp}.err.log";
+    $phpErrorLog = $logDir . DIRECTORY_SEPARATOR . "php_server_{$stamp}.log";
 
-    $publicDir = $basePath . DIRECTORY_SEPARATOR . 'public';
-    $routerFile = $publicDir . DIRECTORY_SEPARATOR . 'router.php';
+    $publicDir = realpath($basePath . DIRECTORY_SEPARATOR . 'public') ?: ($basePath . DIRECTORY_SEPARATOR . 'public');
+    $routerWrapper = realpath($basePath . DIRECTORY_SEPARATOR . 'router.smoke.php') ?: ($basePath . DIRECTORY_SEPARATOR . 'router.smoke.php');
     $cmd = [
         PHP_BINARY,
+        '-d', 'display_errors=1',
+        '-d', 'error_reporting=E_ALL',
+        '-d', 'log_errors=1',
+        '-d', 'error_log=' . $phpErrorLog,
         '-S',
         $host . ':' . $port,
         '-t',
         $publicDir,
-        $routerFile,
+        $routerWrapper,
     ];
 
     $spec = [
@@ -792,6 +805,25 @@ function evaluateResponse(array $check, array $response): array
         $minBodyBytes = (int) $check['minBodyBytes'];
         if (strlen($body) < $minBodyBytes) {
             $errors[] = "Body length is less than {$minBodyBytes} bytes.";
+        }
+    }
+
+    if (isset($check['headerContains']) && is_array($check['headerContains'])) {
+        foreach ($check['headerContains'] as $headerName => $needle) {
+            $headerNameLower = strtolower((string) $headerName);
+            $value = $headers[$headerNameLower] ?? '';
+            if (stripos((string) $value, (string) $needle) === false) {
+                $errors[] = "Header {$headerName} does not contain '{$needle}'.";
+            }
+        }
+    }
+
+    if (isset($check['headerMissing']) && is_array($check['headerMissing'])) {
+        foreach ($check['headerMissing'] as $headerName) {
+            $headerNameLower = strtolower((string) $headerName);
+            if (array_key_exists($headerNameLower, $headers)) {
+                $errors[] = "Header {$headerName} should be absent.";
+            }
         }
     }
 
