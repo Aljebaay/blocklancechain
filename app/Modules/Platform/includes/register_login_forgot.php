@@ -55,9 +55,19 @@ if(isset($_POST['register'])){
 		$pass = strip_tags($input->post('pass'));
 		$con_pass = strip_tags($input->post('con_pass'));
 		$referral = strip_tags($input->post('referral'));
-		$geoplugin = unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip='.$ip));
-		$country = $geoplugin['geoplugin_countryName'];
-		if(empty($country)){ $country = ""; }
+		$country = "";
+		$geoContext = stream_context_create(array(
+			'http' => array(
+				'timeout' => 3,
+			),
+		));
+		$geoResponse = @file_get_contents('https://www.geoplugin.net/json.gp?ip=' . rawurlencode((string) $ip), false, $geoContext);
+		if(is_string($geoResponse) && $geoResponse !== ''){
+			$geoData = json_decode($geoResponse, true);
+			if(is_array($geoData) && isset($geoData['geoplugin_countryName']) && is_string($geoData['geoplugin_countryName'])){
+				$country = trim($geoData['geoplugin_countryName']);
+			}
+		}
 		$regsiter_date = date("F d, Y");
 		$date = date("F d, Y");
 	

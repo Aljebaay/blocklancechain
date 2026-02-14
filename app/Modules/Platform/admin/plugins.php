@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
 	echo "<script>window.open('login','_self');</script>";
 }else{
+  $deletePluginToken = admin_csrf_token('delete_plugin');
 
 ?>
 <div class="breadcrumbs">
@@ -81,7 +83,7 @@ if(!isset($_SESSION['admin_email'])){
       </a>
       <?php } ?>
 
-      <a class="dropdown-item" onclick="return confirm('Are You Sure You Want To Delete This Plugin And Its Data.')" href="index?delete_plugin=<?=$plugin->id; ?>&folder=<?= $plugin->folder; ?>" >
+      <a class="dropdown-item" onclick="return confirm('Are You Sure You Want To Delete This Plugin And Its Data.')" href="index?delete_plugin=<?=$plugin->id; ?>&folder=<?= urlencode((string) $plugin->folder); ?>&csrf_token=<?= urlencode($deletePluginToken); ?>" >
         <i class="fa fa-trash"></i> Delete Plugin
       </a>
       

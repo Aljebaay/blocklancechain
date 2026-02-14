@@ -32,5 +32,8 @@ jobs:
       - name: Smoke checks
         run: composer smoke:http
 
+      - name: Security regression checks
+        run: composer test:security-regression
+
       - name: Security audit
         run: composer audit --no-interaction --abandoned=ignore

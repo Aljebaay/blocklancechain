@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -11,8 +12,13 @@ exit();
 }
 
 if(isset($_GET['approve_payout'])){
+admin_csrf_require('approve_payout', $input->get('csrf_token'), 'index?payouts&status=pending');
 
-$id = $input->get('approve_payout');
+$id = (int) $input->get('approve_payout');
+if($id <= 0){
+	echo "<script>alert('Invalid payout id.');window.open('index?payouts&status=pending','_self');</script>";
+	exit;
+}
 $update = $db->update("payouts",["status"=>'completed'],["id"=>$id]);
 
 if($update){

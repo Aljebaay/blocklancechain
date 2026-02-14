@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -104,6 +105,7 @@ if(!isset($_SESSION['admin_email'])){
                                     $admin_country = $row_admins->admin_country;
 
                                     $admin_job = $row_admins->admin_job;
+                                    $deleteUserToken = admin_csrf_token('delete_user');
 
                                 ?>
 
@@ -151,7 +153,7 @@ if(!isset($_SESSION['admin_email'])){
 
                                             </a>
 
-                                            <a class="dropdown-item" href="index?delete_user=<?= $admin_id; ?>">
+                                            <a class="dropdown-item" href="index?delete_user=<?= $admin_id; ?>&csrf_token=<?= urlencode($deleteUserToken); ?>">
                                             <i class="fa fa-trash"></i> Delete
                                             </a>
 

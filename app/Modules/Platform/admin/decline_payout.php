@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -7,6 +8,10 @@ if(!isset($_SESSION['admin_email'])){
 echo "<script>window.open('login.php','_self');</script>";
   
 }else{
+if(isset($_GET['decline_payout'])){
+  admin_csrf_require('decline_payout', $input->get('csrf_token'), 'index?payouts&status=pending');
+}
+$declinePayoutToken = admin_csrf_token('decline_payout');
 
 ?>
 
@@ -51,6 +56,8 @@ echo "<script>window.open('login.php','_self');</script>";
 
 <form action="" method="post"><!---  form Starts --->
 
+<input type="hidden" name="csrf_token" value="<?= $declinePayoutToken; ?>">
+
 
 <div class="form-group row"><!--- form-group row Starts --->
 
@@ -93,6 +100,7 @@ echo "<script>window.open('login.php','_self');</script>";
 <?php
 
 if(isset($_POST['submit'])){
+admin_csrf_require('decline_payout', $input->post('csrf_token'), 'index?payouts&status=pending');
   
 $id = $input->get('decline_payout');
 $message = $input->post('message');

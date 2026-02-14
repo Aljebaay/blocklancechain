@@ -8,9 +8,13 @@ if (!function_exists('blc_bootstrap_session')) {
 
 		$baseDir = dirname(__DIR__);
 		$projectBaseDir = $baseDir;
-		$parentBaseDir = dirname($baseDir);
-		if (is_dir($parentBaseDir . DIRECTORY_SEPARATOR . 'app') && is_dir($parentBaseDir . DIRECTORY_SEPARATOR . 'public')) {
-			$projectBaseDir = $parentBaseDir;
+		if (defined('BLC_BASE_PATH') && is_string(BLC_BASE_PATH) && BLC_BASE_PATH !== '') {
+			$projectBaseDir = BLC_BASE_PATH;
+		} else {
+			$rootCandidate = dirname(__DIR__, 4);
+			if (is_dir($rootCandidate . DIRECTORY_SEPARATOR . 'app') && is_dir($rootCandidate . DIRECTORY_SEPARATOR . 'public')) {
+				$projectBaseDir = $rootCandidate;
+			}
 		}
 		$sessionDirs = array(
 			$projectBaseDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',

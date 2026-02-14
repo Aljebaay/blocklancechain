@@ -23,6 +23,7 @@
         "audit:endpoints": "php scripts/audit_endpoints.php",
         "generate:public-stubs": "php scripts/generate_compat_stubs.php",
         "smoke:http": "php scripts/smoke_http.php",
+        "test:security-regression": "php tests/regression/security_checks.php",
         "serve": [
             "Composer\\Config::disableProcessTimeout",
             "php -S 127.0.0.1:8080 -t public public/router.php"

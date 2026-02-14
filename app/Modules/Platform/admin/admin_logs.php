@@ -163,44 +163,53 @@ $i = $start_from;
 
 // print_r($input->get());
 
-if(isset($_GET['date']) AND !empty($_GET['date'])){
-	$date = new DateTime($input->get("date"));
-	$date = $date->format("F d, Y");
-}else{
-	$date = "";
+$filterDateInput = isset($_GET['date']) ? (string) $input->get("date") : "";
+$filterDate = "";
+if($filterDateInput !== ""){
+	try{
+		$dateObj = new DateTime($filterDateInput);
+		$filterDate = $dateObj->format("F d, Y");
+	}catch(Exception $exception){
+		$filterDate = "";
+	}
 }
 
-if(isset($_GET['admin_id'])){
-	$admin_id = $input->get("admin_id");
-}else{
-	$admin_id = "";
+$filterAdminId = "";
+if(isset($_GET['admin_id']) && $_GET['admin_id'] !== ""){
+	$adminIdInput = (string) $input->get("admin_id");
+	if(ctype_digit($adminIdInput)){
+		$filterAdminId = $adminIdInput;
+	}
 }
 
-if((isset($_GET['date']) AND isset($_GET['admin_id'])) AND (!empty($date) AND !empty($admin_id))){
-	$filter_query = "where date LIKE '%$date%' AND admin_id LIKE '%$admin_id%'";
-}elseif(isset($_GET['date']) AND !empty($date)){
-	$filter_query = "where date LIKE '%$date%'";
-}elseif(isset($_GET['admin_id']) AND !empty($admin_id)){
-	$filter_query = "where admin_id LIKE '%$admin_id%'";
-}else{
-	$filter_query = "";
+$whereClauses = array();
+$queryParams = array();
+
+if($filterDate !== ""){
+	$whereClauses[] = "date LIKE :filter_date";
+	$queryParams["filter_date"] = "%$filterDate%";
 }
 
-// echo $filter_query;
+if($filterAdminId !== ""){
+	$whereClauses[] = "admin_id = :filter_admin_id";
+	$queryParams["filter_admin_id"] = (int) $filterAdminId;
+}
 
-$get_admin_logs = $db->query("select * from admin_logs $filter_query order by 1 DESC LIMIT :limit OFFSET :offset","",array("limit"=>$per_page,"offset"=>$start_from));
+$whereSql = !empty($whereClauses) ? "where " . implode(" AND ", $whereClauses) : "";
+
+$get_admin_logs = $db->query("select * from admin_logs $whereSql order by 1 DESC LIMIT :limit OFFSET :offset",$queryParams,array("limit"=>$per_page,"offset"=>$start_from));
 
 while($row_admin_logs = $get_admin_logs->fetch()){
 
 $id = $row_admin_logs->id;
-$admin_id = $row_admin_logs->admin_id;
+$log_admin_id = $row_admin_logs->admin_id;
 $work = $row_admin_logs->work;
 $work_id = $row_admin_logs->work_id;
-$date = $row_admin_logs->date;
+$log_date = $row_admin_logs->date;
 $status = $row_admin_logs->status;
 
 
-$get_admin = $db->select("admins",array("admin_id" => $admin_id));
+$get_admin = $db->select("admins",array("admin_id" => $log_admin_id));
 $row_admin = $get_admin->fetch();
 $admin_email = $row_admin->admin_name;
 
@@ -433,7 +442,7 @@ $i++;
 
 <td><?= ucfirst($admin_email); ?> Has <?= $message; ?>. </td>
 
-<td><?= $date; ?></td>
+<td><?= $log_date; ?></td>
 
 <td>                                        
 
@@ -466,10 +475,11 @@ $i++;
 
 <?php
 	
-	$date = @$input->get("date");
+	$paginationDate = urlencode((string) $filterDateInput);
+	$paginationAdminId = urlencode((string) $filterAdminId);
 
 	/// Now Select All From Proposals Table
-	$query = $db->query("select * from admin_logs $filter_query");
+	$query = $db->query("select * from admin_logs $whereSql",$queryParams);
 
 	/// Count The Total Records
 
@@ -479,9 +489,9 @@ $i++;
 
 	$total_pages = ceil($total_records / $per_page);
 
-	echo "<li class='page-item'><a href='index?admin_logs=1&date=$date&admin_id=$admin_id' class='page-link'> First Page </a></li>";
+	echo "<li class='page-item'><a href='index?admin_logs=1&date=$paginationDate&admin_id=$paginationAdminId' class='page-link'> First Page </a></li>";
 
-    echo "<li class='page-item ".(1 == $page ? "active" : "")."'><a class='page-link' href='index?admin_logs=1&date=$date&admin_id=$admin_id'>1</a></li>";
+    echo "<li class='page-item ".(1 == $page ? "active" : "")."'><a class='page-link' href='index?admin_logs=1&date=$paginationDate&admin_id=$paginationAdminId'>1</a></li>";
     
     $i = max(2, $page - 5);
     
@@ -491,14 +501,14 @@ $i++;
     
     for (; $i < min($page + 6, $total_pages); $i++) {
             	
-    	echo "<li class='page-item"; if($i == $page){ echo " active "; } echo "'><a href='index?admin_logs=".$i."&date=$date&admin_id=$admin_id' class='page-link'>".$i."</a></li>";
+    	echo "<li class='page-item"; if($i == $page){ echo " active "; } echo "'><a href='index?admin_logs=".$i."&date=$paginationDate&admin_id=$paginationAdminId' class='page-link'>".$i."</a></li>";
 
     }
     if ($i != $total_pages and $total_pages > 1){echo "<li class='page-item' href='#'><a class='page-link'>...</a></li>";}
 
-    if($total_pages > 1){echo "<li class='page-item ".($total_pages == $page ? "active" : "")."'><a class='page-link' href='index?admin_logs=$total_pages&date=$date&admin_id=$admin_id'>$total_pages</a></li>";}
+    if($total_pages > 1){echo "<li class='page-item ".($total_pages == $page ? "active" : "")."'><a class='page-link' href='index?admin_logs=$total_pages&date=$paginationDate&admin_id=$paginationAdminId'>$total_pages</a></li>";}
 
-    echo "<li class='page-item'><a href='index?admin_logs=$total_pages&date=$date&admin_id=$admin_id' class='page-link'>Last Page </a></li>";
+    echo "<li class='page-item'><a href='index?admin_logs=$total_pages&date=$paginationDate&admin_id=$paginationAdminId' class='page-link'>Last Page </a></li>";
 
 ?>
 

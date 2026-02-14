@@ -1,3 +1,13 @@
-﻿# Regression tests placeholders
+# Regression Checks
 
-Use this directory for deeper regression scripts per module/domain.
+Run security regression assertions:
+
+```bash
+php tests/regression/security_checks.php
+```
+
+or via Composer:
+
+```bash
+composer test:security-regression
+```

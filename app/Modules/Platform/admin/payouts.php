@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
   echo "<script>window.open('login','_self');</script>";
@@ -9,6 +10,8 @@ if(!isset($_SESSION['admin_email'])){
   }else{
     $payoutStatus = "";
   }
+  $approvePayoutToken = admin_csrf_token('approve_payout');
+  $declinePayoutToken = admin_csrf_token('decline_payout');
 
 ?>
 <div class="breadcrumbs">
@@ -132,10 +135,10 @@ if(!isset($_SESSION['admin_email'])){
           <button class="btn btn-success dropdown-toggle" data-toggle="dropdown">Actions</button>
             <div class="dropdown-menu"><!--- dropdown-menu Starts --->
               <?php if($status == "pending"){ ?>
-              <a href="<?= ($method == "moneygram" ? "index?approve_moneygram=$id" : "index?approve_payout=$id") ?>" onclick="return confirm('Are You Sure You Want To Approve This Payout.')" class="dropdown-item">
+              <a href="<?= ($method == "moneygram" ? "index?approve_moneygram=$id" : "index?approve_payout=$id&csrf_token=" . urlencode($approvePayoutToken)) ?>" onclick="return confirm('Are You Sure You Want To Approve This Payout.')" class="dropdown-item">
                 <i class="fa fa-thumbs-up"></i> Approve Payout
               </a>
-              <a href="index?decline_payout=<?= $id; ?>" class="dropdown-item">
+              <a href="index?decline_payout=<?= $id; ?>&csrf_token=<?= urlencode($declinePayoutToken); ?>" class="dropdown-item">
                 <i class="fa fa-thumbs-down"></i> Decline Payout
               </a>
               <?php } ?>
