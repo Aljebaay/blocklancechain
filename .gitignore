@@ -15,6 +15,8 @@ Desktop.ini
 # Environment / local secrets
 .env
 .env.*
+!.env.example
+!.env.exampel
 includes/config.php
 apis/application/config/database.php
 

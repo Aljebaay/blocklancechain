@@ -15,14 +15,13 @@ use Twilio\InstanceResource;
 use Twilio\Rest\Conversations\V1\Service\BindingList;
 use Twilio\Rest\Conversations\V1\Service\ConfigurationList;
 use Twilio\Rest\Conversations\V1\Service\ConversationList;
+use Twilio\Rest\Conversations\V1\Service\ParticipantConversationList;
 use Twilio\Rest\Conversations\V1\Service\RoleList;
 use Twilio\Rest\Conversations\V1\Service\UserList;
 use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- *
  * @property string $accountSid
  * @property string $sid
  * @property string $friendlyName
@@ -37,6 +36,7 @@ class ServiceInstance extends InstanceResource {
     protected $_users;
     protected $_roles;
     protected $_configuration;
+    protected $_participantConversations;
 
     /**
      * Initialize the ServiceInstance
@@ -130,6 +130,13 @@ class ServiceInstance extends InstanceResource {
      */
     protected function getConfiguration(): ConfigurationList {
         return $this->proxy()->configuration;
+    }
+
+    /**
+     * Access the participantConversations
+     */
+    protected function getParticipantConversations(): ParticipantConversationList {
+        return $this->proxy()->participantConversations;
     }
 
     /**

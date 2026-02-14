@@ -5,9 +5,13 @@ Sessions, list archives that have been created, download the recordings, and del
 
 ## Running the App
 
-First, download the dependencies using [Composer](http://getcomposer.org) in this directory.
+First, download the dependencies using [Composer](http://getcomposer.org) in this directory as well
+as the root SDK directory
 
 ```
+$ cd ../../
+$ composer.phar install
+$ cd sample/Archiving
 $ ../../composer.phar install
 ```
 
@@ -15,7 +19,7 @@ Next, input your own API Key and API Secret into the `run-demo` script file:
 
 ```
   export API_KEY=0000000
-  export API_SECRET=abcdef1234567890abcdef01234567890abcdef
+  export API_SECRET=b60d0b2568f3ea9731bd9d3f71be263ce19f802f
 ```
 
 Finally, start the PHP CLI development server (requires PHP >= 5.4) using the `run-demo` script
@@ -52,7 +56,7 @@ $app->get('/host', function () use ($app, $sessionId) {
 
     $token = $app->opentok->generateToken($sessionId, array(
         'role' => Role::MODERATOR
-    ));
+    ), true);
 
     $app->render('host.html', array(
         'apiKey' => $app->apiKey,

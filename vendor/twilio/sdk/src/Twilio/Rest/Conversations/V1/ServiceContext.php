@@ -15,19 +15,19 @@ use Twilio\ListResource;
 use Twilio\Rest\Conversations\V1\Service\BindingList;
 use Twilio\Rest\Conversations\V1\Service\ConfigurationList;
 use Twilio\Rest\Conversations\V1\Service\ConversationList;
+use Twilio\Rest\Conversations\V1\Service\ParticipantConversationList;
 use Twilio\Rest\Conversations\V1\Service\RoleList;
 use Twilio\Rest\Conversations\V1\Service\UserList;
 use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- *
  * @property ConversationList $conversations
  * @property BindingList $bindings
  * @property UserList $users
  * @property RoleList $roles
  * @property ConfigurationList $configuration
+ * @property ParticipantConversationList $participantConversations
  * @method \Twilio\Rest\Conversations\V1\Service\ConversationContext conversations(string $sid)
  * @method \Twilio\Rest\Conversations\V1\Service\BindingContext bindings(string $sid)
  * @method \Twilio\Rest\Conversations\V1\Service\UserContext users(string $sid)
@@ -40,6 +40,7 @@ class ServiceContext extends InstanceContext {
     protected $_users;
     protected $_roles;
     protected $_configuration;
+    protected $_participantConversations;
 
     /**
      * Initialize the ServiceContext
@@ -132,6 +133,20 @@ class ServiceContext extends InstanceContext {
         }
 
         return $this->_configuration;
+    }
+
+    /**
+     * Access the participantConversations
+     */
+    protected function getParticipantConversations(): ParticipantConversationList {
+        if (!$this->_participantConversations) {
+            $this->_participantConversations = new ParticipantConversationList(
+                $this->version,
+                $this->solution['sid']
+            );
+        }
+
+        return $this->_participantConversations;
     }
 
     /**

@@ -2,9 +2,9 @@
 
 namespace OpenTok;
 
+use DomainException;
 use OpenTok\Util\Client;
 use OpenTok\Util\Validators;
-
 use OpenTok\Exception\InvalidArgumentException;
 use OpenTok\Exception\ArchiveUnexpectedValueException;
 
@@ -15,7 +15,7 @@ use OpenTok\Exception\ArchiveUnexpectedValueException;
 * The time at which the archive was created, in milliseconds since the UNIX epoch.
 *
 * @property string $duration
-* The duration of the archive, in milliseconds.
+* The duration of the archive, in seconds.
 *
 * @property bool $hasVideo
 * Whether the archive has a video track (<code>true</code>) or not (<code>false</code>).
@@ -42,13 +42,30 @@ use OpenTok\Exception\ArchiveUnexpectedValueException;
 * the archive stopped (such as "maximum duration exceeded") or failed.
 *
 * @property string $resolution
-* The resolution of the archive.
+* The resolution of the archive, either "640x480" (SD landscape, the default), "1280x720" (HD landscape),
+* "1920x1080" (FHD landscape), "480x640" (SD portrait), "720x1280" (HD portrait), or "1080x1920" (FHD portrait).
+* You may want to use a portrait aspect ratio for archives that include video streams from mobile devices (which often use the portrait aspect ratio).
 *
 * @property string $sessionId
 * The session ID of the OpenTok session associated with this archive.
 *
+* @property string $multiArchiveTag
+* Whether Multiple Archive is switched on, which will be a unique string for each simultaneous archive of an ongoing session.
+* See https://tokbox.com/developer/guides/archiving/#simultaneous-archives for more information.
+*
 * @property string $size
 * The size of the MP4 file. For archives that have not been generated, this value is set to 0.
+*
+* @property string $streamMode
+* Whether streams included in the archive are selected automatically (<code>StreamMode.AUTO</code>) or
+* manually (<code>StreamMode.MANUAL</code>). When streams are selected automatically (<code>StreamMode.AUTO</code>),
+* all streams in the session can be included in the archive. When streams are selected manually
+* (<code>StreamMode.MANUAL</code>), you specify streams to be included based on calls to the
+* <code>Archive.addStreamToArchive()</code> and <code>Archive.removeStreamFromArchive()</code> methods.
+* With manual mode, you can specify whether a stream's audio, video, or both are included in the
+* archive. In both automatic and manual modes, the archive composer includes streams based on
+* <a href="https://tokbox.com/developer/guides/archive-broadcast-layout/#stream-prioritization-rules">stream
+* prioritization rules</a>.
 *
 * @property string $status
 * The status of the archive, which can be one of the following:
@@ -76,44 +93,72 @@ use OpenTok\Exception\ArchiveUnexpectedValueException;
 * "available"; for other archives, (including archives with the status "uploaded") this property is
 * set to null. The download URL is obfuscated, and the file is only available from the URL for
 * 10 minutes. To generate a new URL, call the Archive.listArchives() or OpenTok.getArchive() method.
+*
+* @property bool $hasTranscription
+* Whether the archive has a transcription of the audio of the session (true) or not (false).
+*
+* @property array $transcription
+* Properties of the transcription attached to this archive, including status, url, reason,
+* primaryLanguageCode, and hasSummary.
 */
-class Archive {
+class Archive
+{
     // NOTE: after PHP 5.3.0 support is dropped, the class can implement JsonSerializable
 
     /** @internal */
     private $data;
     /** @internal */
-    private $isDeleted;
+    private ?bool $isDeleted = null;
     /** @internal */
     private $client;
+    /** @internal */
+    private $multiArchiveTag;
+    /**
+     * @var mixed|null
+     */
+    private const PERMITTED_AUTO_RESOLUTIONS = [
+        '480x640',
+        "640x480",
+        "720x1280",
+        "1280x720",
+        "1080x1920",
+        "1920x1080"
+    ];
 
     /** @internal */
-    public function __construct($archiveData, $options = array())
+    public function __construct($archiveData, $options = [])
     {
         // unpack optional arguments (merging with default values) into named variables
-        $defaults = array(
-            'apiKey' => null,
-            'apiSecret' => null,
-            'apiUrl' => 'https://api.opentok.com',
-            'client' => null
-        );
+        $defaults = ['apiKey' => null, 'apiSecret' => null, 'apiUrl' => 'https://api.opentok.com', 'client' => null, 'streamMode' => StreamMode::AUTO];
         $options = array_merge($defaults, array_intersect_key($options, $defaults));
-        list($apiKey, $apiSecret, $apiUrl, $client) = array_values($options);
+        [$apiKey, $apiSecret, $apiUrl, $client, $streamMode] = array_values($options);
 
         // validate params
         Validators::validateArchiveData($archiveData);
         Validators::validateClient($client);
+        Validators::validateHasStreamMode($streamMode);
+
+        if (isset($archiveData['maxBitrate']) && isset($archiveData['quantizationParameter'])) {
+            throw new DomainException('Max Bitrate cannot be set with QuantizationParameter ');
+        }
 
         $this->data = $archiveData;
 
-        $this->client = isset($client) ? $client : new Client();
+        if (isset($this->data['multiArchiveTag'])) {
+            $this->multiArchiveTag = $this->data['multiArchiveTag'];
+        }
+
+        $this->client = $client ?? new Client();
         if (!$this->client->isConfigured()) {
-            Validators::validateApiKey($apiKey);
-            Validators::validateApiSecret($apiSecret);
             Validators::validateApiUrl($apiUrl);
 
             $this->client->configure($apiKey, $apiSecret, $apiUrl);
         }
+    }
+
+    public static function getPermittedResolutions(): array
+    {
+        return self::PERMITTED_AUTO_RESOLUTIONS;
     }
 
     /** @internal */
@@ -122,26 +167,12 @@ class Archive {
         if ($this->isDeleted) {
             // TODO: throw an logic error about not being able to stop an archive thats deleted
         }
-        switch($name) {
-            case 'createdAt':
-            case 'duration':
-            case 'id':
-            case 'name':
-            case 'partnerId':
-            case 'reason':
-            case 'sessionId':
-            case 'size':
-            case 'status':
-            case 'url':
-            case 'hasVideo':
-            case 'hasAudio':
-            case 'outputMode':
-            case 'resolution':
-                return $this->data[$name];
-                break;
-            default:
-                return null;
-        }
+
+        return match ($name) {
+            'createdAt', 'duration', 'id', 'name', 'partnerId', 'reason', 'sessionId', 'size', 'status', 'url', 'hasVideo', 'hasAudio', 'outputMode', 'resolution', 'streamMode', 'maxBitrate', 'quantizationParameter', 'hasTranscription', 'transcription' => $this->data[$name],
+            'multiArchiveTag' => $this->multiArchiveTag,
+            default => null,
+        };
     }
 
     /**
@@ -152,7 +183,7 @@ class Archive {
      *
      * @throws Exception\ArchiveException The archive is not being recorded.
      */
-    public function stop()
+    public function stop(): static
     {
         if ($this->isDeleted) {
             // TODO: throw an logic error about not being able to stop an archive thats deleted
@@ -181,14 +212,14 @@ class Archive {
      * @throws Exception\ArchiveException There archive status is not "available", "updated",
      * or "deleted".
      */
-    public function delete()
+    public function delete(): bool
     {
         if ($this->isDeleted) {
             // TODO: throw an logic error about not being able to stop an archive thats deleted
         }
 
         if ($this->client->deleteArchive($this->data['id'])) {
-            $this->data = array();
+            $this->data = [];
             $this->isDeleted = true;
             return true;
         }
@@ -201,6 +232,55 @@ class Archive {
     public function toJson()
     {
         return json_encode($this->jsonSerialize());
+    }
+
+    /**
+     * Adds a stream to a currently running archive that was started with the
+     * the streamMode set to StreamMode.Manual. You can call the method
+     * repeatedly with the same stream ID, to toggle the stream's audio or video in the archive.
+     *
+     * @param String $streamId The stream ID.
+     * @param Boolean $hasAudio Whether the archive should include the stream's audio (true, the default)
+     * or not (false).
+     * @param Boolean $hasVideo Whether the archive should include the stream's video (true, the default)
+     * or not (false).
+     *
+     * @return Boolean Returns true on success.
+     */
+    public function addStreamToArchive(string $streamId, bool $hasAudio, bool $hasVideo): bool
+    {
+        if ($this->streamMode === StreamMode::AUTO) {
+            throw new InvalidArgumentException('Cannot add stream to an Archive in auto stream mode');
+        }
+
+        if ($hasAudio === false && $hasVideo === false) {
+            throw new InvalidArgumentException('Both hasAudio and hasVideo cannot be false');
+        }
+        return $this->client->addStreamToArchive(
+            $this->data['id'],
+            $streamId,
+            $hasVideo,
+            $hasVideo
+        );
+    }
+
+    /**
+     * Removes a stream from a currently running archive that was started with the
+     * the streamMode set to StreamMode.Manual.
+     *
+     * @param String $streamId The stream ID.
+     *
+     * @return Boolean Returns true on success.
+     */
+    public function removeStreamFromArchive(string $streamId): bool
+    {
+        if ($this->streamMode === StreamMode::AUTO) {
+            throw new InvalidArgumentException('Cannot remove stream to an Archive in auto stream mode');
+        }
+        return $this->client->removeStreamFromArchive(
+            $this->data['id'],
+            $streamId
+        );
     }
 
     /**
@@ -218,5 +298,3 @@ class Archive {
         return $this->data;
     }
 }
-
-/* vim: set ts=4 sw=4 tw=100 sts=4 et :*/

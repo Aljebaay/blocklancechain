@@ -12,12 +12,10 @@ namespace Twilio\Rest\Conversations\V1\Service;
 use Twilio\Exceptions\TwilioException;
 use Twilio\InstanceContext;
 use Twilio\Options;
+use Twilio\Serialize;
 use Twilio\Values;
 use Twilio\Version;
 
-/**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- */
 class ConfigurationContext extends InstanceContext {
     /**
      * Initialize the ConfigurationContext
@@ -61,6 +59,7 @@ class ConfigurationContext extends InstanceContext {
             'DefaultConversationCreatorRoleSid' => $options['defaultConversationCreatorRoleSid'],
             'DefaultConversationRoleSid' => $options['defaultConversationRoleSid'],
             'DefaultChatServiceRoleSid' => $options['defaultChatServiceRoleSid'],
+            'ReachabilityEnabled' => Serialize::booleanToString($options['reachabilityEnabled']),
         ]);
 
         $payload = $this->version->update('POST', $this->uri, [], $data);

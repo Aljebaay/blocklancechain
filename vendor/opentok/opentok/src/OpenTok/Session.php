@@ -2,9 +2,7 @@
 
 namespace OpenTok;
 
-use OpenTok\OpenTok;
-use OpenTok\MediaMode;
-use OpenTok\ArchiveMode;
+use Stringable;
 use OpenTok\Util\Validators;
 
 /**
@@ -13,7 +11,7 @@ use OpenTok\Util\Validators;
 * Use the \OpenTok\OpenTok->createSession() method to create an OpenTok session. Use the
 * getSessionId() method of the Session object to get the session ID.
 */
-class Session
+class Session implements Stringable
 {
     /**
      * @internal
@@ -35,16 +33,25 @@ class Session
      * @internal
      */
     protected $opentok;
+    /**
+     * @internal
+     */
+    protected $e2ee;
 
     /**
      * @internal
      */
-    function __construct($opentok, $sessionId, $properties = array())
+    public function __construct($opentok, $sessionId, $properties = [])
     {
-        // unpack arguments
-        $defaults = array('mediaMode' => MediaMode::ROUTED, 'archiveMode' => ArchiveMode::MANUAL, 'location' => null);
+        $defaults = [
+            'mediaMode' => MediaMode::ROUTED,
+            'archiveMode' => ArchiveMode::MANUAL,
+            'location' => null,
+            'e2ee' => false
+        ];
+
         $properties = array_merge($defaults, array_intersect_key($properties, $defaults));
-        list($mediaMode, $archiveMode, $location) = array_values($properties);
+        [$mediaMode, $archiveMode, $location, $e2ee] = array_values($properties);
 
         Validators::validateOpenTok($opentok);
         Validators::validateSessionId($sessionId);
@@ -57,11 +64,13 @@ class Session
         $this->location = $location;
         $this->mediaMode = $mediaMode;
         $this->archiveMode = $archiveMode;
-
+        $this->e2ee = $e2ee;
     }
 
     /**
     * Returns the session ID, which uniquely identifies the session.
+    *
+    * @return string
     */
     public function getSessionId()
     {
@@ -72,6 +81,8 @@ class Session
     * Returns the location hint IP address.
     *
     * See <a href="OpenTok.OpenTok.html#method_createSession">OpenTok->createSession()</a>.
+    *
+    * @return string
     */
     public function getLocation()
     {
@@ -84,7 +95,9 @@ class Session
     * OpenTok Media Router.
     *
     * See <a href="OpenTok.OpenTok.html#method_createSession">OpenTok->createSession()</a>
-    * and <a href="OpenTok.MediaMode.html">ArchiveMode</a>.
+    * and <a href="OpenTok.MediaMode.html">MediaMode</a>.
+    *
+    * @return MediaMode
     */
     public function getMediaMode()
     {
@@ -97,6 +110,8 @@ class Session
     *
     * See <a href="OpenTok.OpenTok.html#method_createSession">OpenTok->createSession()</a>
     * and <a href="OpenTok.ArchiveMode.html">ArchiveMode</a>.
+    *
+    * @return ArchiveMode
     */
     public function getArchiveMode()
     {
@@ -106,9 +121,9 @@ class Session
     /**
      * @internal
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->sessionId;
+        return (string) $this->sessionId;
     }
 
     /**
@@ -116,7 +131,7 @@ class Session
      * the client passes a token when connecting to the session.
      * <p>
      * For testing, you can also generate tokens or by logging in to your
-     * <a href="https://tokbox.com/account">TokBox account</a>.
+     * <a href="https://tokbox.com/account">OpenTok Video API account</a>.
      *
      * @param array $options This array defines options for the token. This array include the
      * following keys, all of which are optional:
@@ -138,12 +153,22 @@ class Session
      *
      * </ul>
      *
+     * @param bool $legacy Connection tokens are now SHA-256 signed JWTs.
+     * Set this to <code>true</code> to create a token using the legacy T1 format.
+     *
      * @return string The token string.
      */
-    public function generateToken($options = array())
+    public function generateToken($options = [], bool $legacy = false)
     {
-        return $this->opentok->generateToken($this->sessionId, $options);
+        return $this->opentok->generateToken($this->sessionId, $options, $legacy);
+    }
+
+    /**
+     * Whether <a href="https://tokbox.com/developer/guides/end-to-end-encryption">end-to-end encryption</a>
+     * is set for the session.
+     */
+    public function getE2EE(): bool
+    {
+        return (bool)$this->e2ee;
     }
 }
-
-/* vim: set ts=4 sw=4 tw=100 sts=4 et :*/

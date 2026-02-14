@@ -2,32 +2,29 @@
 
 namespace OpenTok;
 
-use OpenTok\Util\Client;
-use OpenTok\Util\Validators;
-
-use OpenTok\Exception\InvalidArgumentException;
-use OpenTok\Exception\ArchiveUnexpectedValueException;
-
 /**
-* Represents data from a Sip Call
+* Represents data from a SIP Call
 *
 * @property string $id
 * The unique identifier of the call that is created.
 *
 * @property string $connectionId
 * The unique identifier of the connection that represents the SIP call in
-* the session. You can use this value to disconnect the SIP call using the moderation API.
+* the session. You can use this value to disconnect the SIP call using OpenTok.forceDisconnect()
+* method.
 *
 * @property string $streamId
-* The id of the stream connected to the session streaming the audio received from the SIP call.
+* The ID of the stream connected to the OpenTok session streaming the audio received from
+* the SIP call.
+*
 */
-class SipCall {
+class SipCall
+{
+    /** @internal */
+    private array $data;
 
     /** @internal */
-    private $data;
-
-    /** @internal */
-    public function __construct($sipCallData)
+    public function __construct(array $sipCallData)
     {
         $this->data['id'] = $sipCallData['id'];
         $this->data['connectionId'] = $sipCallData['connectionId'];
@@ -40,15 +37,10 @@ class SipCall {
     /** @internal */
     public function __get($name)
     {
-        switch($name) {
-            case 'id':
-            case 'connectionId':
-            case 'streamId':
-                return $this->data[$name];
-                break;
-            default:
-                return null;
-        }
+        return match ($name) {
+            'id', 'connectionId', 'streamId' => $this->data[$name],
+            default => null,
+        };
     }
 
 
@@ -60,5 +52,3 @@ class SipCall {
         return json_encode($this->data);
     }
 }
-
-/* vim: set ts=4 sw=4 tw=100 sts=4 et :*/
