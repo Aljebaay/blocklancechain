@@ -117,22 +117,60 @@ if(isset($_POST["install"])){
   $uname = $input->post("db_username");
   $pass = $input->post("db_pass");
   $database = $input->post("db_name"); //Change Your Database Name
-  //ENTER THE RELEVANT INFO BELOW
-  $filename ='gig-zone.sql';
-  $command = file_get_contents($filename);
-  try{
-    $pdo = new PDO("mysql:host=$host;dbname=$database",$uname,$pass);
-    /* execute multi query */
-    $run = $pdo->prepare($command);   
-    if($run->execute()){
+  $project_root = dirname(__DIR__, 3);
+  $scripts_sql_dir = $project_root . DIRECTORY_SEPARATOR . "scripts" . DIRECTORY_SEPARATOR . "sql";
+  $base_sql_candidates = array(
+    __DIR__ . DIRECTORY_SEPARATOR . "gig-zone.sql",
+    $scripts_sql_dir . DIRECTORY_SEPARATOR . "gig-zone.sql",
+  );
+  $base_sql_path = "";
+  foreach($base_sql_candidates as $candidate){
+    if(is_file($candidate)){
+      $base_sql_path = $candidate;
+      break;
+    }
+  }
+
+  if($base_sql_path === ""){
+    echo "<h2 class='text-white text-center mb-3'>Install SQL file gig-zone.sql not found.</h2>";
+  }else{
+    $sql_paths = array($base_sql_path);
+    if(is_dir($scripts_sql_dir)){
+      $patch_files = glob($scripts_sql_dir . DIRECTORY_SEPARATOR . "????-??-??_*.sql");
+      if(is_array($patch_files) && !empty($patch_files)){
+        sort($patch_files, SORT_STRING);
+        foreach($patch_files as $patch_file){
+          if(is_file($patch_file)){
+            $sql_paths[] = $patch_file;
+          }
+        }
+      }
+    }
+
+    try{
+      $pdo = new PDO("mysql:host=$host;dbname=$database",$uname,$pass);
+      foreach($sql_paths as $sql_path){
+        $command = file_get_contents($sql_path);
+        if($command === false){
+          throw new RuntimeException("Unable to read SQL file: " . basename($sql_path));
+        }
+
+        /* execute multi query */
+        $run = $pdo->prepare($command);
+        if($run->execute()){
+          continue;
+        }
+        throw new RuntimeException("Failed executing SQL file: " . basename($sql_path));
+      }
+
       $_SESSION["db_host"] = $host;
       $_SESSION["db_username"] = $uname;
       $_SESSION["db_pass"] = $pass;
       $_SESSION["db_name"] = $database;
       echo "<script>window.open('install2.php','_self'); </script>";
+    }catch(Exception $ex){
+      echo "<h2 class='text-white text-center mb-3'>Something Wrong In Fields</h2>";
     }
-  }catch(PDOException $ex){
-    echo "<h2 class='text-white text-center mb-3'>Something Wrong In Fields</h2>";  
   }
 }
 ?>
