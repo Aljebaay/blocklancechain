@@ -18,24 +18,29 @@ header('Pragma: public');
 
 require_once("../includes/db.php");
 
-$proposal_id = $input->get('proposal_id');
+$proposal_id = (int) $input->get('proposal_id');
+if($proposal_id <= 0){
+   header("Location: ../index");
+   exit;
+}
 
 $login_seller_user_name = $_SESSION['seller_user_name'];
 $select_login_seller = $db->select("sellers",array("seller_user_name" => $login_seller_user_name));
 $row_login_seller = $select_login_seller->fetch();
 $login_seller_id = $row_login_seller->seller_id;
 
-$get_p = $db->query("select * from proposals where proposal_id='$proposal_id' AND proposal_seller_id='$login_seller_id'");
+$get_p = $db->query("select * from proposals where proposal_id=:proposal_id AND proposal_seller_id=:seller_id",array("proposal_id"=>$proposal_id,"seller_id"=>$login_seller_id));
 $count_proposal = $get_p->rowCount();
 
 $get_delivery = $db->select("instant_deliveries",['proposal_id'=>$proposal_id]);
 $row_delivery = $get_delivery->fetch();
-$file = $row_delivery->file;
-$isS3 = $row_delivery->isS3;
+$file = $row_delivery ? $row_delivery->file : "";
+$isS3 = $row_delivery ? $row_delivery->isS3 : 0;
+$file = basename((string) $file);
 
 if($count_proposal != 0 AND !empty($file)){
 
-   header("Content-Disposition: attachment; filename=$file");
+   header('Content-Disposition: attachment; filename="' . str_replace('"', '', $file) . '"');
 
    if($isS3 == 1){
 

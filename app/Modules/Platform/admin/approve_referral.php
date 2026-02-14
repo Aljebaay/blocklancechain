@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -10,8 +11,13 @@ echo "<script>window.open('login','_self');</script>";
 	
 
 if(isset($_GET['approve_referral'])){
+   admin_csrf_require('approve_referral', $input->get('csrf_token'), 'index?view_referrals');
 	
-   $referral_id = $input->get('approve_referral');
+   $referral_id = (int) $input->get('approve_referral');
+   if($referral_id <= 0){
+      echo "<script>alert('Invalid referral id.');window.open('index?view_referrals','_self');</script>";
+      exit;
+   }
 
    $get_referrals = $db->select("referrals",array("referral_id" => $referral_id));
    $row_referrals = $get_referrals->fetch();
@@ -21,8 +27,9 @@ if(isset($_GET['approve_referral'])){
    $select_seller = $db->select("sellers",array("seller_id" => $seller_id));
    $row_seller = $select_seller->fetch();
    $seller_user_name = $row_seller->seller_user_name;
+   $safeSellerUserName = addslashes((string) $seller_user_name);
 
-   $update_current_balance = $db->query("update seller_accounts set current_balance=current_balance+:plus where seller_id='$seller_id'",array("plus"=>$comission));
+   $update_current_balance = $db->query("update seller_accounts set current_balance=current_balance+:plus where seller_id=:seller_id",array("plus"=>$comission,"seller_id"=>(int) $seller_id));
 
    $update_referral = $db->update("referrals",array("status" => 'approved'),array("referral_id" => $referral_id));
 
@@ -33,7 +40,7 @@ if(isset($_GET['approve_referral'])){
       $n_date = date("F d, Y");
       $insert_notification = $db->insert("notifications",array("receiver_id" => $seller_id,"sender_id" => "admin_$admin_id","order_id" => $referral_id,"reason" => "referral_approved","date" => $n_date,"status" => "unread"));
 
-      echo "<script>alert('Referral approved successfully. Commission has be added to $seller_user_name shopping balance.');</script>";
+      echo "<script>alert('Referral approved successfully. Commission has be added to $safeSellerUserName shopping balance.');</script>";
       echo "<script>window.open('index?view_referrals','_self');</script>";
    	
    }

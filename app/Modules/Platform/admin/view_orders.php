@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
 echo "<script>window.open('login','_self');</script>";
 }else{
+	$cancelOrderToken = admin_csrf_token('cancel_order');
 ?>
 <div class="breadcrumbs">
 <div class="col-sm-4">
@@ -196,7 +198,7 @@ echo "<script>window.open('login','_self');</script>";
                       </a>
                       <?php if($order_status == "cancelled" or $order_status == "completed"){ ?>
                       <?php }else{ ?>
-                      <a class="dropdown-item" href="index?cancel_order=<?= $order_id; ?>" onclick="return confirm('Do You Really Want To Cancel This Order , After Cancellation , Order Amount Will Return To Buyer.');">
+                      <a class="dropdown-item" href="index?cancel_order=<?= $order_id; ?>&csrf_token=<?= urlencode($cancelOrderToken); ?>" onclick="return confirm('Do You Really Want To Cancel This Order , After Cancellation , Order Amount Will Return To Buyer.');">
                           <i class="fa fa-ban"></i> Cancel Order
                       </a>
                       <?php } ?>

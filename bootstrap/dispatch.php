@@ -28,6 +28,58 @@ $switchConfig = (is_array($appConfig) && isset($appConfig['endpoint_switch']) &&
     ? $appConfig['endpoint_switch']
     : [];
 
+$entryPath = (isset($entry['path']) && is_string($entry['path'])) ? str_replace('\\', '/', $entry['path']) : '';
+if (strpos($__blcEndpointId, 'admin.') === 0 && $entryPath !== '') {
+    $pathParts = explode('/', trim($entryPath, '/'));
+    if (count($pathParts) === 2 && $pathParts[0] === 'admin') {
+        $adminScript = $pathParts[1];
+        $directAdminAllowList = [
+            'index.php',
+            'login.php',
+            'logout.php',
+            'forgot-password.php',
+            'change_password.php',
+            'proceed.php',
+            'template_preview.php',
+            'app_license.php',
+            'timezones.php',
+            'updateHtaccess.php',
+        ];
+
+        if (!in_array($adminScript, $directAdminAllowList, true)) {
+            $routeKey = pathinfo($adminScript, PATHINFO_FILENAME);
+            if ($routeKey !== '' && preg_match('/^[A-Za-z0-9_-]+$/', $routeKey) === 1) {
+                if (!array_key_exists($routeKey, $_GET)) {
+                    $_GET[$routeKey] = '';
+                }
+                $_REQUEST = array_merge($_REQUEST, $_GET);
+
+                $adminIndex = $__blcRoot
+                    . DIRECTORY_SEPARATOR . 'app'
+                    . DIRECTORY_SEPARATOR . 'Modules'
+                    . DIRECTORY_SEPARATOR . 'Platform'
+                    . DIRECTORY_SEPARATOR . 'admin'
+                    . DIRECTORY_SEPARATOR . 'index.php';
+
+                if (!is_file($adminIndex)) {
+                    throw new RuntimeException('Admin index script not found: ' . $adminIndex);
+                }
+
+                $oldWorkingDirectory = getcwd();
+                chdir(dirname($adminIndex));
+                try {
+                    require $adminIndex;
+                } finally {
+                    if ($oldWorkingDirectory !== false) {
+                        chdir($oldWorkingDirectory);
+                    }
+                }
+                return;
+            }
+        }
+    }
+}
+
 $handler = (isset($entry['handler']) && is_string($entry['handler'])) ? $entry['handler'] : '';
 $fallback = (isset($entry['fallback']) && is_string($entry['fallback'])) ? $entry['fallback'] : '';
 $fallbackOnError = isset($switchConfig['fallback_on_error']) ? (bool) $switchConfig['fallback_on_error'] : true;

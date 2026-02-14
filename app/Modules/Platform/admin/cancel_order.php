@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -10,8 +11,14 @@ echo "<script>window.open('login','_self');</script>";
 
 
 if(isset($_GET['cancel_order'])){
+	admin_csrf_require('cancel_order', $input->get('csrf_token'), 'index?view_orders');
 	
-	$order_id = $input->get('cancel_order');
+	$order_id = (int) $input->get('cancel_order');
+	if($order_id <= 0){
+		echo "<script>alert('Invalid order id.');</script>";
+		echo "<script>window.open('index?view_orders','_self');</script>";
+		exit;
+	}
 
 	$update_order = $db->update("orders",array("order_active"=>'no',"order_status"=>'cancelled'),array("order_id"=>$order_id));
 
@@ -42,7 +49,7 @@ if(isset($_GET['cancel_order'])){
 
 		$insert_notification = $db->insert("notifications",array("receiver_id" => $seller_id,"sender_id" => $buyer_id,"order_id" => $order_id,"reason" => "cancelled_by_customer_support","date" => $n_date,"status" => "unread"));
 
-		$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases-:minus,current_balance=current_balance+:plus where seller_id='$buyer_id'",array("minus"=>$order_price,"plus"=>$order_price));
+		$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases-:minus,current_balance=current_balance+:plus where seller_id=:seller_id",array("minus"=>$order_price,"plus"=>$order_price,"seller_id"=>(int) $buyer_id));
 
 		if($update_balance){
 

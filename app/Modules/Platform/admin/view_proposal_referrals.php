@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -7,6 +8,8 @@ if(!isset($_SESSION['admin_email'])){
 echo "<script>window.open('login','_self');</script>";
 
 }else{
+	$approveProposalReferralToken = admin_csrf_token('approve_proposal_referral');
+	$declineProposalReferralToken = admin_csrf_token('decline_proposal_referral');
 
 ?>
 
@@ -188,13 +191,13 @@ Actions
 
 <div class="dropdown-menu">
 
-<a class="dropdown-item" href="index?approve_proposal_referral=<?= $referral_id; ?>" onclick="return confirm('Are you sure you want to approve this referral? if so, <?= showPrice($comission); ?>.00 will be added to <?= $seller_user_name; ?> shopping balance.');">
+<a class="dropdown-item" href="index?approve_proposal_referral=<?= $referral_id; ?>&csrf_token=<?= urlencode($approveProposalReferralToken); ?>" onclick="return confirm('Are you sure you want to approve this referral? if so, <?= showPrice($comission); ?>.00 will be added to <?= $seller_user_name; ?> shopping balance.');">
 
 <i class="fa fa-thumbs-up"></i> Approve 
 
 </a>
 
-<a class="dropdown-item" href="index?decline_proposal_referral=<?= $referral_id; ?>" onclick="return confirm('Are you sure you want to decline this referral? if so, <?= $seller_user_name; ?> will receive no commission.');">
+<a class="dropdown-item" href="index?decline_proposal_referral=<?= $referral_id; ?>&csrf_token=<?= urlencode($declineProposalReferralToken); ?>" onclick="return confirm('Are you sure you want to decline this referral? if so, <?= $seller_user_name; ?> will receive no commission.');">
 
 <i class="fa fa-ban"></i> Decline
 

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -13,8 +14,13 @@ echo "<script>window.open('login','_self');</script>";
 <?php
 
 if(isset($_GET['decline_proposal_referral'])){
+admin_csrf_require('decline_proposal_referral', $input->get('csrf_token'), 'index?view_proposal_referrals');
 	
-$referral_id = $input->get('decline_proposal_referral');
+$referral_id = (int) $input->get('decline_proposal_referral');
+if($referral_id <= 0){
+	echo "<script>alert('Invalid referral id.');window.open('index?view_proposal_referrals','_self');</script>";
+	exit;
+}
 
 $get_referrals = $db->select("proposal_referrals",array("referral_id" => $referral_id));
 
@@ -28,6 +34,7 @@ $referrer_id = $row_referrals->referrer_id;
 $sel_referrer = $db->select("sellers",array("seller_id" => $referrer_id));
 
 $referrer_user_name = $sel_referrer->fetch()->seller_user_name;
+$safeReferrerUserName = addslashes((string) $referrer_user_name);
 
 
 $update_referral = $db->update("proposal_referrals",array("status" => 'declined'),array("referral_id" => $referral_id));
@@ -36,7 +43,7 @@ if($update_referral){
 
 $insert_log = $db->insert_log($admin_id,"proposal_referral",$referral_id,"declined");
 
-echo "<script>alert('Referral has been declined successfully. No commision has been rewarded to $referrer_user_name.');</script>";
+echo "<script>alert('Referral has been declined successfully. No commision has been rewarded to $safeReferrerUserName.');</script>";
 	
 echo "<script>window.open('index?view_proposal_referrals','_self');</script>";
 	

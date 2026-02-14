@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -7,6 +8,8 @@ if(!isset($_SESSION['admin_email'])){
 echo "<script>window.open('login','_self');</script>";
 
 }else{
+	$deleteLogToken = admin_csrf_token('delete_log');
+	$deleteAllLogsToken = admin_csrf_token('delete_all_logs');
 
 ?>
 
@@ -121,7 +124,7 @@ echo "<script>window.open('login','_self');</script>";
 
 <div class="card-body"><!--- card-body Starts --->
 
-<a href="index?delete_all_logs" onclick="return confirm('Do you really want to delete all admin panel logs.')" class="btn btn-danger btn-lg float-right mb-4"><i class="fa fa-trash"></i>&nbsp;&nbsp;Delete All Logs</a>
+<a href="index?delete_all_logs&csrf_token=<?= urlencode($deleteAllLogsToken); ?>" onclick="return confirm('Do you really want to delete all admin panel logs.')" class="btn btn-danger btn-lg float-right mb-4"><i class="fa fa-trash"></i>&nbsp;&nbsp;Delete All Logs</a>
 
 <div class="table-responsive"><!--- table-responsive Starts --->
 
@@ -446,7 +449,7 @@ $i++;
 
 <td>                                        
 
-<a href="index?delete_log=<?= $id; ?>" class="btn btn-danger text-white">
+<a href="index?delete_log=<?= $id; ?>&csrf_token=<?= urlencode($deleteLogToken); ?>" class="btn btn-danger text-white">
 
 <i class="fa fa-trash text-white"></i> <span class="text-white">Delete&nbsp;</span>
 

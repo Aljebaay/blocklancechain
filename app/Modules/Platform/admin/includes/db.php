@@ -6,6 +6,37 @@ $dir = str_replace("admin\includes", '',$dir);
 
 include("$dir/includes/config.php");
 
+if(!function_exists('blc_admin_resolve_language_file')){
+	function blc_admin_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
+		$baseDir = realpath($languagesDir);
+		if($baseDir === false){
+			return null;
+		}
+
+		$normalizedTitle = strtolower(trim($languageTitle));
+		if($normalizedTitle === ''){
+			return null;
+		}
+
+		if(preg_match('/^[a-z0-9 _().-]+$/', $normalizedTitle) !== 1){
+			return null;
+		}
+
+		$candidate = $baseDir . DIRECTORY_SEPARATOR . $normalizedTitle . '.php';
+		$resolved = realpath($candidate);
+		if($resolved === false){
+			return null;
+		}
+
+		$basePrefix = rtrim($baseDir, "\\/") . DIRECTORY_SEPARATOR;
+		if(strpos($resolved, $basePrefix) !== 0){
+			return null;
+		}
+
+		return $resolved;
+	}
+}
+
 if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 	echo "<script>window.open('../install.php','_self'); </script>";
 	exit();
@@ -76,7 +107,14 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 
    $sel_language = $db->select("languages",array( "id" => $_SESSION['adminLanguage']))->fetch();
    $template_folder = $sel_language->template_folder; 
-   require($dir."languages/".strtolower($sel_language->title).".php");
+   $languageFile = blc_admin_resolve_language_file($dir."languages", (string) $sel_language->title);
+   if($languageFile === null){
+      $languageFile = blc_admin_resolve_language_file($dir."languages", "english");
+   }
+   if($languageFile === null){
+      throw new RuntimeException("No valid admin language file found for runtime.");
+   }
+   require($languageFile);
 
 
    $site_favicon = getImageUrl2("general_settings","site_favicon",$row_general_settings->site_favicon);

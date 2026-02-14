@@ -219,6 +219,8 @@ if(isset($_POST['admin_login'])){
     	  }
       }
     	
+      blc_session_regenerate_id_safe(true);
+
       $_SESSION['admin_email'] = $admin_email;
       $_SESSION['loggedin_time'] = time();
           

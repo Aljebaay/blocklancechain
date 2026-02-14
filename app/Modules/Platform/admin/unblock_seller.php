@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -13,8 +14,13 @@ echo "<script>window.open('login','_self');</script>";
 <?php
 
 if(isset($_GET['unblock_seller'])){
+admin_csrf_require('unblock_seller', $input->get('csrf_token'), 'index?view_sellers');
 	
-$seller_id = $input->get('unblock_seller');
+$seller_id = (int) $input->get('unblock_seller');
+if($seller_id <= 0){
+	echo "<script>alert('Invalid seller id.');window.open('index?view_sellers','_self');</script>";
+	exit;
+}
 	
 $update_seller = $db->update("sellers",array("seller_status" => 'away'),array("seller_id" => $seller_id));
 	

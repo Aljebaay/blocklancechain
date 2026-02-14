@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 
 blc_bootstrap_session();
@@ -8,6 +9,9 @@ if(!isset($_SESSION['admin_email'])){
 echo "<script>window.open('login','_self');</script>";
 
 }else{
+	$verifyEmailToken = admin_csrf_token('verify_email');
+	$banSellerToken = admin_csrf_token('ban_seller');
+	$unblockSellerToken = admin_csrf_token('unblock_seller');
 
 ?>
 
@@ -275,7 +279,7 @@ echo "<script>window.open('login','_self');</script>";
                                     </a>
                                         
                                     <?php if($seller_verification != "ok"){ ?>
-                                    <a class="dropdown-item" href="index?verify_email=<?= $seller_id; ?>">
+                                    <a class="dropdown-item" href="index?verify_email=<?= $seller_id; ?>&csrf_token=<?= urlencode($verifyEmailToken); ?>">
 
                                         <i class="fa fa-envelope"></i> Verify Seller Email
 
@@ -298,7 +302,7 @@ echo "<script>window.open('login','_self');</script>";
 
                                     <?php if($seller_status == "block-ban"){ ?>
 
-                                    <a class="dropdown-item" href="index?unblock_seller=<?= $seller_id; ?>">
+                                    <a class="dropdown-item" href="index?unblock_seller=<?= $seller_id; ?>&csrf_token=<?= urlencode($unblockSellerToken); ?>">
 
                                         <i class="fa fa-unlock"></i> Already Banned! Unblock Seller?
 
@@ -306,7 +310,7 @@ echo "<script>window.open('login','_self');</script>";
 
                                     <?php }else{ ?>
 
-                                    <a class="dropdown-item" href="index?ban_seller=<?= $seller_id; ?>">
+                                    <a class="dropdown-item" href="index?ban_seller=<?= $seller_id; ?>&csrf_token=<?= urlencode($banSellerToken); ?>">
 
                                         <i class="fa fa-ban"></i> Block / Ban User
 

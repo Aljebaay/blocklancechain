@@ -234,6 +234,7 @@ if(isset($_SESSION['seller_user_name'])){
 	    	$row_seller = $select_seller->fetch();
 
 				if($select_seller){
+					blc_session_regenerate_id_safe(true);
 					
 					$update_seller = $db->update("sellers",array("seller_status"=>'online',"seller_ip"=>$ip),array("seller_id"=>$row_seller->seller_id,"seller_pass"=>$hashed_password));
 //					$seller_user_name = ucfirst(strtolower($row_seller->seller_user_name));

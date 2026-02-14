@@ -2,6 +2,7 @@
 
 require_once("$dir/functions/email.php");
 require_once("$dir/functions/mailer.php");
+require_once("$dir/includes/password_reset.php");
 
 $get_general_settings = $db->select("general_settings");   
 $row_general_settings = $get_general_settings->fetch();
@@ -111,6 +112,7 @@ if(isset($_POST['register'])){
 					
 			$regsiter_seller_id = $db->lastInsertId();
 			if($insert_seller){
+			  blc_session_regenerate_id_safe(true);
 			  $_SESSION['seller_user_name'] = $u_name;
 				$insert_seller_account = $db->insert("seller_accounts",array("seller_id" => $regsiter_seller_id));
 				if($paymentGateway == 1){
@@ -241,6 +243,7 @@ if(isset($_POST['login'])){
 				$select_seller = $db->query("select * from sellers where seller_email=:u_email OR seller_user_name=:u_name AND seller_pass=:u_pass",array("u_email"=>$seller_user_name,"u_name"=>$seller_user_name,"u_pass"=>$hashed_password));
 	    		$row_seller = $select_seller->fetch();
 				if($select_seller){
+					blc_session_regenerate_id_safe(true);
 					
 					$_SESSION['sessionStart'] = $row_seller->seller_user_name;
 					if(isset($_SESSION['sessionStart']) and $_SESSION['sessionStart'] === $row_seller->seller_user_name){
@@ -294,24 +297,34 @@ if(isset($_POST['forgot'])){
 		$site_email_address = $row_general_settings->site_email_address;
 
 		$row_seller_email = $select_seller_email->fetch();
+		$seller_id = (int) $row_seller_email->seller_id;
 		$seller_user_name = $row_seller_email->seller_user_name;
-		$seller_pass = $row_seller_email->seller_pass;
-
-		$data = [];
-		$data['template'] = "forgot_password";
-		$data['to'] = $forgot_email;
-		$data['subject'] = "$site_name: Password Reset";
-		$data['user_name'] = $seller_user_name;
-		$data['forgot_link'] = "$site_url/change_password?username=$seller_user_name&code=$seller_pass";
-
-		if(send_mail($data)){
+		$resetToken = blc_password_reset_issue($db, $seller_id, $forgot_email, 3600);
+		if(!is_array($resetToken) || empty($resetToken['selector']) || empty($resetToken['token'])){
 			echo "
-	        <script>
-	         swal({
-		         type: 'success',
-		         text: '{$lang['alert']['successfully_forgot_pass']}',
-	         });
-	      </script>";
+			<script>
+				swal({
+					type: 'error',
+					text: 'Unable to create password reset request. Please try again.'
+				});
+			</script>";
+		}else{
+			$data = [];
+			$data['template'] = "forgot_password";
+			$data['to'] = $forgot_email;
+			$data['subject'] = "$site_name: Password Reset";
+			$data['user_name'] = $seller_user_name;
+			$data['forgot_link'] = "$site_url/change_password?selector={$resetToken['selector']}&token={$resetToken['token']}";
+
+			if(send_mail($data)){
+				echo "
+		        <script>
+		         swal({
+			         type: 'success',
+			         text: '{$lang['alert']['successfully_forgot_pass']}',
+		         });
+		      </script>";
+			}
 		}
 
 	}

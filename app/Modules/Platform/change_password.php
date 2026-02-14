@@ -3,17 +3,17 @@ require_once __DIR__ . '/includes/session_bootstrap.php';
 
 blc_bootstrap_session();
 require_once("includes/db.php");
+require_once("includes/password_reset.php");
 
 if(isset($_SESSION['seller_user_name'])){
 	echo "<script> window.open('index.php','_self'); </script>";
 }
 
-$username = $input->get('username');
-$code = $input->get('code');
+$selector = (string) $input->get('selector');
+$token = (string) $input->get('token');
+$resetRow = blc_password_reset_resolve($db, $selector, $token);
 
-$select_seller = $db->select("sellers",array("seller_user_name" => $username,"seller_pass" => $code));
-$count_seller = $select_seller->rowCount();
-if($count_seller == 0){
+if(!$resetRow){
 	// exit();
 	echo "
 		<script>
@@ -24,9 +24,19 @@ if($count_seller == 0){
    exit();
 }
 
-$row_seller = $select_seller->fetch();
-$seller_id = $row_seller->seller_id;
-$seller_user_name = $row_seller->seller_user_name;
+$seller_id = (int) $resetRow->seller_id;
+$sellerRow = $db->select("sellers", array("seller_id" => $seller_id))->fetch();
+if(!$sellerRow){
+	echo "
+		<script>
+			alert('Your Change-Password Link Is Invalid.');
+			window.open('index.php','_self');
+		</script>
+	";
+	exit();
+}
+$seller_user_name = $sellerRow->seller_user_name;
+$reset_id = (int) $resetRow->id;
 
 ?>
 <!DOCTYPE html>
@@ -158,6 +168,16 @@ $seller_user_name = $row_seller->seller_user_name;
 <?php
 
 if(isset($_POST['submit'])){
+	$submitResetRow = blc_password_reset_resolve($db, $selector, $token);
+	if(!$submitResetRow || (int) $submitResetRow->id !== $reset_id){
+		echo "
+		<script>
+			alert('Your Change-Password Link Is Invalid.');
+			window.open('index.php','_self');
+		</script>
+		";
+		exit();
+	}
 	
     $new_pass = $input->post('new_pass');
     
@@ -185,6 +205,7 @@ if(isset($_POST['submit'])){
 	$update_password = $db->update("sellers",array("seller_pass"=>$encrypted_password),array("seller_id"=>$seller_id));
 	
 	if($update_password){
+		blc_password_reset_mark_used($db, $reset_id, $seller_id);
 		
 		echo "
 		

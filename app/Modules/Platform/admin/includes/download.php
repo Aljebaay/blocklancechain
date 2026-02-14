@@ -22,13 +22,17 @@ header('Pragma: public');
 
 include("db.php");
 
-$order_id = $input->get('order_id');
-$c_id = $input->get('c_id');
+$order_id = (int) $input->get('order_id');
+$c_id = (int) $input->get('c_id');
+if($order_id <= 0 || $c_id <= 0){
+	header("Location: ../index");
+	exit;
+}
 
-$get_order = $db->query("select * from orders where order_id='$order_id'");
+$get_order = $db->query("select * from orders where order_id=:order_id",array("order_id"=>$order_id));
 $count_order = $get_order->rowCount();
 
-$sel_c = $db->select("order_conversations",array("c_id" => $c_id));
+$sel_c = $db->select("order_conversations",array("c_id" => $c_id,"order_id"=>$order_id));
 $count_c = $sel_c->rowCount();
 
 if($count_order != 0 AND $count_c != 0){
@@ -48,8 +52,13 @@ if($count_order != 0 AND $count_c != 0){
 	}else{
 		$file_name = $file;
 	}
+	$file_name = basename((string) $file_name);
+	if($file_name === ''){
+		header("Location: ../index");
+		exit;
+	}
 
-	header("Content-Disposition: attachment; filename=$file_name");
+	header('Content-Disposition: attachment; filename="' . str_replace('"', '', $file_name) . '"');
 
 	if($isS3 == 1){
 

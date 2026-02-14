@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/session_bootstrap.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 blc_bootstrap_session();
 if(!isset($_SESSION['admin_email'])){
@@ -13,8 +14,13 @@ echo "<script>window.open('login','_self');</script>";
 <?php
 
 if(isset($_GET['approve_proposal_referral'])){
+   admin_csrf_require('approve_proposal_referral', $input->get('csrf_token'), 'index?view_proposal_referrals');
 	
-   $referral_id = $input->get('approve_proposal_referral');
+   $referral_id = (int) $input->get('approve_proposal_referral');
+   if($referral_id <= 0){
+      echo "<script>alert('Invalid referral id.');window.open('index?view_proposal_referrals','_self');</script>";
+      exit;
+   }
 
 
    $get_referrals = $db->select("proposal_referrals",array("referral_id" => $referral_id));
@@ -26,11 +32,12 @@ if(isset($_GET['approve_proposal_referral'])){
 
    $sel_referrer = $db->select("sellers",array("seller_id" => $referrer_id));
    $referrer_user_name = $sel_referrer->fetch()->seller_user_name;
+   $safeReferrerUserName = addslashes((string) $referrer_user_name);
 
 
-   $update_seller_balance = $db->query("update seller_accounts set current_balance=current_balance-:minus where seller_id='$seller_id'",array("minus"=>$comission));
+   $update_seller_balance = $db->query("update seller_accounts set current_balance=current_balance-:minus where seller_id=:seller_id",array("minus"=>$comission,"seller_id"=>(int) $seller_id));
 
-   $update_referrer_balance = $db->query("update seller_accounts set current_balance=current_balance+:plus where seller_id='$referrer_id'",array("plus"=>$comission));
+   $update_referrer_balance = $db->query("update seller_accounts set current_balance=current_balance+:plus where seller_id=:referrer_id",array("plus"=>$comission,"referrer_id"=>(int) $referrer_id));
 
    $update_referral = $db->update("proposal_referrals",array("status"=>'approved'),array("referral_id"=>$referral_id));
 
@@ -41,7 +48,7 @@ if(isset($_GET['approve_proposal_referral'])){
 
       $insert_log = $db->insert_log($admin_id,"proposal_referral",$referral_id,"approved");
 
-      echo "<script>alert('Referral approved successfully. Commission has be added to $referrer_user_name shopping balance.');</script>";
+      echo "<script>alert('Referral approved successfully. Commission has be added to $safeReferrerUserName shopping balance.');</script>";
       echo "<script>window.open('index?view_proposal_referrals','_self');</script>";
 
    }
