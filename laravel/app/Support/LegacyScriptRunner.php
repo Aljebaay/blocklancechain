@@ -104,11 +104,18 @@ PHP;
 
         $markerPos = strrpos($output, 'STATUS:');
         if ($markerPos === false) {
-            return null;
+            // Fallback: return raw output with default status when marker missing.
+            return [
+                'status' => $defaultStatus,
+                'body' => $output,
+            ];
         }
         $newlinePos = strpos($output, "\n", $markerPos);
         if ($newlinePos === false) {
-            return null;
+            return [
+                'status' => $defaultStatus,
+                'body' => $output,
+            ];
         }
 
         $statusLine = substr($output, $markerPos + strlen('STATUS:'), $newlinePos - ($markerPos + strlen('STATUS:')));
@@ -116,7 +123,7 @@ PHP;
         $status = (int) trim($statusLine);
 
         return [
-            'status' => $status,
+            'status' => $status > 0 ? $status : $defaultStatus,
             'body' => $body,
         ];
     }
