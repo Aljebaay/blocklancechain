@@ -16,11 +16,14 @@ require_once __DIR__ . '/includes/session_bootstrap.php';
 	$get_payment_settings = $db->select("payment_settings");
 	$row_payment_settings = $get_payment_settings->fetch();
 	$enable_paypal = $row_payment_settings->enable_paypal;
-	$enable_paypal = $row_payment_settings->enable_paypal;
-	$paypal_client_id = $row_payment_settings->paypal_app_client_id;
+	$paypal_client_id = trim((string) $row_payment_settings->paypal_app_client_id);
 	$paypal_email = $row_payment_settings->paypal_email;
-	$paypal_currency_code = $row_payment_settings->paypal_currency_code;
+	$paypal_currency_code = strtoupper(trim((string) $row_payment_settings->paypal_currency_code));
 	$paypal_sandbox = $row_payment_settings->paypal_sandbox;
+	$paypal_is_configured = (!empty($paypal_client_id) && !empty($paypal_currency_code));
+	if(!$paypal_is_configured){
+		$enable_paypal = "no";
+	}
 	$enable_dusupay = $row_payment_settings->enable_dusupay;
 	$dusupay_method = $row_payment_settings->dusupay_method;
 	$dusupay_provider_id = $row_payment_settings->dusupay_provider_id;
@@ -187,7 +190,9 @@ require_once __DIR__ . '/includes/session_bootstrap.php';
 <script src="https://checkout.stripe.com/checkout.js"></script>
 
 <!-- Include the PayPal JavaScript SDK -->
+<?php if($paypal_is_configured){ ?>
 <script src="https://www.paypal.com/sdk/js?client-id=<?= $paypal_client_id; ?>&commit=true&disable-funding=credit,card&currency=<?= $paypal_currency_code; ?>"></script>
+<?php } ?>
 
 <?php if(!empty($site_favicon)){ ?>
 <link rel="shortcut icon" href="<?= $site_favicon; ?>" type="image/x-icon">
@@ -694,8 +699,9 @@ $('#mercadopago').click(function(){
 </script>
 <?php } ?>
 <?php require_once("includes/footer.php"); ?>
-
+<?php if($enable_paypal == "yes"){ ?>
 <script src="js/paypal.js" id="paypal-js" data-base-url="<?= $site_url; ?>" data-payment-type="proposal"></script>
+<?php } ?>
 
 </body>
 </html>

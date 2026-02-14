@@ -4,6 +4,22 @@ $(document).ready(function(){
 	var enable_sound = $("#custom-js").data("enable-sound");
 	var enable_notifications = $("#custom-js").data("enable-notifications");
 	var disable_messages = $("#custom-js").data("disable-messages");
+	var parseJSONSafe = function(data){
+		if(typeof data === "object" && data !== null){
+			return data;
+		}
+		if(typeof data !== "string"){
+			return null;
+		}
+		try{
+			return $.parseJSON(data);
+		}catch(error){
+			if(window.console && typeof window.console.warn === "function"){
+				window.console.warn("Invalid JSON response received.", data.substring(0, 80));
+			}
+			return null;
+		}
+	};
 
 	// Langauge
 	$("#languageSelect").change(function(){
@@ -159,7 +175,11 @@ $(document).ready(function(){
 				url: base_url+"/includes/comp/search-auto",
 				data: {seller_id:seller_id, search:val},
 				success: function(data){
-					result = $.parseJSON(data);
+					result = parseJSONSafe(data);
+					if(!result){
+						$('.search-bar-panel').addClass('d-none');
+						return;
+					}
 		      	proposals = result.proposals;
 		      	sellers = result.sellers;
 					var html = "";
@@ -334,7 +354,11 @@ $(document).ready(function(){
 			url: base_url+"/includes/comp/c-messages-body",
 			data: {seller_id: seller_id}
 			}).done(function(data){
-				result = $.parseJSON(data);
+				result = parseJSONSafe(data);
+				if(!result){
+					setTimeout(c_messages_body, LIGHT_POLL_INTERVAL);
+					return;
+				}
 				messages = result.messages;
 				html = "<h3 class='dropdown-header'> "+result['lang'].inbox+" ("+result.count_all_inbox_sellers+") <a class='float-right make-black' href='"+base_url+"/conversations/inbox' style='color:black;'>"+result['lang'].view_inbox+"</a></h3>";
 				if(parseInt(result.count_all_inbox_sellers) == 0){
@@ -382,7 +406,11 @@ $(document).ready(function(){
 			url: base_url+"/includes/comp/c-notifications-body",
 			data: {seller_id: seller_id}
 			}).done(function(data){
-				result = $.parseJSON(data);
+				result = parseJSONSafe(data);
+				if(!result){
+					setTimeout(c_notifications_body, LIGHT_POLL_INTERVAL);
+					return;
+				}
 				notifications = result.notifications;
 				html = "<h3 class='dropdown-header'> "+result['lang'].notifications+" ("+result.count_all_notifications+") <a class='float-right make-black' href='"+base_url+"/notifications' style='color:black;'>"+result['lang'].view_notifications+"</a></h3>";
 				if(parseInt(result.count_all_notifications) == 0){
@@ -412,7 +440,7 @@ $(document).ready(function(){
 			data: {seller_id: seller_id}
 			}).done(function(data){
 				if(enable_notifications == 1 && disable_messages == 0){
-					result = $.parseJSON(data);
+					result = parseJSONSafe(data) || [];
 					html = '';
 					for(i in result){
 						html += "<div class='header-message-div'><a class='float-left' href='"+base_url+"/conversations/inbox?single_message_id="+result[i].message_group_id+"'><img src='"+result[i].sender_image+"' width='50' height='50' class='rounded-circle'><strong class='heading'>"+result[i].sender_user_name+"</strong><p class='message'>"+result[i].desc+"</p><p class='date text-muted'>"+result[i].date+"</p></a><a href='#' class='float-right close closePopup btn btn-sm pl-lg-5 pt-0'><i class='fa fa-times'></i></a></div>";
@@ -435,7 +463,7 @@ $(document).ready(function(){
 			data: {seller_id: seller_id, enable_sound: enable_sound}
 			}).done(function(data){
 				if(enable_notifications == 1){
-					result = $.parseJSON(data);
+					result = parseJSONSafe(data) || [];
 					html = '';
 					for(i in result){
 						html += "<div class='header-message-div'><a class='float-left' href='"+base_url+"/dashboard?n_id="+result[i].notification_id+"'><img src='"+result[i].sender_image+"' width='50' height='50' class='rounded-circle'><strong class='heading'>"+result[i].sender_user_name+"</strong><p class='message'>"+result[i].message+"</p><p class='date text-muted'>"+result[i].date+"</p></a><a href='#' class='float-right close closePopup btn btn-sm pl-lg-5 pt-0'><i class='fa fa-times'></i></a>"+result[i].more+"</div>";

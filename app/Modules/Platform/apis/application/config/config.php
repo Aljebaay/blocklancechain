@@ -23,7 +23,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = '';
+$apiBaseUrl = getenv('API_BASE_URL');
+if ($apiBaseUrl === false || $apiBaseUrl === '') {
+	$apiBaseUrl = getenv('APP_URL');
+}
+$config['base_url'] = $apiBaseUrl !== false && $apiBaseUrl !== ''
+	? rtrim((string) $apiBaseUrl, '/\\') . '/'
+	: '';
 
 /*
 |--------------------------------------------------------------------------
@@ -324,7 +330,9 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/user_guide/libraries/encryption.html
 |
 */
-$config['encryption_key'] = '';
+$config['encryption_key'] = getenv('CI_ENCRYPTION_KEY') !== false
+	? (string) getenv('CI_ENCRYPTION_KEY')
+	: '';
 
 /*
 |--------------------------------------------------------------------------

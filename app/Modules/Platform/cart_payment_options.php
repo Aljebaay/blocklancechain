@@ -12,10 +12,14 @@ if (!isset($_SESSION['seller_user_name'])) {
 $get_payment_settings = $db->select("payment_settings");
 $row_payment_settings = $get_payment_settings->fetch();
 $enable_paypal = $row_payment_settings->enable_paypal;
-$paypal_client_id = $row_payment_settings->paypal_app_client_id;
+$paypal_client_id = trim((string) $row_payment_settings->paypal_app_client_id);
 $paypal_email = $row_payment_settings->paypal_email;
-$paypal_currency_code = $row_payment_settings->paypal_currency_code;
+$paypal_currency_code = strtoupper(trim((string) $row_payment_settings->paypal_currency_code));
 $paypal_sandbox = $row_payment_settings->paypal_sandbox;
+$paypal_is_configured = (!empty($paypal_client_id) && !empty($paypal_currency_code));
+if(!$paypal_is_configured){
+	$enable_paypal = "no";
+}
 if ($paypal_sandbox == "on") {
 	$paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr";
 } elseif ($paypal_sandbox == "off") {
@@ -105,7 +109,9 @@ $total = $sub_total + $processing_fee;
 	<?php } ?>
 
 	<!-- Include the PayPal JavaScript SDK -->
+	<?php if($paypal_is_configured){ ?>
 	<script src="https://www.paypal.com/sdk/js?client-id=<?= $paypal_client_id; ?>&disable-funding=credit,card&currency=<?= $paypal_currency_code; ?>"></script>
+	<?php } ?>
 
 </head>
 
@@ -527,7 +533,9 @@ $total = $sub_total + $processing_fee;
 		</script>
 	<?php } ?>
 	<?php require_once("includes/footer.php"); ?>
+	<?php if($enable_paypal == "yes"){ ?>
 	<script src="js/paypal.js" id="paypal-js" data-base-url="<?= $site_url; ?>" data-payment-type="cart"></script>
+	<?php } ?>
 </body>
 
 </html>

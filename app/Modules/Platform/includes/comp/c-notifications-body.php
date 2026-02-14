@@ -29,11 +29,17 @@ while($row_notifications = $select_notofications->fetch()){
 	// Select Sender Details
 	$select_sender = $db->select("sellers",array("seller_id" => $sender_id));
 	$row_sender = $select_sender->fetch();
-	$data['notifications'][$i]['sender_user_name'] = ucfirst(@$row_sender->seller_user_name);
-	if(empty($row_sender->seller_image)){ 
+	$sender_user_name = "";
+	$sender_image = "";
+	if($row_sender){
+		$sender_user_name = (string)($row_sender->seller_user_name ?? "");
+		$sender_image = (string)($row_sender->seller_image ?? "");
+	}
+	$data['notifications'][$i]['sender_user_name'] = ucfirst($sender_user_name);
+	if($sender_image === ""){ 
 		$data['notifications'][$i]['sender_image'] = "$site_url/user_images/empty-image.png"; 
 	}else{
-		$data['notifications'][$i]['sender_image'] = getImageUrl2("sellers","seller_image",$row_sender->seller_image);
+		$data['notifications'][$i]['sender_image'] = getImageUrl2("sellers","seller_image",$sender_image);
 	}
 
 	if(strpos($sender_id,'admin') !== false){

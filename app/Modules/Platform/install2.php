@@ -189,25 +189,54 @@
         
         $update_admin = $db->update("admins",array("admin_name"=>$admin_name,"admin_email"=> $admin_email,"admin_pass"=> $encrypt_password));
 
-        $config_file = "includes/config.php";
-        $newData = "<?php
-          ini_set('display_errors', 0);
-          ini_set('display_startup_errors', 0);
-          @define('DB_HOST', '$host');
-          @define('DB_USER', '$uname');
-          @define('DB_PASS', '$pass');
-          @define('DB_NAME', '$database');"; 
-        
-        $handle = fopen($config_file, "w"); 
-        fwrite($handle, $newData); 
-        fclose($handle);
+        $project_root = dirname(__DIR__, 3);
+        $env_path = $project_root . DIRECTORY_SEPARATOR . ".env";
+        $env_lines = file_exists($env_path) ? file($env_path, FILE_IGNORE_NEW_LINES) : [];
+        if(!is_array($env_lines)){
+          $env_lines = [];
+        }
 
-        $apis_db = file_get_contents('apis/application/config/database.php');
-        $apis_db = str_replace('db_host', $host, $apis_db);
-        $apis_db = str_replace('db_user', $uname, $apis_db);
-        $apis_db = str_replace('db_pass', $pass, $apis_db);
-        $apis_db = str_replace('db_name', $database, $apis_db);
-        file_put_contents('apis/application/config/database.php', $apis_db);
+        $format_env_value = function($value){
+          $value = (string)$value;
+          if($value === ""){
+            return "";
+          }
+          if(preg_match('/[\s#=]/', $value)){
+            return '"' . addcslashes($value, "\\\"") . '"';
+          }
+          return $value;
+        };
+
+        $set_env_value = function($key, $value) use (&$env_lines, $format_env_value){
+          $formatted = $key . "=" . $format_env_value($value);
+          $pattern = '/^\s*' . preg_quote($key, '/') . '\s*=/';
+          $updated = false;
+          foreach($env_lines as $line_number => $line_text){
+            if(preg_match($pattern, $line_text)){
+              $env_lines[$line_number] = $formatted;
+              $updated = true;
+              break;
+            }
+          }
+          if(!$updated){
+            $env_lines[] = $formatted;
+          }
+        };
+
+        $set_env_value('APP_ENV', 'production');
+        $set_env_value('APP_DEBUG', '0');
+        $set_env_value('APP_URL', rtrim((string)$site_url, "/"));
+        $set_env_value('DB_HOST', $host);
+        $set_env_value('DB_USER', $uname);
+        $set_env_value('DB_PASS', $pass);
+        $set_env_value('DB_NAME', $database);
+        $set_env_value('API_BASE_URL', rtrim((string)$site_url, "/") . '/apis');
+        $set_env_value('API_DB_HOST', $host);
+        $set_env_value('API_DB_USER', $uname);
+        $set_env_value('API_DB_PASS', $pass);
+        $set_env_value('API_DB_NAME', $database);
+
+        file_put_contents($env_path, implode(PHP_EOL, $env_lines) . PHP_EOL);
 
         session_destroy();
 

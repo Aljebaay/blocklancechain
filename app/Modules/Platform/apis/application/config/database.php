@@ -73,20 +73,52 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+$apiDbHost = getenv('API_DB_HOST');
+$apiDbUser = getenv('API_DB_USER');
+$apiDbPass = getenv('API_DB_PASS');
+$apiDbName = getenv('API_DB_NAME');
+$apiDbCharset = getenv('API_DB_CHARSET');
+$apiDbCollation = getenv('API_DB_COLLATION');
+$appDebug = getenv('APP_DEBUG');
+
+if ($apiDbHost === false || $apiDbHost === '') {
+	$apiDbHost = getenv('DB_HOST');
+}
+if ($apiDbUser === false || $apiDbUser === '') {
+	$apiDbUser = getenv('DB_USER');
+}
+if ($apiDbPass === false || $apiDbPass === '') {
+	$apiDbPass = getenv('DB_PASS');
+}
+if ($apiDbName === false || $apiDbName === '') {
+	$apiDbName = getenv('DB_NAME');
+}
+if ($apiDbCharset === false || $apiDbCharset === '') {
+	$apiDbCharset = getenv('DB_CHARSET');
+}
+if ($apiDbCollation === false || $apiDbCollation === '') {
+	$apiDbCollation = getenv('DB_COLLATION');
+}
+
+$apiDbDebug = TRUE;
+if ($appDebug !== false && $appDebug !== '') {
+	$apiDbDebug = in_array(strtolower((string) $appDebug), array('1', 'true', 'yes', 'on'), true);
+}
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => 'root',
-	'database' => 'blocklancechain',
+	'hostname' => $apiDbHost !== false && $apiDbHost !== '' ? (string) $apiDbHost : 'localhost',
+	'username' => $apiDbUser !== false ? (string) $apiDbUser : '',
+	'password' => $apiDbPass !== false ? (string) $apiDbPass : '',
+	'database' => $apiDbName !== false ? (string) $apiDbName : '',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
-	'db_debug' => TRUE,
+	'db_debug' => $apiDbDebug,
 	'cache_on' => FALSE,
 	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
+	'char_set' => $apiDbCharset !== false && $apiDbCharset !== '' ? (string) $apiDbCharset : 'utf8',
+	'dbcollat' => $apiDbCollation !== false && $apiDbCollation !== '' ? (string) $apiDbCollation : 'utf8_general_ci',
 	'swap_pre' => '',
 	'encrypt' => FALSE,
 	'compress' => FALSE,

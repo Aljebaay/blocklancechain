@@ -10,7 +10,10 @@ RewriteCond %{REQUEST_URI} (.+)/$
 RewriteRule ^ %1 [R=301,L]
 
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.+\.(?:css|js|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|webm|pdf|json|mp3|wav|ogg))$ asset_proxy.php?path=$1 [QSA,L,NC]
+RewriteRule ^(.+\.(?:css|js|map|png|jpe?g|gif|svg|ico|woff2?|ttf|otf|eot|webp|mp4|webm|pdf|json|mp3|wav|ogg))$ asset_proxy.php?path=$1 [QSA,L,NC]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^includes/(.+)$ includes_proxy.php?path=$1 [QSA,L,NC]
 
 # categories
 RewriteRule ^categories/(.+)/(.+)/?$ categories/category.php?cat_url=$1&cat_child_url=$2 [QSA,L,NC]

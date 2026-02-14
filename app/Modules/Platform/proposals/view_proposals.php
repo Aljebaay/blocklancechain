@@ -52,7 +52,9 @@ $count_declined_proposals = $db->count("proposals",array("proposal_seller_id" =>
 	<?php } ?>
 
 	<!-- Include the PayPal JavaScript SDK -->
+	<?php if(!empty($paypal_client_id) && !empty($paypal_currency_code)){ ?>
 	<script src="https://www.paypal.com/sdk/js?client-id=<?= $paypal_client_id; ?>&disable-funding=credit,card&currency=<?= $paypal_currency_code; ?>"></script>
+	<?php } ?>
 
 </head>
 <body class="is-responsive">

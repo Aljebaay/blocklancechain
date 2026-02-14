@@ -39,7 +39,12 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 	
 	$get_general_settings = $db->select("general_settings");   
 	$row_general_settings = $get_general_settings->fetch();
-	$site_url = $row_general_settings->site_url;
+	$app_url_from_env = getenv('APP_URL');
+	if($app_url_from_env !== false && trim((string)$app_url_from_env) !== ""){
+		$site_url = rtrim((string)$app_url_from_env, "/");
+	}else{
+		$site_url = rtrim((string)$row_general_settings->site_url, "/");
+	}
 	$site_email_address = $row_general_settings->site_email_address;
 	$site_name = $row_general_settings->site_name;
 	$site_desc = $row_general_settings->site_desc;

@@ -14,6 +14,12 @@ if(typeof formData == 'undefined'){
 formData.append('paypal', 1);
 formData.append('type',payment_type);
 
+if(typeof paypal === "undefined" || !paypal || typeof paypal.Buttons !== "function"){
+    if(window.console && typeof window.console.warn === "function"){
+        window.console.warn("PayPal SDK is unavailable. Skipping PayPal button rendering.");
+    }
+}else{
+
 // Render the PayPal button into #paypal-button-container
 paypal.Buttons({
 
@@ -120,3 +126,5 @@ paypal.Buttons({
     }
 
 }).render('.paypal-button-container');
+
+}

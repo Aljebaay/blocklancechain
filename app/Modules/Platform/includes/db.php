@@ -39,17 +39,22 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 	
 	$get_general_settings = $db->select("general_settings");   
 	$row_general_settings = $get_general_settings->fetch();
-	$site_url = rtrim($row_general_settings->site_url, "/");
-	if(!empty($_SERVER['HTTP_HOST'])){
-		$scheme = "http";
-		if(
-			(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
-			(isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ||
-			(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
-		){
-			$scheme = "https";
+	$app_url_from_env = getenv('APP_URL');
+	if($app_url_from_env !== false && trim((string)$app_url_from_env) !== ""){
+		$site_url = rtrim((string)$app_url_from_env, "/");
+	}else{
+		$site_url = rtrim((string)$row_general_settings->site_url, "/");
+		if(!empty($_SERVER['HTTP_HOST'])){
+			$scheme = "http";
+			if(
+				(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+				(isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ||
+				(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+			){
+				$scheme = "https";
+			}
+			$site_url = $scheme . "://" . $_SERVER['HTTP_HOST'];
 		}
-		$site_url = $scheme . "://" . $_SERVER['HTTP_HOST'];
 	}
 	$site_email_address = $row_general_settings->site_email_address;
 	$site_name = $row_general_settings->site_name;
@@ -121,8 +126,8 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 
 	$get_payment_settings = $db->select("payment_settings");
 	$row_payment_settings = $get_payment_settings->fetch();
-	$paypal_client_id = $row_payment_settings->paypal_app_client_id;
-	$paypal_currency_code = $row_payment_settings->paypal_currency_code;
+	$paypal_client_id = trim((string) $row_payment_settings->paypal_app_client_id);
+	$paypal_currency_code = strtoupper(trim((string) $row_payment_settings->paypal_currency_code));
 
 	date_default_timezone_set($site_timezone);
 

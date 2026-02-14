@@ -5,16 +5,18 @@ $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $uriPath = $uriPath ?: '/';
 $docRoot = __DIR__;
 $fullPath = $docRoot . $uriPath;
+$platformBasePath = realpath(
+    __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform'
+);
 
 if ($uriPath !== '/' && is_file($fullPath)) {
     return false;
 }
 
-if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|webm|pdf|json|mp3|wav|ogg)$/i', $uriPath)) {
+if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|otf|eot|webp|mp4|webm|pdf|json|mp3|wav|ogg)$/i', $uriPath)) {
     $platformStaticPath = realpath(
         __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform' . str_replace('/', DIRECTORY_SEPARATOR, $uriPath)
     );
-    $platformBasePath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform');
     if (
         $platformStaticPath !== false &&
         $platformBasePath !== false &&
@@ -37,6 +39,7 @@ if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|w
             'woff' => 'font/woff',
             'woff2' => 'font/woff2',
             'ttf' => 'font/ttf',
+            'otf' => 'font/otf',
             'eot' => 'application/vnd.ms-fontobject',
             'mp4' => 'video/mp4',
             'webm' => 'video/webm',
@@ -50,6 +53,35 @@ if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|w
         }
         header('Content-Length: ' . (string) filesize($platformStaticPath));
         readfile($platformStaticPath);
+        return true;
+    }
+
+    http_response_code(404);
+    echo 'Not Found';
+    return true;
+}
+
+if (str_starts_with($uriPath, '/includes/')) {
+    $legacyPath = ltrim($uriPath, '/');
+    if (!preg_match('/\.php$/i', $legacyPath)) {
+        $legacyPath .= '.php';
+    }
+
+    $platformIncludesBase = $platformBasePath !== false ? realpath($platformBasePath . DIRECTORY_SEPARATOR . 'includes') : false;
+    $legacyIncludePath = $platformBasePath !== false
+        ? realpath($platformBasePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $legacyPath))
+        : false;
+
+    if (
+        $legacyIncludePath !== false &&
+        $platformIncludesBase !== false &&
+        is_file($legacyIncludePath) &&
+        strncmp($legacyIncludePath, $platformIncludesBase, strlen($platformIncludesBase)) === 0
+    ) {
+        $oldCwd = getcwd();
+        chdir(dirname($legacyIncludePath));
+        require $legacyIncludePath;
+        chdir($oldCwd ?: $docRoot);
         return true;
     }
 

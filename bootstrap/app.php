@@ -13,6 +13,14 @@ if (!defined('BLC_PLATFORM_PATH')) {
     define('BLC_PLATFORM_PATH', BLC_APP_PATH . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform');
 }
 
+$envBootstrap = BLC_BASE_PATH . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+if (is_file($envBootstrap)) {
+    require_once $envBootstrap;
+    if (function_exists('blc_load_env')) {
+        blc_load_env(BLC_BASE_PATH);
+    }
+}
+
 $sessionBootstrapCandidates = [
     BLC_BASE_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php',
     BLC_PLATFORM_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php',

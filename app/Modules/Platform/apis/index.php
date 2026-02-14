@@ -53,6 +53,26 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
+    $projectBasePath = dirname(__DIR__, 4);
+    $envBootstrap = $projectBasePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+    if (is_file($envBootstrap))
+    {
+        require_once $envBootstrap;
+        if (function_exists('blc_load_env'))
+        {
+            blc_load_env($projectBasePath);
+        }
+    }
+
+    if (empty($_SERVER['CI_ENV']))
+    {
+        $appEnvironment = getenv('APP_ENV');
+        if ($appEnvironment !== false && $appEnvironment !== '')
+        {
+            $_SERVER['CI_ENV'] = $appEnvironment;
+        }
+    }
+
 	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'production');
 
 /*
