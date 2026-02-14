@@ -15,3 +15,11 @@
 - Updated smoke tests to cover /_app/health (legacy probes unchanged).
 - No database schema changes; legacy runtime remains primary.
 
+
+## 2026-02-14 — Phase 3: Laravel functional slice
+- Added legacy DB connection (read-only) via Laravel 'legacy' connection using LEGACY_DB_* env with DB_* fallback.
+- Introduced /_app/system/info endpoint reporting bridge status and DB connectivity.
+- Added LegacyUser model (sellers table) as exemplar Eloquent access to legacy DB.
+- Extended smoke checks with /_app/system/info probe; total 16 checks.
+- Added bridge documentation (laravel/README_BRIDGE.md).
+
