@@ -330,6 +330,8 @@ foreach ($passes as $pass) {
             $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
             $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
 
+            ensureLegacyWriteEnv($basePath);
+
             $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
             if ($port <= 0) {
                 fwrite(STDERR, "No available port found for built-in server.\n");
@@ -506,6 +508,115 @@ function startPhpServer(string $basePath, string $host, int $port): array
     }
 
     return [$process, ['stdout' => $stdout, 'stderr' => $stderr]];
+}
+
+function ensureLegacyWriteEnv(string $basePath): void
+{
+    $required = [
+        'LEGACY_WRITE_DB_HOST',
+        'LEGACY_WRITE_DB_PORT',
+        'LEGACY_WRITE_DB_DATABASE',
+        'LEGACY_WRITE_DB_USERNAME',
+        'LEGACY_WRITE_DB_PASSWORD',
+    ];
+
+    $missing = [];
+    foreach ($required as $key) {
+        $value = getenv($key);
+        if ($value === false || $value === '') {
+            $missing[] = $key;
+        }
+    }
+
+    if (empty($missing)) {
+        return;
+    }
+
+    $envFiles = [
+        $basePath . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . '.env',
+        $basePath . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . '.env.example',
+        $basePath . DIRECTORY_SEPARATOR . '.env',
+        $basePath . DIRECTORY_SEPARATOR . '.env.example',
+    ];
+
+    $parsed = [];
+    foreach ($envFiles as $envFile) {
+        if (!is_file($envFile) || !is_readable($envFile)) {
+            continue;
+        }
+        $parsed = array_merge($parsed, parseEnvFile($envFile));
+    }
+
+    foreach ($missing as $key) {
+        if (isset($parsed[$key]) && $parsed[$key] !== '') {
+            setEnvValue($key, $parsed[$key]);
+        }
+    }
+
+    // Fallback to legacy read credentials only for smoke server startup (explicitly set, not silent in app).
+    foreach ($required as $key) {
+        $value = getenv($key);
+        if ($value === false || $value === '') {
+            $suffix = substr($key, strlen('LEGACY_WRITE_'));
+            $legacyKey = 'LEGACY_' . $suffix;
+            $legacyVal = getenv($legacyKey);
+            if ($legacyVal !== false && $legacyVal !== '') {
+                setEnvValue($key, $legacyVal);
+            }
+        }
+    }
+
+    $stillMissing = [];
+    foreach ($required as $key) {
+        $value = getenv($key);
+        if ($value === false || $value === '') {
+            $stillMissing[] = $key;
+        }
+    }
+
+    if (!empty($stillMissing)) {
+        throw new RuntimeException(
+            'Missing required LEGACY_WRITE_DB_* environment variables for smoke server: ' . implode(', ', $stillMissing)
+        );
+    }
+}
+
+function parseEnvFile(string $path): array
+{
+    $lines = @file($path, FILE_IGNORE_NEW_LINES);
+    if (!is_array($lines)) {
+        return [];
+    }
+
+    $values = [];
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+        if (stripos($line, 'export ') === 0) {
+            $line = trim(substr($line, 7));
+        }
+        $pos = strpos($line, '=');
+        if ($pos === false) {
+            continue;
+        }
+        $name = trim(substr($line, 0, $pos));
+        $value = trim(substr($line, $pos + 1));
+        if ($name === '') {
+            continue;
+        }
+        $values[$name] = trim($value, "\"'");
+    }
+
+    return $values;
+}
+
+function setEnvValue(string $key, string $value): void
+{
+    putenv($key . '=' . $value);
+    $_ENV[$key] = $value;
+    $_SERVER[$key] = $value;
 }
 
 function stopProcess($process): void

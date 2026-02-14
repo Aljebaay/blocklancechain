@@ -37,7 +37,7 @@ function blc_require_laravel(string $laravelIndex, string $targetUri): array
             $status = 200;
         }
     } catch (Throwable $bridgeException) {
-        $buffer = '';
+        $buffer = '<!-- LARAVEL_BRIDGE_ERROR ' . get_class($bridgeException) . ': ' . $bridgeException->getMessage() . ' -->';
         $status = 500;
     } finally {
         ob_end_clean();
@@ -78,7 +78,7 @@ if (strncmp($uriPath, $bridgePrefix, strlen($bridgePrefix)) === 0) {
         if ($mime !== '') {
             header('Content-Type: ' . $mime);
         } elseif ($extension === 'json') {
-            header('Content-Type: application/json; charset=UTF-8');
+            header('Content-Type: 'application/json; charset=UTF-8');
         }
         header('Content-Length: ' . (string) filesize($candidate));
         readfile($candidate);
@@ -86,12 +86,12 @@ if (strncmp($uriPath, $bridgePrefix, strlen($bridgePrefix)) === 0) {
     }
 
     if (is_file($laravelIndex)) {
-        $oldCwd = getcwd();
-        chdir(dirname($laravelIndex));
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
-        $_SERVER['PHP_SELF'] = '/index.php';
-        require $laravelIndex;
-        chdir($oldCwd ?: $docRoot);
+        $targetUri = $uriPath . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        http_response_code($result['status']);
+        if ($result['body'] !== '') {
+            echo $result['body'];
+        }
         return true;
     }
 }
