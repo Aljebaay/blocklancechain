@@ -8,6 +8,7 @@ declare(strict_types=1);
  *   php scripts/smoke_http.php
  *   php scripts/smoke_http.php --base-url=http://127.0.0.1:8080
  *   php scripts/smoke_http.php --host=127.0.0.1 --port=8080
+ *   php scripts/smoke_http.php --toggle=on|off|both
  *   php scripts/smoke_http.php --record-snapshots
  */
 
@@ -39,7 +40,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'record-snapshots', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -54,6 +55,7 @@ if (isset($options['help'])) {
     echo "  php scripts/smoke_http.php\n";
     echo "  php scripts/smoke_http.php --base-url=http://127.0.0.1:8080\n";
     echo "  php scripts/smoke_http.php --host=127.0.0.1 --port=8080\n";
+    echo "  php scripts/smoke_http.php --toggle=on|off|both   (default both)\n";
     echo "  php scripts/smoke_http.php --record-snapshots\n";
     exit(0);
 }
@@ -65,7 +67,16 @@ $requestedPort = isset($options['port'])
     ? (int) $options['port']
     : ($defaultPortFromEnv > 0 ? $defaultPortFromEnv : 0);
 $baseUrlOption = isset($options['base-url']) && is_string($options['base-url']) ? trim($options['base-url']) : '';
+$toggleOption = isset($options['toggle']) && is_string($options['toggle']) && $options['toggle'] !== ''
+    ? strtolower(trim($options['toggle']))
+    : 'both';
 $recordSnapshots = array_key_exists('record-snapshots', $options);
+
+$validToggleOptions = ['on', 'off', 'both'];
+if (!in_array($toggleOption, $validToggleOptions, true)) {
+    fwrite(STDERR, "Invalid --toggle value. Use on, off, or both.\n");
+    exit(1);
+}
 
 $snapshotsDir = $basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'snapshots';
 if (!is_dir($snapshotsDir)) {
@@ -224,113 +235,163 @@ $checks = [
     ],
 ];
 
-$serverProcess = null;
-$serverLogs = [
-    'stdout' => '',
-    'stderr' => '',
-];
+$originalToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
+$passes = [];
+switch ($toggleOption) {
+    case 'on':
+        $passes[] = ['label' => 'toggle-on', 'env' => 'true'];
+        break;
+    case 'off':
+        $passes[] = ['label' => 'toggle-off', 'env' => 'false'];
+        break;
+    default:
+        $passes[] = ['label' => 'toggle-off', 'env' => 'false'];
+        $passes[] = ['label' => 'toggle-on', 'env' => 'true'];
+        break;
+}
 
-try {
-    echo "Preparing HTTP smoke checks...\n";
-    if ($baseUrlOption !== '') {
-        $baseUrl = rtrim($baseUrlOption, '/');
-        echo "Using existing server: {$baseUrl}\n";
-    } else {
-        $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
-        if ($port <= 0) {
-            fwrite(STDERR, "No available port found for built-in server.\n");
-            exit(1);
-        }
+if ($baseUrlOption !== '' && count($passes) > 1) {
+    echo "Warning: --base-url provided; running all passes against the same external server (toggle cannot be forced).\n";
+}
 
-        echo "Starting local server on {$host}:{$port}...\n";
-        [$serverProcess, $serverLogs] = startPhpServer($basePath, $host, $port);
-        $baseUrl = "http://{$host}:{$port}";
-        echo "Started local server: {$baseUrl}\n";
+$overall = ['passed' => 0, 'failed' => 0, 'skipped' => 0];
+$exitCode = 0;
 
-        if (!waitForServer($baseUrl, 20, 250000)) {
-            fwrite(STDERR, "Server did not become ready in time.\n");
-            dumpLogs($serverLogs);
-            exit(1);
-        }
-    }
+foreach ($passes as $pass) {
+    $serverProcess = null;
+    $serverLogs = ['stdout' => '', 'stderr' => ''];
+    $passLabel = $pass['label'];
+    $envValue = $pass['env'];
 
-    $passed = 0;
-    $failed = 0;
-    $skipped = 0;
+    echo "Preparing HTTP smoke checks ({$passLabel})...\n";
 
-    foreach ($checks as $check) {
-        $started = microtime(true);
-        $response = httpRequest($baseUrl, $check);
-        $durationMs = (int) round((microtime(true) - $started) * 1000);
-
-        $id = (string) $check['id'];
-        $ok = true;
-        $reasons = [];
-        $dbUnavailable = responseIndicatesDbUnavailable($response);
-
-        if (!empty($check['dbDependent']) && $dbUnavailable) {
-            $skipped++;
-            echo "SKIP  {$id} status={$response['status']} time={$durationMs}ms reason=database unavailable\n";
-            continue;
-        }
-
-        [$ok, $reasons] = evaluateResponse($check, $response);
-
-        if (isset($check['snapshot']) && is_string($check['snapshot']) && !$dbUnavailable) {
-            $snapshotPath = $snapshotsDir . DIRECTORY_SEPARATOR . $check['snapshot'] . '.snapshot.txt';
-            $bodyPrefix = isset($response['body']) && is_string($response['body']) ? substr($response['body'], 0, 2048) : '';
-
-            if ($recordSnapshots || !is_file($snapshotPath)) {
-                if ($ok) {
-                    file_put_contents($snapshotPath, $bodyPrefix);
-                    echo "SNAP  {$id} saved snapshot to {$snapshotPath}\n";
-                } else {
-                    echo "SNAP-SKIP  {$id} snapshot not recorded (response invalid)\n";
-                }
-            } elseif ($bodyPrefix !== '') {
-                $snapshotBody = (string) @file_get_contents($snapshotPath);
-                if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
-                    $ok = false;
-                    $reasons[] = 'Snapshot drift detected';
-                }
-            }
-        }
-
-        $status = $response['status'];
-
-        if ($ok) {
-            $passed++;
-            echo "PASS  {$id} status={$status} time={$durationMs}ms\n";
+    try {
+        if ($baseUrlOption !== '') {
+            $baseUrl = rtrim($baseUrlOption, '/');
+            echo "Using existing server: {$baseUrl}\n";
         } else {
-            $failed++;
-            echo "FAIL  {$id} status={$status} time={$durationMs}ms\n";
-            foreach ($reasons as $reason) {
-                echo "  - {$reason}\n";
+            putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $envValue);
+            $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
+            $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
+
+            $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
+            if ($port <= 0) {
+                fwrite(STDERR, "No available port found for built-in server.\n");
+                $exitCode = 1;
+                break;
+            }
+
+            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$envValue}...\n";
+            [$serverProcess, $serverLogs] = startPhpServer($basePath, $host, $port);
+            $baseUrl = "http://{$host}:{$port}";
+            echo "Started local server: {$baseUrl}\n";
+
+            if (!waitForServer($baseUrl, 20, 250000)) {
+                fwrite(STDERR, "Server did not become ready in time.\n");
+                dumpLogs($serverLogs);
+                $exitCode = 1;
+                break;
             }
         }
-    }
 
-    $total = $passed + $failed + $skipped;
-    echo "Summary: total={$total} passed={$passed} failed={$failed} skipped={$skipped}\n";
+        $passed = 0;
+        $failed = 0;
+        $skipped = 0;
 
-    if ($failed > 0) {
+        foreach ($checks as $check) {
+            $started = microtime(true);
+            $response = httpRequest($baseUrl, $check);
+            $durationMs = (int) round((microtime(true) - $started) * 1000);
+
+            $id = (string) $check['id'];
+            $ok = true;
+            $reasons = [];
+            $dbUnavailable = responseIndicatesDbUnavailable($response);
+
+            if (!empty($check['dbDependent']) && $dbUnavailable) {
+                $skipped++;
+                echo "SKIP  [{$passLabel}] {$id} status={$response['status']} time={$durationMs}ms reason=database unavailable\n";
+                continue;
+            }
+
+            [$ok, $reasons] = evaluateResponse($check, $response);
+
+            $snapshotId = isset($check['snapshot']) && is_string($check['snapshot']) && $check['snapshot'] !== ''
+                ? $check['snapshot'] . '.' . $passLabel
+                : null;
+
+            if ($snapshotId !== null && !$dbUnavailable) {
+                $snapshotPath = $snapshotsDir . DIRECTORY_SEPARATOR . $snapshotId . '.snapshot.txt';
+                $bodyPrefix = isset($response['body']) && is_string($response['body']) ? substr($response['body'], 0, 2048) : '';
+
+                if ($recordSnapshots || !is_file($snapshotPath)) {
+                    if ($ok) {
+                        file_put_contents($snapshotPath, $bodyPrefix);
+                        echo "SNAP  [{$passLabel}] {$id} saved snapshot to {$snapshotPath}\n";
+                    } else {
+                        echo "SNAP-SKIP  [{$passLabel}] {$id} snapshot not recorded (response invalid)\n";
+                    }
+                } elseif ($bodyPrefix !== '') {
+                    $snapshotBody = (string) @file_get_contents($snapshotPath);
+                    if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
+                        $ok = false;
+                        $reasons[] = 'Snapshot drift detected';
+                    }
+                }
+            }
+
+            $status = $response['status'];
+
+            if ($ok) {
+                $passed++;
+                echo "PASS  [{$passLabel}] {$id} status={$status} time={$durationMs}ms\n";
+            } else {
+                $failed++;
+                echo "FAIL  [{$passLabel}] {$id} status={$status} time={$durationMs}ms\n";
+                foreach ($reasons as $reason) {
+                    echo "  - {$reason}\n";
+                }
+            }
+        }
+
+        $total = $passed + $failed + $skipped;
+        $overall['passed'] += $passed;
+        $overall['failed'] += $failed;
+        $overall['skipped'] += $skipped;
+
+        echo "Summary ({$passLabel}): total={$total} passed={$passed} failed={$failed} skipped={$skipped}\n";
+
+        if ($failed > 0) {
+            $exitCode = 1;
+            if ($serverProcess !== null) {
+                dumpLogs($serverLogs);
+            }
+        }
+    } catch (Throwable $exception) {
+        fwrite(STDERR, "[{$passLabel}] Smoke script failed: " . $exception->getMessage() . "\n");
         if ($serverProcess !== null) {
             dumpLogs($serverLogs);
         }
-        exit(1);
-    }
-} catch (Throwable $exception) {
-    fwrite(STDERR, "Smoke script failed: " . $exception->getMessage() . "\n");
-    if ($serverProcess !== null) {
-        dumpLogs($serverLogs);
-    }
-    exit(1);
-} finally {
-    if (is_resource($serverProcess)) {
-        stopProcess($serverProcess);
+        $exitCode = 1;
+    } finally {
+        if (is_resource($serverProcess)) {
+            stopProcess($serverProcess);
+        }
     }
 }
 
+if ($originalToggle !== false) {
+    putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $originalToggle);
+    $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
+    $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
+}
+
+if ($exitCode !== 0) {
+    exit($exitCode);
+}
+
+$overallTotal = $overall['passed'] + $overall['failed'] + $overall['skipped'];
+echo "Overall summary: total={$overallTotal} passed={$overall['passed']} failed={$overall['failed']} skipped={$overall['skipped']}\n";
 exit(0);
 
 /**

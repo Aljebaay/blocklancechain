@@ -60,28 +60,82 @@ if ($migrateFetchToggle && $uriPath === '/requests/fetch_subcategory') {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+    $legacyFetchPath = $docRoot . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'fetch_subcategory.php';
 
     if (is_file($laravelIndex)) {
         $oldUri = $_SERVER['REQUEST_URI'] ?? $uriPath;
         $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
         $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
         $oldCwd = getcwd();
+        $bufferLevel = ob_get_level();
+        $laravelOutput = '';
+        $laravelStatus = 500;
+        $dispatchCompleted = false;
+        $routeHandled = false;
+
+        $restoreServerContext = function () use ($oldUri, $oldScript, $oldPhpSelf): void {
+            $_SERVER['REQUEST_URI'] = $oldUri;
+            $_SERVER['SCRIPT_NAME'] = $oldScript;
+            $_SERVER['PHP_SELF'] = $oldPhpSelf;
+        };
+
+        $fallbackToLegacy = function () use ($legacyFetchPath, $docRoot, $oldCwd, $restoreServerContext): bool {
+            $restoreServerContext();
+            if ($oldCwd !== false) {
+                chdir($oldCwd);
+            } else {
+                chdir($docRoot);
+            }
+            http_response_code(200);
+            require $legacyFetchPath;
+            return true;
+        };
+
+        $shutdownHandler = function () use (&$routeHandled, $bufferLevel, $fallbackToLegacy): void {
+            if ($routeHandled) {
+                return;
+            }
+            $error = error_get_last();
+            if ($error === null) {
+                return;
+            }
+            while (ob_get_level() > $bufferLevel) {
+                ob_end_clean();
+            }
+            $routeHandled = true;
+            $fallbackToLegacy();
+        };
+        register_shutdown_function($shutdownHandler);
+
+        ob_start();
         try {
             $_SERVER['REQUEST_URI'] = '/_app/migrate/requests/fetch_subcategory';
             $_SERVER['SCRIPT_NAME'] = '/index.php';
             $_SERVER['PHP_SELF'] = '/index.php';
             chdir(dirname($laravelIndex));
             require $laravelIndex;
-            chdir($oldCwd ?: $docRoot);
-            return true;
+            $dispatchCompleted = true;
         } catch (Throwable $bridgeException) {
-            $_SERVER['REQUEST_URI'] = $oldUri;
-            $_SERVER['SCRIPT_NAME'] = $oldScript;
-            $_SERVER['PHP_SELF'] = $oldPhpSelf;
-            if ($oldCwd !== false) {
-                chdir($oldCwd);
-            }
+            $dispatchCompleted = false;
+        } finally {
+            $laravelOutput = ob_get_clean();
+            $laravelStatus = http_response_code();
+            $restoreServerContext();
+            chdir($oldCwd ?: $docRoot);
         }
+
+        $routeHandled = true;
+
+        if ($dispatchCompleted && $laravelStatus === 200 && $laravelOutput !== '') {
+            echo $laravelOutput;
+            return true;
+        }
+
+        while (ob_get_level() > $bufferLevel) {
+            ob_end_clean();
+        }
+
+        return $fallbackToLegacy();
     }
 }
 
