@@ -78,7 +78,7 @@ if (strncmp($uriPath, $bridgePrefix, strlen($bridgePrefix)) === 0) {
         if ($mime !== '') {
             header('Content-Type: ' . $mime);
         } elseif ($extension === 'json') {
-            header('Content-Type: 'application/json; charset=UTF-8');
+            header('Content-Type: application/json; charset=UTF-8');
         }
         header('Content-Length: ' . (string) filesize($candidate));
         readfile($candidate);
@@ -100,13 +100,61 @@ if ($migrateFetchToggle && $uriPath === '/requests/fetch_subcategory') {
     $laravelIndex = $laravelPublicPath !== false
         ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
-    if (is_file($laravelIndex)) {
-        $targetUri = '/_app/migrate/requests/fetch_subcategory' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
-        $result = blc_require_laravel($laravelIndex, $targetUri);
-        if ($result['status'] === 200 && $result['body'] !== '') {
-            echo $result['body'];
+    $legacyPath = __DIR__ . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'fetch_subcategory.php';
+    $forceLaravelFail = filter_var(getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+
+    if (!$forceLaravelFail && is_file($laravelIndex)) {
+        $oldUri = $_SERVER['REQUEST_URI'] ?? '/';
+        $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+        $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
+        $oldCwd = getcwd();
+        $failed = false;
+        $output = '';
+        $status = 500;
+
+        ob_start();
+        try {
+            $_SERVER['REQUEST_URI'] = '/_app/migrate/requests/fetch_subcategory' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+            $_SERVER['SCRIPT_NAME'] = '/index.php';
+            $_SERVER['PHP_SELF'] = '/index.php';
+            http_response_code(200);
+            chdir(dirname($laravelIndex));
+            require $laravelIndex;
+            $output = (string) ob_get_contents();
+            $status = http_response_code();
+            if ($status === false) {
+                $status = 200;
+            }
+        } catch (Throwable $bridgeException) {
+            $failed = true;
+        } finally {
+            ob_end_clean();
+            if ($oldCwd !== false) {
+                chdir($oldCwd);
+            }
+            $_SERVER['REQUEST_URI'] = $oldUri;
+            $_SERVER['SCRIPT_NAME'] = $oldScript;
+            $_SERVER['PHP_SELF'] = $oldPhpSelf;
+        }
+
+        if (!$failed && $status === 200 && $output !== '') {
+            echo $output;
             return true;
         }
+    }
+
+    if (is_file($legacyPath)) {
+        $oldCwd = getcwd();
+        header_remove();
+        http_response_code(200);
+        chdir(dirname($legacyPath));
+        require $legacyPath;
+        header('HTTP/1.1 200 OK', true, 200);
+        http_response_code(200);
+        if ($oldCwd !== false) {
+            chdir($oldCwd);
+        }
+        return true;
     }
 }
 

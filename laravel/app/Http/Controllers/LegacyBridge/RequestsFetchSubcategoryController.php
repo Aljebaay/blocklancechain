@@ -12,6 +12,11 @@ class RequestsFetchSubcategoryController extends Controller
 {
     public function __invoke(Request $request)
     {
+        $forceFail = filter_var(env('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL', false), FILTER_VALIDATE_BOOLEAN);
+        if ($forceFail) {
+            throw new \RuntimeException('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL triggered');
+        }
+
         $this->bootstrapLegacySession();
 
         // Mirror legacy session check by attempting to read the same PHP session if available.
