@@ -98,8 +98,8 @@ if (!isset($_SESSION['admin_email'])) {
                                     <?php
                                     $per_page = 7;
                                     if (isset($_GET['view_buyer_reviews'])) {
-                                        $page = $input->get('view_buyer_reviews');
-                                        if ($page == 0) {
+                                        $page = (int) $input->get('view_buyer_reviews');
+                                        if ($page < 1) {
                                             $page = 1;
                                         }
                                     } else {

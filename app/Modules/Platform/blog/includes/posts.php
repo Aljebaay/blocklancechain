@@ -2,8 +2,8 @@
 
 $per_page = 5;
 if(isset($_GET['page'])){
-	$page = $input->get('page');
-	if($page == 0){ $page = 1; }
+	$page = (int) $input->get('page');
+	if($page < 1){ $page = 1; }
 }else{
 	$page = 1;
 }

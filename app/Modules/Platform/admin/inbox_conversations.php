@@ -59,9 +59,9 @@ echo "<script>window.open('login','_self');</script>";
     
                          if(isset($_GET["inbox_conversations"])){
                              
-                            $page = $input->get("inbox_conversations");
+                            $page = (int) $input->get("inbox_conversations");
 
-                            if($page == 0){ $page = 1; }
+                            if($page < 1){ $page = 1; }
 
                          }else {
                              

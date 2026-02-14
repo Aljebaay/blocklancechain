@@ -151,8 +151,8 @@ $per_page = 10;
 
 if(isset($_GET['admin_logs'])){
 
-	$page = $input->get('admin_logs');
-	if($page == 0){ $page = 1; }
+	$page = (int) $input->get('admin_logs');
+	if($page < 1){ $page = 1; }
 
 }else{
 	$page = 1;

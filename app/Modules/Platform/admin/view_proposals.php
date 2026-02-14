@@ -236,9 +236,9 @@ $per_page = 10;
 
 if(isset($_GET['view_proposals'])){
     
-$page = $input->get('view_proposals');
+$page = (int) $input->get('view_proposals');
     
-if($page == 0){ $page = 1; }
+if($page < 1){ $page = 1; }
 
 }else{
     

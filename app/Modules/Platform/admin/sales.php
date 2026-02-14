@@ -149,8 +149,8 @@ if(!isset($_SESSION['admin_email'])){
   	<?php
   	$per_page = 10;
   	if(isset($_GET['sales'])){
-  	  $page = $input->get('sales');
-  	  if($page == 0){ 
+  	  $page = (int) $input->get('sales');
+  	  if($page < 1){ 
   	    $page = 1; 
   	  }
   	}else{

@@ -113,9 +113,9 @@ $count_seller_reviews = $db->count("seller_reviews");
 
                 if(isset($_GET['view_seller_reviews'])){
                     
-                $page = $input->get('view_seller_reviews');
+                $page = (int) $input->get('view_seller_reviews');
                     
-                if($page == 0){ $page = 1; }
+                if($page < 1){ $page = 1; }
 
                 }else{
                     

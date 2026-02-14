@@ -30,9 +30,9 @@ $limit = 12;
 
 if(isset($_GET['view_proposals_files'])){
     
-$page = $_GET['view_proposals_files'];
+$page = (int) $_GET['view_proposals_files'];
     
-if($page == 0){ $page = 1; }
+if($page < 1){ $page = 1; }
 
 }else{
     

@@ -138,9 +138,9 @@ $status = "";
 
                            if(isset($_GET['buyer_requests'])){
 
-                           $page = $input->get('buyer_requests');
+                           $page = (int) $input->get('buyer_requests');
 
-                           if($page == 0){ $page = 1; }
+                           if($page < 1){ $page = 1; }
 
                            }else{
 

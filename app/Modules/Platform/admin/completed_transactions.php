@@ -33,8 +33,8 @@ echo "<script>window.open('login','_self');</script>";
       <?php
       $per_page = 7;
       if(isset($_GET['completed_transactions'])){
-        $page = $input->get('completed_transactions');
-      if($page == 0){ $page = 1; }
+        $page = (int) $input->get('completed_transactions');
+      if($page < 1){ $page = 1; }
       }else{
        $page = 1;
       }

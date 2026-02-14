@@ -222,7 +222,10 @@ function get_proposals($filter_type) {
 
    $per_page = 16;
    if (isset($_GET['page'])) {
-      $page = $input->get('page');
+      $page = (int) $input->get('page');
+      if ($page < 1) {
+         $page = 1;
+      }
    } else {
       $page = 1;
    }
@@ -560,8 +563,8 @@ function get_pagination($filter_type) {
    if ($count_proposals > 0) {
       $total_pages = ceil($count_proposals / $per_page);
       if (isset($_GET['page'])) {
-         $page = $input->get('page');
-         if ($page == 0) {
+         $page = (int) $input->get('page');
+         if ($page < 1) {
             $page = 1;
          }
       } else {

@@ -151,8 +151,8 @@ echo "<script>window.open('login','_self');</script>";
             <?php
             $per_page = 8;
             if(isset($_GET['view_orders'])){
-            $page = $input->get('view_orders');
-            if($page == 0){ $page = 1; }
+            $page = (int) $input->get('view_orders');
+            if($page < 1){ $page = 1; }
             }else{
             $page = 1;
             }

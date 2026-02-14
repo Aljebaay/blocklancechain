@@ -73,8 +73,8 @@ if(!isset($_SESSION['admin_email'])){
 
         $per_page = 7;
         if(isset($_GET['payouts'])){
-          $page = $input->get('payouts');
-          if($page == 0){
+          $page = (int) $input->get('payouts');
+          if($page < 1){
             $page = 1; 
           }
         }else{
