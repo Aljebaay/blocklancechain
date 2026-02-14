@@ -9,17 +9,9 @@ echo "<script>window.open('login','_self');</script>";
 
 $count_tickets_closed = $db->count("support_tickets",["status" => "close"]);
 
-if(isset($_GET['view_support_requests_closed'])){
-    
-    $page = $input->get('view_support_requests_closed');
-    if($page == 0){ 
-        $page = 1; 
-    }
-    
-}else{
-    
-    $page = 1;
-    
+$page = 1;
+if (isset($_GET['view_support_requests_closed'])) {
+    $page = max(1, (int) $input->get('view_support_requests_closed'));
 }
 
 if(isset($_GET['enquiry_id'])){
