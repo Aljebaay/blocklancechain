@@ -6,3 +6,12 @@
 - Created DB_SCHEMA_SNAPSHOT.md and TENANT_SCOPE_MAP.md for future SaaS work (no schema changes).
 - Enhanced smoke verification (scripts/smoke_http.php) with extra probes, snapshot support, DB-unavailable skip handling; added scripts/smoke.sh wrapper and snapshots directory.
 - No runtime behavior, routes, or database schema modified.
+
+## 2026-02-14 — Laravel 12 bridge
+- Added Laravel 12 app under laravel/ (no legacy code moved).
+- Introduced /_app prefix delegation in public/router.php to Laravel without altering legacy routes.
+- Added health and debug routes in Laravel; DB/session/cache configured for legacy DB (read-only intent).
+- Added docs: LARAVEL_BRIDGE.md, README_LARAVEL12.md.
+- Updated smoke tests to cover /_app/health (legacy probes unchanged).
+- No database schema changes; legacy runtime remains primary.
+

@@ -126,6 +126,12 @@ $checks = [
         'minBodyBytes' => 2000,
     ],
     [
+        'id' => 'laravel-health',
+        'path' => '/_app/health',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
         'expectedStatuses' => [200, 302],

@@ -8,9 +8,51 @@ $fullPath = $docRoot . $uriPath;
 $platformBasePath = realpath(
     __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform'
 );
+$laravelPublicPath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public');
+$bridgePrefix = '/_app';
 
 if ($uriPath !== '/' && is_file($fullPath)) {
     return false;
+}
+
+if (str_starts_with($uriPath, $bridgePrefix)) {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+
+    $relative = substr($uriPath, strlen($bridgePrefix));
+    $relativePath = $relative === '' ? '/' : $relative;
+    $candidate = $laravelPublicPath !== false
+        ? realpath($laravelPublicPath . str_replace('/', DIRECTORY_SEPARATOR, $relativePath))
+        : false;
+
+    if (
+        $candidate !== false &&
+        $laravelPublicPath !== false &&
+        is_file($candidate) &&
+        strncmp($candidate, $laravelPublicPath, strlen($laravelPublicPath)) === 0
+    ) {
+        $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+        $mime = @mime_content_type($candidate) ?: '';
+        if ($mime !== '') {
+            header('Content-Type: ' . $mime);
+        } elseif ($extension === 'json') {
+            header('Content-Type: application/json; charset=UTF-8');
+        }
+        header('Content-Length: ' . (string) filesize($candidate));
+        readfile($candidate);
+        return true;
+    }
+
+    if (is_file($laravelIndex)) {
+        $oldCwd = getcwd();
+        chdir(dirname($laravelIndex));
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['PHP_SELF'] = '/index.php';
+        require $laravelIndex;
+        chdir($oldCwd ?: $docRoot);
+        return true;
+    }
 }
 
 if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|otf|eot|webp|mp4|webm|pdf|json|mp3|wav|ogg)$/i', $uriPath)) {
