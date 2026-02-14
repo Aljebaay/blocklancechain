@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\LegacyBridge;
 
 use App\Http\Controllers\Controller;
+use App\Support\LegacyWrite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,7 @@ class RequestsPauseRequestController extends Controller
             return $this->manageRedirect(false);
         }
 
+        LegacyWrite::ensureConfigured();
         $connection = DB::connection('legacy_write');
 
         try {
