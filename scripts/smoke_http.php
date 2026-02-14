@@ -101,6 +101,8 @@ $checks = [
         'bodyContainsAny' => [
             "window.open('../login",
             'manage_requests',
+            "window.open('install.php'",
+            'install.php',
         ],
     ],
     [
@@ -113,6 +115,8 @@ $checks = [
         'bodyContainsAny' => [
             "window.open('../login",
             '<option',
+            "window.open('install.php'",
+            'install.php',
         ],
     ],
     [
@@ -126,6 +130,8 @@ $checks = [
             "window.open('../login",
             'false',
             'true',
+            "window.open('install.php'",
+            'install.php',
         ],
     ],
     [
