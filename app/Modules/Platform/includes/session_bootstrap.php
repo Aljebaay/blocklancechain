@@ -35,7 +35,7 @@ if (!function_exists('blc_bootstrap_session')) {
 			$projectBaseDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
 			$baseDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
 			$baseDir . DIRECTORY_SEPARATOR . '.sessions',
-			rtrim(sys_get_temp_dir(), "\\/") . DIRECTORY_SEPARATOR . 'blocklancechain_sessions',
+			rtrim(sys_get_temp_dir(), "\\/") . DIRECTORY_SEPARATOR . 'gig-zone_sessions',
 		);
 
 		foreach ($sessionDirs as $sessionDir) {

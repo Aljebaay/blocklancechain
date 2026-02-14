@@ -2,16 +2,40 @@
   require_once __DIR__ . "/includes/session_bootstrap.php";
   blc_bootstrap_session();
   require_once("includes/config.php");
-  require_once("libs/database.php");
+  require_once("includes/install_state.php");
   require_once("libs/input.php");
   require_once ("libs/flash.php");
-  if(!empty(DB_HOST) and !empty(DB_USER) and !empty(DB_NAME)){
-  echo "<script>window.open('index.php','_self'); </script>";
-  exit();
+
+  $hasConfiguredDb = !empty(DB_HOST) && !empty(DB_USER) && !empty(DB_NAME);
+
+  if(
+    $hasConfiguredDb &&
+    blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+  ){
+    echo "<script>window.open('index.php','_self'); </script>";
+    exit();
   }
+
+  if(!isset($_SESSION["db_host"])){
+    if(
+      $hasConfiguredDb &&
+      blc_has_required_schema((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+    ){
+      $_SESSION["db_host"] = (string) DB_HOST;
+      $_SESSION["db_username"] = (string) DB_USER;
+      $_SESSION["db_pass"] = (string) DB_PASS;
+      $_SESSION["db_name"] = (string) DB_NAME;
+    }else{
+      echo "<script>window.open('install.php','_self'); </script>";
+      exit();
+    }
+  }
+
   if(!isset($_SESSION["db_host"])){
     echo "<script>window.open('install.php','_self'); </script>";
+    exit();
   }
+  require_once("libs/database.php");
   $form_data = Flash::render("form_data");
   ?>
 <!DOCTYPE html>

@@ -5,6 +5,7 @@ $dir = str_replace("admin/includes", '',$dir);
 $dir = str_replace("admin\includes", '',$dir);
 
 include("$dir/includes/config.php");
+include("$dir/includes/install_state.php");
 
 if(!function_exists('blc_admin_resolve_language_file')){
 	function blc_admin_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
@@ -37,7 +38,12 @@ if(!function_exists('blc_admin_resolve_language_file')){
 	}
 }
 
-if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
+if(
+	empty(DB_HOST) ||
+	empty(DB_USER) ||
+	empty(DB_NAME) ||
+	!blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+){
 	echo "<script>window.open('../install.php','_self'); </script>";
 	exit();
 }else{

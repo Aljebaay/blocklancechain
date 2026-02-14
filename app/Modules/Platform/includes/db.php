@@ -3,6 +3,7 @@
 require_once __DIR__ . "/session_bootstrap.php";
 blc_bootstrap_session();
 require_once("config.php");
+require_once("install_state.php");
 
 if(!function_exists('blc_resolve_language_file')){
 	function blc_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
@@ -41,7 +42,12 @@ if(isset($_SESSION['sessionStart'])){
 	unset($_SESSION['sessionStart']);
 }
 
-if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
+if(
+	empty(DB_HOST) ||
+	empty(DB_USER) ||
+	empty(DB_NAME) ||
+	!blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+){
 	echo "<script>window.open('install.php','_self'); </script>";
 	exit();
 }else{

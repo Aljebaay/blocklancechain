@@ -1,6 +1,6 @@
 {
-    "name": "blocklancechain/app",
-    "description": "Blocklancechain marketplace application",
+    "name": "gig-zone/app",
+    "description": "gig-zone marketplace application",
     "license": "proprietary",
     "require": {
         "stripe/stripe-php": "^7.45",

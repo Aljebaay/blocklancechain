@@ -2,13 +2,22 @@
   require_once __DIR__ . "/includes/session_bootstrap.php";
   blc_bootstrap_session();
   require_once("includes/config.php");
+  require_once("includes/install_state.php");
   require_once("libs/input.php");
-  if(!empty(DB_HOST) and !empty(DB_USER) and !empty(DB_NAME)){
-    echo "<script>window.open('index.php','_self'); </script>";
-    exit();
-  }
+
+  $hasConfiguredDb = !empty(DB_HOST) && !empty(DB_USER) && !empty(DB_NAME);
+
   if(isset($_SESSION["db_host"])){
     echo "<script>window.open('install2.php','_self'); </script>";
+    exit();
+  }
+
+  if(
+    $hasConfiguredDb &&
+    blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+  ){
+    echo "<script>window.open('index.php','_self'); </script>";
+    exit();
   }
 ?>
 <!DOCTYPE html>
@@ -113,10 +122,10 @@ body {
 <?php
 
 if(isset($_POST["install"])){
-  $host = $input->post("db_host");
-  $uname = $input->post("db_username");
-  $pass = $input->post("db_pass");
-  $database = $input->post("db_name"); //Change Your Database Name
+  $host = trim((string) $input->post("db_host"));
+  $uname = trim((string) $input->post("db_username"));
+  $pass = (string) $input->post("db_pass");
+  $database = trim((string) $input->post("db_name")); //Change Your Database Name
   $project_root = dirname(__DIR__, 3);
   $scripts_sql_dir = $project_root . DIRECTORY_SEPARATOR . "scripts" . DIRECTORY_SEPARATOR . "sql";
   $base_sql_candidates = array(
@@ -133,6 +142,8 @@ if(isset($_POST["install"])){
 
   if($base_sql_path === ""){
     echo "<h2 class='text-white text-center mb-3'>Install SQL file gig-zone.sql not found.</h2>";
+  }elseif($host === "" || $uname === "" || $database === ""){
+    echo "<h2 class='text-white text-center mb-3'>Database host, username and database name are required.</h2>";
   }else{
     $sql_paths = array($base_sql_path);
     if(is_dir($scripts_sql_dir)){
@@ -148,19 +159,12 @@ if(isset($_POST["install"])){
     }
 
     try{
-      $pdo = new PDO("mysql:host=$host;dbname=$database",$uname,$pass);
-      foreach($sql_paths as $sql_path){
-        $command = file_get_contents($sql_path);
-        if($command === false){
-          throw new RuntimeException("Unable to read SQL file: " . basename($sql_path));
-        }
+      $safeDatabaseName = str_replace("`", "``", $database);
+      $pdoServer = blc_create_installer_pdo($host, $uname, $pass);
+      $pdoServer->exec("CREATE DATABASE IF NOT EXISTS `{$safeDatabaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
-        /* execute multi query */
-        $run = $pdo->prepare($command);
-        if($run->execute()){
-          continue;
-        }
-        throw new RuntimeException("Failed executing SQL file: " . basename($sql_path));
+      foreach($sql_paths as $sql_path){
+        blc_execute_sql_file_with_mysqli($host, $uname, $pass, $database, $sql_path);
       }
 
       $_SESSION["db_host"] = $host;
@@ -168,8 +172,9 @@ if(isset($_POST["install"])){
       $_SESSION["db_pass"] = $pass;
       $_SESSION["db_name"] = $database;
       echo "<script>window.open('install2.php','_self'); </script>";
-    }catch(Exception $ex){
-      echo "<h2 class='text-white text-center mb-3'>Something Wrong In Fields</h2>";
+    }catch(Throwable $ex){
+      $safeError = htmlspecialchars($ex->getMessage(), ENT_QUOTES, 'UTF-8');
+      echo "<h2 class='text-white text-center mb-3'>Install error: {$safeError}</h2>";
     }
   }
 }
