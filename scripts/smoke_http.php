@@ -177,6 +177,16 @@ if ($forceRequestsFallback) {
         }
     }
     unset($check);
+
+    $checks[] = [
+        'id' => 'requests-manage-fallback',
+        'path' => '/requests/manage_requests',
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ["window.open('../login", 'manage_requests', '<html', '<title', 'install.php'],
+        'bodyNotContains' => ['LARAVEL_BRIDGE_ERROR', 'Exception', 'Stack trace'],
+        'dbDependent' => true,
+        'laravelOnly' => true,
+    ];
 }
 
 $originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
@@ -334,6 +344,12 @@ foreach ($passes as $pass) {
             if (!empty($check['dbDependent']) && $dbUnavailable) {
                 $skipped++;
                 echo "SKIP  [{$passLabel}] {$id} status={$response['status']} time={$durationMs}ms reason=database unavailable\n";
+                continue;
+            }
+
+            if (!empty($check['laravelOnly']) && $passLabel !== 'laravel') {
+                $skipped++;
+                echo "SKIP  [{$passLabel}] {$id} status={$response['status']} time={$durationMs}ms reason=laravel-only probe\n";
                 continue;
             }
 
