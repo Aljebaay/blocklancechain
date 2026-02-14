@@ -10,6 +10,10 @@ class RequestsPauseRequestController extends Controller
 {
     public function __invoke(Request $request)
     {
+        if (filter_var(env('FORCE_LARAVEL_REQUESTS_MODULE_FAIL', false), FILTER_VALIDATE_BOOLEAN)) {
+            return response('', 500);
+        }
+
         $this->bootstrapLegacySession($request);
 
         $sellerUserName = $_SESSION['seller_user_name'] ?? null;

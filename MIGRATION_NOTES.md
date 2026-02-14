@@ -66,3 +66,11 @@
 - Toggle MIGRATE_PROPOSAL_PRICING_CHECK delegates to Laravel with buffered response; fallback to legacy on exception, non-200, or empty output; exact-path match only.
 - Smoke extended with legacy/laravel mode probes and optional FORCE_LARAVEL_PROPOSAL_PRICING_FAIL fallback simulation; all passes green.
 - No schema or auth changes; JSON shape preserved (status 200, Content-Type application/json).
+
+## 2026-02-14 — Phase 9: Requests module bridge hardening
+- Introduced module-level toggle MIGRATE_REQUESTS_MODULE with override precedence (endpoint toggle false forces legacy; module false allows per-endpoint opt-in).
+- Added Laravel bridge routes for manage_requests, resume_request, create_request, update_request using isolated legacy runner; added support class LegacyScriptRunner.
+- Router now uses exact-path matching with buffered Laravel delegation and guaranteed legacy fallback for all Requests endpoints.
+- Added force flag FORCE_LARAVEL_REQUESTS_MODULE_FAIL to simulate Laravel failure and verify fallback.
+- Smoke suite extended with module mode (legacy/laravel), new Requests probes, write-guarded checks via SMOKE_ALLOW_WRITES, and force-fallback support.
+

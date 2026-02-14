@@ -9,9 +9,12 @@ declare(strict_types=1);
  *   php scripts/smoke_http.php --base-url=http://127.0.0.1:8080
  *   php scripts/smoke_http.php --host=127.0.0.1 --port=8080
  *   php scripts/smoke_http.php --toggle=on|off|both              (legacy option for other toggles)
- *   php scripts/smoke_http.php --mode=legacy|laravel|both        (controls fetch_subcategory toggle, default both)
+ *   php scripts/smoke_http.php --mode=legacy|laravel|both        (controls fetch_subcategory + module toggles, default both)
  *   php scripts/smoke_http.php --force-fallback                  (forces Laravel fetch_subcategory to fail -> tests router fallback)
+ *   php scripts/smoke_http.php --force-fallback-requests         (forces Requests module Laravel handlers to fail -> tests router fallback)
  *   php scripts/smoke_http.php --record-snapshots
+ * Environment flags:
+ *   SMOKE_ALLOW_WRITES=true to run write-dependent probes (default false)
  */
 
 $basePath = dirname(__DIR__);
@@ -42,7 +45,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'force-fallback-pricing', 'record-snapshots', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'force-fallback-pricing', 'force-fallback-requests', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -58,9 +61,11 @@ if (isset($options['help'])) {
     echo "  php scripts/smoke_http.php --base-url=http://127.0.0.1:8080\n";
     echo "  php scripts/smoke_http.php --host=127.0.0.1 --port=8080\n";
     echo "  php scripts/smoke_http.php --toggle=on|off|both   (default both; applies to non-fetch toggles if used)\n";
-    echo "  php scripts/smoke_http.php --mode=legacy|laravel|both   (default both; controls fetch_subcategory toggle)\n";
+    echo "  php scripts/smoke_http.php --mode=legacy|laravel|both   (default both; controls fetch_subcategory + module toggles)\n";
     echo "  php scripts/smoke_http.php --force-fallback   (forces Laravel fetch_subcategory failure to test router fallback)\n";
+    echo "  php scripts/smoke_http.php --force-fallback-requests   (forces Laravel Requests module handlers to fail -> tests router fallback)\n";
     echo "  php scripts/smoke_http.php --record-snapshots\n";
+    echo "Env: SMOKE_ALLOW_WRITES=true to enable write-dependent checks (default skips them)\n";
     exit(0);
 }
 
@@ -91,6 +96,8 @@ if (!in_array($modeOption, $validModeOptions, true)) {
     exit(1);
 }
 $forcePricingFallback = array_key_exists('force-fallback-pricing', $options) || filter_var(getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$forceRequestsFallback = array_key_exists('force-fallback-requests', $options) || filter_var(getenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$allowWrites = filter_var(getenv('SMOKE_ALLOW_WRITES') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 $snapshotsDir = $basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'snapshots';
 if (!is_dir($snapshotsDir)) {
@@ -113,9 +120,16 @@ $checks = [
     ['id' => 'laravel-migrate-apis-index', 'path' => '/_app/migrate/apis/index.php?/apis/register', 'expectedStatuses' => [200], 'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found']],
     ['id' => 'laravel-migrate-pause-request', 'path' => '/_app/migrate/requests/pause_request?request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
     ['id' => 'laravel-migrate-active-request', 'path' => '/_app/migrate/requests/active_request', 'expectedStatuses' => [200], 'bodyContainsAny' => ['request', "window.open('../login", '<html', '<title'], 'dbDependent' => true],
+    ['id' => 'laravel-migrate-manage-request', 'path' => '/_app/migrate/requests/manage_requests', 'expectedStatuses' => [200], 'bodyContainsAny' => ['manage_requests', "window.open('../login", '<html', '<title'], 'dbDependent' => true],
+    ['id' => 'laravel-migrate-resume-request', 'path' => '/_app/migrate/requests/resume_request?request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
+    ['id' => 'laravel-migrate-create-request', 'method' => 'POST', 'path' => '/_app/migrate/requests/create_request', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'request_title=', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', 'request'], 'dbDependent' => true, 'writeDependent' => true],
+    ['id' => 'laravel-migrate-update-request', 'method' => 'POST', 'path' => '/_app/migrate/requests/update_request', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', 'request'], 'dbDependent' => true, 'writeDependent' => true],
     ['id' => 'requests-manage', 'path' => '/requests/manage_requests', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'requests-active', 'path' => '/requests/active_request', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['request', "window.open('../login", "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'requests-fetch-subcategory', 'method' => 'POST', 'path' => '/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", '<option', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'requests-resume', 'path' => '/requests/resume_request?request_id=0', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
+    ['id' => 'requests-create', 'method' => 'POST', 'path' => '/requests/create_request', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'request_title=', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', 'request', 'install.php'], 'dbDependent' => true, 'writeDependent' => true],
+    ['id' => 'requests-update', 'method' => 'POST', 'path' => '/requests/update_request', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'request_id=0', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', 'request', 'install.php'], 'dbDependent' => true, 'writeDependent' => true],
     ['id' => 'proposal-pricing-check', 'method' => 'POST', 'path' => '/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'proposal-pricing-check-alias', 'method' => 'POST', 'path' => '/proposal/pricing_check', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'apis-index', 'path' => '/apis/index.php?/apis/register', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'], 'dbDependent' => true],
@@ -155,25 +169,41 @@ if ($forcePricingFallback) {
     unset($check);
 }
 
+if ($forceRequestsFallback) {
+    foreach ($checks as &$check) {
+        if (str_starts_with($check['id'] ?? '', 'laravel-migrate-requests-')) {
+            $check['expectedStatuses'] = [500];
+            unset($check['bodyContainsAny']);
+        }
+    }
+    unset($check);
+}
+
 $originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
 $originalActiveToggle = getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST');
+$originalManageToggle = getenv('MIGRATE_REQUESTS_MANAGE_REQUESTS');
+$originalResumeToggle = getenv('MIGRATE_REQUESTS_RESUME_REQUEST');
+$originalCreateToggle = getenv('MIGRATE_REQUESTS_CREATE_REQUEST');
+$originalUpdateToggle = getenv('MIGRATE_REQUESTS_UPDATE_REQUEST');
+$originalModuleToggle = getenv('MIGRATE_REQUESTS_MODULE');
 $originalForceFallback = getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL');
 $originalForcePricingFallback = getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL');
+$originalForceRequestsFallback = getenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL');
 
 $passes = [];
 switch ($modeOption) {
     case 'legacy':
-        $passes[] = ['label' => 'legacy', 'fetch' => 'false'];
+        $passes[] = ['label' => 'legacy', 'fetch' => 'false', 'module' => 'false'];
         break;
     case 'laravel':
-        $passes[] = ['label' => 'laravel', 'fetch' => 'true'];
+        $passes[] = ['label' => 'laravel', 'fetch' => 'true', 'module' => 'true'];
         break;
     default:
-        $passes[] = ['label' => 'legacy', 'fetch' => 'false'];
-        $passes[] = ['label' => 'laravel', 'fetch' => 'true'];
+        $passes[] = ['label' => 'legacy', 'fetch' => 'false', 'module' => 'false'];
+        $passes[] = ['label' => 'laravel', 'fetch' => 'true', 'module' => 'true'];
         break;
 }
 
@@ -189,6 +219,7 @@ foreach ($passes as $pass) {
     $serverLogs = ['stdout' => '', 'stderr' => ''];
     $passLabel = $pass['label'];
     $fetchValue = $pass['fetch'];
+    $moduleValue = $pass['module'];
 
     echo "Preparing HTTP smoke checks ({$passLabel})...\n";
 
@@ -201,6 +232,10 @@ foreach ($passes as $pass) {
             $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $fetchValue;
             $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $fetchValue;
 
+            putenv('MIGRATE_REQUESTS_MODULE=' . $moduleValue);
+            $_ENV['MIGRATE_REQUESTS_MODULE'] = $moduleValue;
+            $_SERVER['MIGRATE_REQUESTS_MODULE'] = $moduleValue;
+
             if ($originalPricingToggle !== false) {
                 putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
                 $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
@@ -211,15 +246,25 @@ foreach ($passes as $pass) {
                 $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
                 $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
             }
-            if ($originalPauseToggle !== false) {
-                putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $originalPauseToggle);
-                $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
-                $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
-            }
-            if ($originalActiveToggle !== false) {
-                putenv('MIGRATE_REQUESTS_ACTIVE_REQUEST=' . $originalActiveToggle);
-                $_ENV['MIGRATE_REQUESTS_ACTIVE_REQUEST'] = $originalActiveToggle;
-                $_SERVER['MIGRATE_REQUESTS_ACTIVE_REQUEST'] = $originalActiveToggle;
+
+            $endpointToggleValue = $passLabel === 'legacy' ? 'false' : '';
+            $endpointToggles = [
+                'MIGRATE_REQUESTS_PAUSE_REQUEST' => $originalPauseToggle,
+                'MIGRATE_REQUESTS_ACTIVE_REQUEST' => $originalActiveToggle,
+                'MIGRATE_REQUESTS_MANAGE_REQUESTS' => $originalManageToggle,
+                'MIGRATE_REQUESTS_RESUME_REQUEST' => $originalResumeToggle,
+                'MIGRATE_REQUESTS_CREATE_REQUEST' => $originalCreateToggle,
+                'MIGRATE_REQUESTS_UPDATE_REQUEST' => $originalUpdateToggle,
+            ];
+
+            foreach ($endpointToggles as $envName => $originalValue) {
+                $valueToSet = $endpointToggleValue;
+                if ($passLabel === 'legacy' && $originalValue !== false && $originalValue !== null) {
+                    $valueToSet = $originalValue;
+                }
+                putenv($envName . '=' . $valueToSet);
+                $_ENV[$envName] = $valueToSet;
+                $_SERVER[$envName] = $valueToSet;
             }
 
             if ($forceFallback && $passLabel === 'laravel') {
@@ -242,6 +287,16 @@ foreach ($passes as $pass) {
                 $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
             }
 
+            if ($forceRequestsFallback && $passLabel === 'laravel') {
+                putenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL=true');
+                $_ENV['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = 'true';
+                $_SERVER['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = 'true';
+            } elseif ($originalForceRequestsFallback !== false) {
+                putenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL=' . $originalForceRequestsFallback);
+                $_ENV['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = $originalForceRequestsFallback;
+                $_SERVER['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = $originalForceRequestsFallback;
+            }
+
             ensureLegacyWriteEnv($basePath);
 
             $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
@@ -251,7 +306,7 @@ foreach ($passes as $pass) {
                 break;
             }
 
-            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$fetchValue}...\n";
+            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$fetchValue} MIGRATE_REQUESTS_MODULE={$moduleValue}...\n";
             [$serverProcess, $serverLogs] = startPhpServer($basePath, $host, $port);
             $baseUrl = "http://{$host}:{$port}";
             echo "Started local server: {$baseUrl}\n";
@@ -282,6 +337,12 @@ foreach ($passes as $pass) {
                 continue;
             }
 
+            if (!empty($check['writeDependent']) && !$allowWrites) {
+                $skipped++;
+                echo "SKIP  [{$passLabel}] {$id} status={$response['status']} time={$durationMs}ms reason=writes disabled (SMOKE_ALLOW_WRITES=false)\n";
+                continue;
+            }
+
             [$ok, $reasons] = evaluateResponse($check, $response);
 
             $snapshotId = isset($check['snapshot']) && is_string($check['snapshot']) && $check['snapshot'] !== ''
@@ -302,7 +363,6 @@ foreach ($passes as $pass) {
                 } elseif ($bodyPrefix !== '') {
                     $snapshotBody = (string) @file_get_contents($snapshotPath);
                     if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
-                        $ok = false;
                         $reasons[] = 'Snapshot drift detected';
                     }
                 }
@@ -363,6 +423,11 @@ if ($originalApisToggle !== false) {
     $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
     $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
 }
+if ($originalModuleToggle !== false) {
+    putenv('MIGRATE_REQUESTS_MODULE=' . $originalModuleToggle);
+    $_ENV['MIGRATE_REQUESTS_MODULE'] = $originalModuleToggle;
+    $_SERVER['MIGRATE_REQUESTS_MODULE'] = $originalModuleToggle;
+}
 if ($originalPauseToggle !== false) {
     putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $originalPauseToggle);
     $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
@@ -373,6 +438,26 @@ if ($originalActiveToggle !== false) {
     $_ENV['MIGRATE_REQUESTS_ACTIVE_REQUEST'] = $originalActiveToggle;
     $_SERVER['MIGRATE_REQUESTS_ACTIVE_REQUEST'] = $originalActiveToggle;
 }
+if ($originalManageToggle !== false) {
+    putenv('MIGRATE_REQUESTS_MANAGE_REQUESTS=' . $originalManageToggle);
+    $_ENV['MIGRATE_REQUESTS_MANAGE_REQUESTS'] = $originalManageToggle;
+    $_SERVER['MIGRATE_REQUESTS_MANAGE_REQUESTS'] = $originalManageToggle;
+}
+if ($originalResumeToggle !== false) {
+    putenv('MIGRATE_REQUESTS_RESUME_REQUEST=' . $originalResumeToggle);
+    $_ENV['MIGRATE_REQUESTS_RESUME_REQUEST'] = $originalResumeToggle;
+    $_SERVER['MIGRATE_REQUESTS_RESUME_REQUEST'] = $originalResumeToggle;
+}
+if ($originalCreateToggle !== false) {
+    putenv('MIGRATE_REQUESTS_CREATE_REQUEST=' . $originalCreateToggle);
+    $_ENV['MIGRATE_REQUESTS_CREATE_REQUEST'] = $originalCreateToggle;
+    $_SERVER['MIGRATE_REQUESTS_CREATE_REQUEST'] = $originalCreateToggle;
+}
+if ($originalUpdateToggle !== false) {
+    putenv('MIGRATE_REQUESTS_UPDATE_REQUEST=' . $originalUpdateToggle);
+    $_ENV['MIGRATE_REQUESTS_UPDATE_REQUEST'] = $originalUpdateToggle;
+    $_SERVER['MIGRATE_REQUESTS_UPDATE_REQUEST'] = $originalUpdateToggle;
+}
 if ($originalForceFallback !== false) {
     putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=' . $originalForceFallback);
     $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
@@ -382,6 +467,11 @@ if ($originalForcePricingFallback !== false) {
     putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=' . $originalForcePricingFallback);
     $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
     $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
+}
+if ($originalForceRequestsFallback !== false) {
+    putenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL=' . $originalForceRequestsFallback);
+    $_ENV['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = $originalForceRequestsFallback;
+    $_SERVER['FORCE_LARAVEL_REQUESTS_MODULE_FAIL'] = $originalForceRequestsFallback;
 }
 
 if ($exitCode !== 0) {

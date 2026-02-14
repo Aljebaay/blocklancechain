@@ -68,3 +68,11 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 - Router buffers Laravel response; serves only when status==200 and body non-empty; otherwise falls back to legacy public/proposals/ajax/check/pricing.php.
 - Laravel route: POST /_app/migrate/proposal/pricing_check (isolated runner).
 - Testing: smoke --mode=legacy|laravel|both; optional --force-fallback-pricing (or env FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=true) forces Laravel failure to confirm fallback.
+
+## Requests Module Toggle (Phase 9)
+- Module toggle: MIGRATE_REQUESTS_MODULE governs all /requests/* endpoints by default.
+- Endpoint overrides: setting MIGRATE_REQUESTS_<ENDPOINT>=false forces legacy even when module toggle is true; setting to true enables a single endpoint when module toggle is false.
+- Router isolation: exact-path checks only; any Laravel error, non-200, or empty body triggers legacy fallback.
+- Force simulation: FORCE_LARAVEL_REQUESTS_MODULE_FAIL=true makes Laravel handlers return 500 so fallback can be verified via smoke.
+- Smoke: use --mode=legacy|laravel|both; SMOKE_ALLOW_WRITES=false by default skips write-dependent checks; --force-fallback-requests tests fallback path.
+

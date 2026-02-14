@@ -12,6 +12,10 @@ class RequestsFetchSubcategoryController extends Controller
 {
     public function __invoke(Request $request)
     {
+        if (filter_var(env('FORCE_LARAVEL_REQUESTS_MODULE_FAIL', false), FILTER_VALIDATE_BOOLEAN)) {
+            return response('', 500);
+        }
+
         $forceFail = filter_var(env('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL', false), FILTER_VALIDATE_BOOLEAN);
         if ($forceFail) {
             throw new \RuntimeException('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL triggered');
