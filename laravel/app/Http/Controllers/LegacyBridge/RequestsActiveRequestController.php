@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\LegacyBridge;
 
 use App\Http\Controllers\Controller;
+use App\Support\LegacyWriteConnection;
 use Illuminate\Http\Request;
-use App\Support\LegacyScriptRunner;
+use Illuminate\Support\Facades\DB;
 
 class RequestsActiveRequestController extends Controller
 {
@@ -15,15 +16,96 @@ class RequestsActiveRequestController extends Controller
             return response('', 500);
         }
 
-        $script = base_path('..' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'requests' . DIRECTORY_SEPARATOR . 'active_request.php');
-        $result = LegacyScriptRunner::run($request, $script, '/requests/active_request');
+        $this->bootstrapLegacySession();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
 
-        if ($result === null || $result['status'] !== 200 || $result['body'] === '') {
+        $sellerUserName = $_SESSION['seller_user_name'] ?? null;
+        if (!is_string($sellerUserName) || $sellerUserName === '') {
+            return $this->loginRedirect();
+        }
+
+        $requestId = $this->sanitizeRequestId($request->query('request_id'));
+        if ($requestId === null) {
+            return $this->manageRedirect(false);
+        }
+
+        try {
+            $legacyRead = DB::connection('legacy');
+            $sellerRow = $legacyRead
+                ->table('sellers')
+                ->select('seller_id')
+                ->where('seller_user_name', $sellerUserName)
+                ->first();
+        } catch (\Throwable $exception) {
             return response('', 500);
         }
 
-        return response($result['body'], $result['status'], [
-            'Content-Type' => 'text/html; charset=UTF-8',
-        ]);
+        if (!$sellerRow || !isset($sellerRow->seller_id)) {
+            return $this->loginRedirect();
+        }
+
+        $sellerId = (int) $sellerRow->seller_id;
+
+        try {
+            $connection = LegacyWriteConnection::connection();
+            $affected = $connection->transaction(function () use ($connection, $requestId, $sellerId) {
+                return $connection->update(
+                    'update buyer_requests set request_status = ? where request_id = ? and seller_id = ?',
+                    ['active', $requestId, $sellerId]
+                );
+            });
+        } catch (\Throwable $exception) {
+            return response('', 500);
+        }
+
+        if ((int) $affected === 1) {
+            $body = "<script>alert('One request has been activated.');</script>";
+            $body .= "<script>window.open('manage_requests','_self')</script>";
+            return response($body, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        }
+
+        return $this->manageRedirect(false);
+    }
+
+    private function sanitizeRequestId($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (!is_numeric($value)) {
+            return null;
+        }
+        return (int) $value;
+    }
+
+    private function bootstrapLegacySession(): void
+    {
+        $legacyBase = realpath(base_path('..'));
+        $bootstrap = $legacyBase !== false
+            ? $legacyBase . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php'
+            : null;
+
+        if ($bootstrap && is_file($bootstrap) && !function_exists('blc_bootstrap_session')) {
+            require_once $bootstrap;
+        }
+
+        if (function_exists('blc_bootstrap_session')) {
+            blc_bootstrap_session();
+        }
+    }
+
+    private function loginRedirect()
+    {
+        $body = "<script>window.open('../login','_self')</script>";
+        return response($body, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    private function manageRedirect(bool $showAlert): \Illuminate\Http\Response
+    {
+        $body = $showAlert ? "<script>alert('One request has been activated.');</script>" : "";
+        $body .= "<script>window.open('manage_requests','_self')</script>";
+        return response($body, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 }
