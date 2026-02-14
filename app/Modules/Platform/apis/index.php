@@ -54,13 +54,17 @@
  * NOTE: If you change these, also change the error_reporting() code below
  */
     $projectBasePath = dirname(__DIR__, 4);
-    $envBootstrap = $projectBasePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+    $envBootstrap = $projectBasePath . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+    if (!is_file($envBootstrap))
+    {
+        $envBootstrap = $projectBasePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+    }
     if (is_file($envBootstrap))
     {
         require_once $envBootstrap;
         if (function_exists('blc_load_env'))
         {
-            blc_load_env($projectBasePath);
+            blc_load_env($projectBasePath . DIRECTORY_SEPARATOR . 'laravel');
         }
     }
 

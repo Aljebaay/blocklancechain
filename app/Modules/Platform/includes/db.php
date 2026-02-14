@@ -5,6 +5,8 @@ blc_bootstrap_session();
 require_once("config.php");
 require_once("install_state.php");
 
+$skipInstallCheck = getenv('BLC_SKIP_INSTALL_CHECK') === 'true';
+
 if(!function_exists('blc_resolve_language_file')){
 	function blc_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
 		$baseDir = realpath($languagesDir);
@@ -43,10 +45,12 @@ if(isset($_SESSION['sessionStart'])){
 }
 
 if(
-	empty(DB_HOST) ||
-	empty(DB_USER) ||
-	empty(DB_NAME) ||
-	!blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+	!$skipInstallCheck && (
+		empty(DB_HOST) ||
+		empty(DB_USER) ||
+		empty(DB_NAME) ||
+		!blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+	)
 ){
 	echo "<script>window.open('install.php','_self'); </script>";
 	exit();

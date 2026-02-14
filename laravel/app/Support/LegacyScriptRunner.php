@@ -7,6 +7,8 @@ use Symfony\Component\Process\Process;
 
 class LegacyScriptRunner
 {
+    private static ?array $rootEnvCache = null;
+
     /**
      * Execute a legacy PHP script in an isolated subprocess, preserving the original
      * superglobals and capturing status/body even when the legacy script calls exit/die.
@@ -35,13 +37,31 @@ class LegacyScriptRunner
             'SCRIPT_FILENAME' => $scriptPath,
         ]);
 
-        $env = array_merge($_ENV, $extraEnv, [
+        // Build explicit DB values to hand to legacy layer (prefer LEGACY_* then DB_*).
+        $legacyHost = env('LEGACY_DB_HOST', env('DB_HOST'));
+        $legacyPort = env('LEGACY_DB_PORT', env('DB_PORT'));
+        if ($legacyHost && $legacyPort && !str_contains((string) $legacyHost, ':')) {
+            $legacyHost = $legacyHost . ':' . $legacyPort;
+        }
+        $legacyPortRaw = $legacyPort ?: getenv('DB_PORT');
+        $legacyDb = env('LEGACY_DB_DATABASE', env('DB_DATABASE'));
+        $legacyUser = env('LEGACY_DB_USERNAME', env('DB_USERNAME'));
+        $legacyPass = env('LEGACY_DB_PASSWORD', env('DB_PASSWORD'));
+
+        // Merge order: Laravel env, root env, caller extras, forced flags, explicit DB_* overrides.
+        $env = array_merge($_ENV, self::loadRootEnv(), $extraEnv, [
             'LEGACY_SERVER' => json_encode($server),
             'LEGACY_GET' => json_encode($request->query->all()),
             'LEGACY_POST' => json_encode($request->request->all()),
             'LEGACY_SCRIPT' => $scriptPath,
             'LEGACY_CWD' => dirname($scriptPath),
             'LEGACY_STATUS_DEFAULT' => (string) $defaultStatus,
+            'BLC_SKIP_INSTALL_CHECK' => 'true',
+            'DB_HOST' => $legacyHost ?: getenv('DB_HOST'),
+            'DB_PORT' => $legacyPortRaw ?: getenv('DB_PORT'),
+            'DB_USER' => $legacyUser ?: getenv('DB_USER'),
+            'DB_PASS' => $legacyPass ?: getenv('DB_PASS'),
+            'DB_NAME' => $legacyDb ?: getenv('DB_NAME'),
         ]);
 
         $runner = tempnam(sys_get_temp_dir(), 'legacy_runner_');
@@ -126,5 +146,47 @@ PHP;
             'status' => $status > 0 ? $status : $defaultStatus,
             'body' => $body,
         ];
+    }
+
+    /**
+     * Load root .env (project base, not Laravel/.env) to ensure legacy scripts
+     * receive DB_* and related values when running via artisan serve.
+     */
+    private static function loadRootEnv(): array
+    {
+        if (self::$rootEnvCache !== null) {
+            return self::$rootEnvCache;
+        }
+
+        $envPath = base_path('..' . DIRECTORY_SEPARATOR . '.env');
+        $vars = [];
+        if (is_file($envPath) && is_readable($envPath)) {
+            $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (is_array($lines)) {
+                foreach ($lines as $line) {
+                    $line = ltrim($line);
+                    if ($line === '' || $line[0] === '#' || $line[0] === ';') {
+                        continue;
+                    }
+                    if (stripos($line, 'export ') === 0) {
+                        $line = trim(substr($line, 7));
+                    }
+                    $pos = strpos($line, '=');
+                    if ($pos === false) {
+                        continue;
+                    }
+                    $name = trim(substr($line, 0, $pos));
+                    if ($name === '') {
+                        continue;
+                    }
+                    $value = trim(substr($line, $pos + 1));
+                    $value = trim($value, "\"'");
+                    $vars[$name] = $value;
+                }
+            }
+        }
+
+        self::$rootEnvCache = $vars;
+        return $vars;
     }
 }

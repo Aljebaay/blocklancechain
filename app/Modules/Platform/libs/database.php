@@ -6,25 +6,62 @@ class Database{
   // public $error;
 
   public function __construct(){
-  $this->connect();
+    $this->connect();
   }
 
   private function connect(){
-    if(!isset($_SESSION["db_host"]) & !isset($_SESSION["db_username"]) & !isset($_SESSION["db_pass"]) & !isset($_SESSION["db_name"])){
-      $host = DB_HOST;
-      $user = DB_USER;
-      $pass = DB_PASS;
-      $db_name = DB_NAME;
+    $skipInstall = getenv('BLC_SKIP_INSTALL_CHECK') === 'true';
+
+    $useSession = !$skipInstall
+      && isset($_SESSION["db_host"], $_SESSION["db_username"], $_SESSION["db_pass"], $_SESSION["db_name"])
+      && $_SESSION["db_host"] !== '';
+
+    if($useSession){
+      $host = (string) $_SESSION["db_host"];
+      $user = (string) $_SESSION["db_username"];
+      $pass = (string) $_SESSION["db_pass"];
+      $db_name = (string) $_SESSION["db_name"];
     }else{
-      $host = $_SESSION["db_host"];
-      $user = $_SESSION["db_username"];
-      $pass = $_SESSION["db_pass"];
-      $db_name = $_SESSION["db_name"];
+      $host = defined('DB_HOST') ? DB_HOST : getenv('DB_HOST');
+      $user = defined('DB_USER') ? DB_USER : getenv('DB_USER');
+      $pass = defined('DB_PASS') ? DB_PASS : getenv('DB_PASS');
+      $db_name = defined('DB_NAME') ? DB_NAME : getenv('DB_NAME');
     }
+
+    // Normalize host and port (supports "host:port" or "[ipv6]:port")
+    if(function_exists('blc_parse_mysql_host')){
+      $parsed = blc_parse_mysql_host((string) $host);
+      $normalizedHost = $parsed['host'] ?? $host;
+      $port = $parsed['port'] ?? null;
+    }else{
+      $normalizedHost = $host;
+      $port = null;
+      if(strpos($host, ':') !== false){
+        [$normalizedHost, $maybePort] = explode(':', $host, 2);
+        if(ctype_digit($maybePort)){
+          $port = (int) $maybePort;
+        }
+      }
+    }
+    if($port === null){
+      $envPort = getenv('DB_PORT');
+      if($envPort !== false && ctype_digit((string) $envPort)){
+        $port = (int) $envPort;
+      }
+    }
+
+    $dsn = "mysql:host={$normalizedHost}";
+    if($port !== null){
+      $dsn .= ";port={$port}";
+    }
+    if(!empty($db_name)){
+      $dsn .= ";dbname={$db_name}";
+    }
+    $dsn .= ";charset=utf8mb4";
+
     try{
-      // $this->con = new PDO("mysql:host=$host;dbname=$db_name", $user, $pass);
       $this->con = new PDO(
-        "mysql:host=$host;dbname=$db_name",
+        $dsn,
         $user,
         $pass,
         array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci")
@@ -33,6 +70,7 @@ class Database{
       $this->con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }catch(PDOException $ex){
       echo "Database Connection Error Is: " . $ex->getMessage();
+      $this->con = null;
     }
   }
 

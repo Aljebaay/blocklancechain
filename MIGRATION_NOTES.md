@@ -112,6 +112,19 @@
 - Added Laravel controllers for proposal view and sections using LegacyScriptRunner under MIGRATE_PROPOSALS toggle (default false); buffered router delegation with fallback to legacy on non-200/empty/error.
 - Routes: /_app/migrate/proposals/{username}/{slug?} and /_app/migrate/proposals/sections/* mirror legacy proposal.php and sections/*.php without changing public URLs.
 - Smoke remains green in legacy/laravel modes; no behavior change while toggle is off. Rollback: set MIGRATE_PROPOSALS=false.
+- Added content-type aware passthrough so CSS/JS/assets load correctly when using `php artisan serve` (legacy public assets still served from root /public).
+
+## 2026-02-14 — Phase 15 kickoff: orders/payments bridge scaffold
+- Added MIGRATE_ORDERS toggle (default false) to .env samples.
+- Added Laravel OrdersBridgeController and /_app/migrate/orders/* route using LegacyScriptRunner for P0 checkout/cart/payment endpoints; guarded whitelist; returns 404 when toggle off.
+- public/router.php now forwards cart/checkout/order/payment front controllers to Laravel when MIGRATE_ORDERS=true; legacy remains default fallback.
+- No behavior change by default; flip MIGRATE_ORDERS=true to exercise bridge and parity-test P0 flows.
+
+## 2026-02-14 — Phase 14B (native) in progress: proposals page
+- Added ProposalViewService to fetch proposal/seller/category/delivery/reviews/extras/faq from legacy DB.
+- ProposalPageController now renders Blade view `proposals.show` (native HTML) when MIGRATE_PROPOSALS=true; returns 404 when toggle off.
+- Kept sections controller via runner for now; fallback remains available if service returns null.
+- Parity not yet validated; ordering/favorite actions still disabled placeholders.
 
 ## 2026-02-14 — Phase 13: inventory, priorities, and migration matrix
 - Added MIGRATION_MATRIX.md summarizing all modules: endpoint counts (native/runner/unmigrated), priorities (P0/P1/P2), toggles, and fallback status.

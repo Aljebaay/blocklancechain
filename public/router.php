@@ -13,6 +13,7 @@ $bridgePrefix = '/_app';
 $migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateProposalsToggle = filter_var(getenv('MIGRATE_PROPOSALS') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migrateOrdersToggle = filter_var(getenv('MIGRATE_ORDERS') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateRequestsModuleToggle = filter_var(getenv('MIGRATE_REQUESTS_MODULE') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 // Deprecated per-endpoint overrides (kept for safe rollback): a false value forces legacy even if module toggle is on; true enables a single endpoint when module toggle is off.
 $requestsToggleOverrides = [
@@ -220,6 +221,41 @@ if (($migrateProposalsToggle || $migratePricingToggle) && $uriPath === '/proposa
             chdir($oldCwd);
         }
         return true;
+    }
+}
+
+$ordersWhitelist = [
+    '/cart.php',
+    '/cart_charge.php',
+    '/cart_paystack_charge.php',
+    '/cart_dusupay_charge.php',
+    '/cart_mercadopago_charge.php',
+    '/cart_crypto_charge.php',
+    '/checkout.php',
+    '/checkout_charge.php',
+    '/order.php',
+    '/order_details.php',
+    '/paypal_charge.php',
+    '/paypal_order.php',
+    '/paystack_order.php',
+    '/mercadopago_order.php',
+    '/dusupay_order.php',
+    '/crypto_order.php',
+    '/cancel_payment.php',
+];
+
+if ($migrateOrdersToggle && in_array($uriPath, $ordersWhitelist, true)) {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+
+    if (is_file($laravelIndex)) {
+        $targetUri = '/_app/migrate/orders' . $uriPath . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        if ($result['status'] === 200 && $result['body'] !== '') {
+            echo $result['body'];
+            return true;
+        }
     }
 }
 
