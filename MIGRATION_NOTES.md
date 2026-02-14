@@ -23,3 +23,10 @@
 - Extended smoke checks with /_app/system/info probe; total 16 checks.
 - Added bridge documentation (laravel/README_BRIDGE.md).
 
+
+## 2026-02-14 — Phase 4: migrate fetch_subcategory
+- Added Laravel handler for /requests/fetch_subcategory under /_app/migrate/requests/fetch_subcategory.
+- Toggle MIGRATE_REQUESTS_FETCH_SUBCATEGORY controls delegation to Laravel; default false; fallback to legacy on error.
+- Response shape preserved (HTML <option> list; login redirect if not authenticated).
+- Smoke extended with Laravel migrate probe; legacy probe retained.
+
