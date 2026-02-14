@@ -6,6 +6,20 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
+if (PHP_SAPI === 'cli' && isset($argv[1]) && $argv[1] === 'serve') {
+    $existingMode = getenv('XDEBUG_MODE');
+    if ($existingMode === false || trim((string) $existingMode) === '') {
+        $serveMode = getenv('ARTISAN_SERVE_XDEBUG_MODE');
+        if ($serveMode === false || trim((string) $serveMode) === '') {
+            $serveMode = 'off';
+        }
+
+        putenv('XDEBUG_MODE=' . $serveMode);
+        $_ENV['XDEBUG_MODE'] = $serveMode;
+        $_SERVER['XDEBUG_MODE'] = $serveMode;
+    }
+}
+
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 

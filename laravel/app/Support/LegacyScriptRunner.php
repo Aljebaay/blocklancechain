@@ -7,13 +7,16 @@ use Symfony\Component\Process\Process;
 
 class LegacyScriptRunner
 {
+    private const META_BEGIN = '__BLC_META_BEGIN__';
+    private const META_END = '__BLC_META_END__';
+
     private static ?array $rootEnvCache = null;
 
     /**
      * Execute a legacy PHP script in an isolated subprocess, preserving the original
      * superglobals and capturing status/body even when the legacy script calls exit/die.
      *
-     * @return array|null ['status' => int, 'body' => string] or null on bootstrap failure
+     * @return array|null ['status' => int, 'body' => string, 'headers' => string[]] or null on bootstrap failure
      */
     public static function run(Request $request, string $scriptPath, string $legacyUri, array $options = []): ?array
     {
@@ -47,6 +50,10 @@ class LegacyScriptRunner
         $legacyDb = env('LEGACY_DB_DATABASE', env('DB_DATABASE'));
         $legacyUser = env('LEGACY_DB_USERNAME', env('DB_USERNAME'));
         $legacyPass = env('LEGACY_DB_PASSWORD', env('DB_PASSWORD'));
+        $xdebugMode = env('LEGACY_RUNNER_XDEBUG_MODE', getenv('XDEBUG_MODE') ?: 'off');
+        if (!is_string($xdebugMode) || trim($xdebugMode) === '') {
+            $xdebugMode = 'off';
+        }
 
         // Merge order: Laravel env, root env, caller extras, forced flags, explicit DB_* overrides.
         $env = array_merge($_ENV, self::loadRootEnv(), $extraEnv, [
@@ -62,6 +69,8 @@ class LegacyScriptRunner
             'DB_USER' => $legacyUser ?: getenv('DB_USER'),
             'DB_PASS' => $legacyPass ?: getenv('DB_PASS'),
             'DB_NAME' => $legacyDb ?: getenv('DB_NAME'),
+            // Keep legacy runner fast when Xdebug is globally enabled.
+            'XDEBUG_MODE' => $xdebugMode,
         ]);
 
         $runner = tempnam(sys_get_temp_dir(), 'legacy_runner_');
@@ -94,11 +103,25 @@ register_shutdown_function(function (): void {
     if ($status === false) {
         $status = 200;
     }
+    $headers = headers_list();
+    if ((!is_array($headers) || $headers === []) && function_exists('xdebug_get_headers')) {
+        $xdebugHeaders = xdebug_get_headers();
+        if (is_array($xdebugHeaders) && $xdebugHeaders !== []) {
+            $headers = $xdebugHeaders;
+        }
+    }
+    if (function_exists('header_remove')) {
+        header_remove();
+    }
     $captured = ob_get_contents();
     if ($captured !== false) {
         ob_end_clean();
     }
-    echo 'STATUS:' . $status . "\n";
+    $meta = base64_encode((string) json_encode([
+        'status' => $status,
+        'headers' => is_array($headers) ? $headers : [],
+    ], JSON_UNESCAPED_SLASHES));
+    echo '__BLC_META_BEGIN__' . $meta . '__BLC_META_END__';
     if ($captured !== false) {
         echo $captured;
     }
@@ -109,7 +132,14 @@ PHP;
 
         file_put_contents($runner, $phpCode);
 
-        $process = new Process([PHP_BINARY, $runner]);
+        $processCommand = [PHP_BINARY];
+        if ($xdebugMode !== '') {
+            $processCommand[] = '-d';
+            $processCommand[] = 'xdebug.mode=' . $xdebugMode;
+        }
+        $processCommand[] = $runner;
+
+        $process = new Process($processCommand);
         $process->setWorkingDirectory(dirname($scriptPath));
         $process->setEnv($env);
         $process->setTimeout($timeout);
@@ -122,29 +152,69 @@ PHP;
             return null;
         }
 
-        $markerPos = strrpos($output, 'STATUS:');
-        if ($markerPos === false) {
-            // Fallback: return raw output with default status when marker missing.
+        $metaBeginPos = strpos($output, self::META_BEGIN);
+        if ($metaBeginPos === false) {
+            // Backward compatibility with older runner output.
+            $markerPos = strrpos($output, 'STATUS:');
+            if ($markerPos === false) {
+                // Fallback: return raw output with default status when marker missing.
+                return [
+                    'status' => $defaultStatus,
+                    'body' => $output,
+                    'headers' => [],
+                ];
+            }
+            $newlinePos = strpos($output, "\n", $markerPos);
+            if ($newlinePos === false) {
+                return [
+                    'status' => $defaultStatus,
+                    'body' => $output,
+                    'headers' => [],
+                ];
+            }
+
+            $statusLine = substr($output, $markerPos + strlen('STATUS:'), $newlinePos - ($markerPos + strlen('STATUS:')));
+            $body = substr($output, $newlinePos + 1);
+            $status = (int) trim($statusLine);
+
             return [
-                'status' => $defaultStatus,
-                'body' => $output,
-            ];
-        }
-        $newlinePos = strpos($output, "\n", $markerPos);
-        if ($newlinePos === false) {
-            return [
-                'status' => $defaultStatus,
-                'body' => $output,
+                'status' => $status > 0 ? $status : $defaultStatus,
+                'body' => $body,
+                'headers' => [],
             ];
         }
 
-        $statusLine = substr($output, $markerPos + strlen('STATUS:'), $newlinePos - ($markerPos + strlen('STATUS:')));
-        $body = substr($output, $newlinePos + 1);
-        $status = (int) trim($statusLine);
+        $metaStart = $metaBeginPos + strlen(self::META_BEGIN);
+        $metaEndPos = strpos($output, self::META_END, $metaStart);
+        if ($metaEndPos === false) {
+            return [
+                'status' => $defaultStatus,
+                'body' => $output,
+                'headers' => [],
+            ];
+        }
+
+        $encodedMeta = substr($output, $metaStart, $metaEndPos - $metaStart);
+        $decodedMeta = base64_decode($encodedMeta, true);
+        $meta = json_decode(is_string($decodedMeta) ? $decodedMeta : '{}', true);
+
+        $status = is_array($meta) && isset($meta['status']) ? (int) $meta['status'] : $defaultStatus;
+        $rawHeaders = is_array($meta) && isset($meta['headers']) && is_array($meta['headers'])
+            ? $meta['headers']
+            : [];
+        $headers = [];
+        foreach ($rawHeaders as $headerLine) {
+            if (is_string($headerLine) && $headerLine !== '') {
+                $headers[] = $headerLine;
+            }
+        }
+
+        $body = substr($output, $metaEndPos + strlen(self::META_END));
 
         return [
             'status' => $status > 0 ? $status : $defaultStatus,
             'body' => $body,
+            'headers' => $headers,
         ];
     }
 

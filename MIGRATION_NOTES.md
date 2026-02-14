@@ -120,6 +120,20 @@
 - public/router.php now forwards cart/checkout/order/payment front controllers to Laravel when MIGRATE_ORDERS=true; legacy remains default fallback.
 - No behavior change by default; flip MIGRATE_ORDERS=true to exercise bridge and parity-test P0 flows.
 
+## 2026-02-14 — Phase 15A: native cancel_payment endpoint
+- Migrated `/cancel_payment.php` to native Laravel controller `CancelPaymentController` under `/_app/migrate/orders/cancel_payment.php` (toggle-gated by `MIGRATE_ORDERS`).
+- Preserved legacy response contract (JS redirect/close scripts) and legacy DB side effects (`temp_orders`/`temp_extras` cleanup) using `legacy_write` transaction.
+- Kept `OrdersBridgeController` for remaining orders/payment endpoints; removed `cancel_payment.php` from runner whitelist.
+- Smoke harness updated to:
+  - set `MIGRATE_ORDERS=true` in laravel mode,
+  - add `orders-cancel-payment` probe,
+  - keep proposal/apis toggles deterministic per pass.
+
+## 2026-02-14 — Hotfix: DB install-check false negatives on non-default port
+- Fixed installer/runtime install-state DB probing to honor `DB_PORT` when `DB_HOST` has no inline port (`app/Modules/Platform/includes/install_state.php`).
+- Root cause: install completeness check used DSN default port 3306, causing false redirects to `install.php` and `SQLSTATE[HY000] [2002]` despite valid runtime DB config on port 3307.
+- Verified with smoke laravel pass: home/login/index and requests endpoints now pass without DB-unavailable skips.
+
 ## 2026-02-14 — Phase 14B (native) in progress: proposals page
 - Added ProposalViewService to fetch proposal/seller/category/delivery/reviews/extras/faq from legacy DB.
 - ProposalPageController now renders Blade view `proposals.show` (native HTML) when MIGRATE_PROPOSALS=true; returns 404 when toggle off.
@@ -130,4 +144,18 @@
 - Added MIGRATION_MATRIX.md summarizing all modules: endpoint counts (native/runner/unmigrated), priorities (P0/P1/P2), toggles, and fallback status.
 - Identified top P0 endpoints and assigned to upcoming phases: Phase 14 (Proposals), Phase 15 (Orders/Payments), Phase 16 (Messages/Offers), Phase 17 (Admin/APIs with /apis/index.php kept behind toggle).
 - Smoke remains green in legacy/laravel modes; no runtime changes made.
+
+## 2026-02-14 — CSRF scope fix for legacy passthrough (419 errors)
+- Root cause: Laravel `web` CSRF middleware was applied to the global legacy catch-all route (`/{any?}`), so legacy POST endpoints like `/search-knowledge` and `/includes/close_cookies_footer.php` returned HTTP 419 when served through `php artisan serve`.
+- Fix: scoped CSRF exclusion to the legacy catch-all route only via `withoutMiddleware(ValidateCsrfToken::class)` in `laravel/routes/web.php`.
+- Safety: `/_app` migration routes keep Laravel CSRF behavior unchanged (existing explicit exceptions remain in `laravel/bootstrap/app.php`).
+- Added regression test `laravel/tests/Feature/LegacyPassthroughCsrfTest.php` to assert the catch-all excludes CSRF while `/_app/migrate/orders/{file}` does not.
+
+## 2026-02-14 — Phase 15B: bridge response parity hardening
+- Enhanced `LegacyScriptRunner` to return structured metadata (`status`, `body`, and raw response `headers` when available) with backward-compatible fallback parsing.
+- Hardened Laravel legacy passthrough (`laravel/routes/web.php`) to treat empty-body redirects as valid responses and preserve captured legacy headers.
+- Refactored `ApisIndexController` to use shared `LegacyScriptRunner` instead of a duplicated isolated runner implementation.
+- Updated `OrdersBridgeController` to accept redirect-style legacy responses and forward captured headers with safe content-type fallback.
+- Added regression tests: `laravel/tests/Feature/LegacyScriptRunnerHeadersTest.php`.
+- Verification: `php laravel/artisan test` and `php scripts/smoke_http.php --mode laravel` both pass.
 

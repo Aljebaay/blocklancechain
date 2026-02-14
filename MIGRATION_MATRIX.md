@@ -13,17 +13,17 @@ Priority: **P0** critical/top-traffic/auth/payment; **P1** core; **P2** long tai
 - Priority: P0 = post_request, buyer_requests, load_category_data, load_search_data (search/browse), view_offers, insert_offer; P1 = remaining; P2 = static assets.
 
 ## Proposals (72 endpoints)
-- Native: 0  
-- Runner (2): /proposals/ajax/check/pricing, /proposal/pricing_check (bridge runner).  
-- Unmigrated: ~70 proposal pages, sections, coupons, files.  
-- Toggles: MIGRATE_PROPOSAL_PRICING_CHECK (default false).  
+- Native (3): proposal public page (`/proposals/{username}/{slug}`), `/proposals/ajax/check/pricing`, `/proposal/pricing_check`.  
+- Runner (1): proposal sections passthrough (`/proposals/sections/*`).  
+- Unmigrated: remaining proposal pages/coupons/files/edit flows.  
+- Toggles: MIGRATE_PROPOSALS (default false), MIGRATE_PROPOSAL_PRICING_CHECK (compat toggle).  
 - Priority: P0 = proposal view (handler/proposal.php), pricing_check (already bridged but not native), proposal sections/ajax; P1 = coupons/files; P2 = long-tail assets.
 
 ## Orders / Payments (53 endpoints: manage_orders 10 + orderIncludes 37 + paypal 6)
-- Native: 0  
-- Runner: 0  
-- Unmigrated: all orders/checkout/payment flows (stripe_charge, paypal/*, paystack, mercadopago, dusupay, crypto, offer_submit_order, manage_orders pages).  
-- Toggles: none yet.  
+- Native (1): `/cancel_payment.php` (Laravel controller, legacy contract preserved).  
+- Runner (16): cart/checkout/order/payment front controllers still bridged via `OrdersBridgeController`.  
+- Unmigrated: remaining orders/checkout/payment flows (stripe_charge, paypal/*, paystack, mercadopago, dusupay, crypto, offer_submit_order, manage_orders pages).  
+- Toggles: MIGRATE_ORDERS (default false).  
 - Priority: P0 = checkout flows (stripe_charge, paypal/checkout, offer_submit_order, paystack/charge, mercadopago/dusupay/crypto), manage_orders main page; P1 = orderIncludes fragments; P2 = ancillary assets.
 
 ## Messages / Offers (26 conversations endpoints)
@@ -69,7 +69,8 @@ Priority: **P0** critical/top-traffic/auth/payment; **P1** core; **P2** long tai
 
 ## Fallback status
 - Router remains exact-path with buffered fallback; module toggles override deprecated endpoint toggles.  
-- Legacy runtime intact for all unmigrated endpoints; forced-fallback flags verified for Requests.
+- Legacy runtime intact for all unmigrated endpoints; forced-fallback flags verified for Requests (and available for Proposals via FORCE_LARAVEL_PROPOSALS_FAIL).
+- Bridge response handling now treats redirect statuses as valid even with empty bodies, and preserves legacy headers when the runtime SAPI exposes them.
 
 ## Notes
 - Counts per module derived from endpoint manifest grouping by first path segment; “root” endpoints (104) house auth/account and assorted platform pages—classified above where applicable.  

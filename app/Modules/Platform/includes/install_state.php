@@ -28,8 +28,16 @@ if(!function_exists('blc_build_mysql_dsn')){
 		$hostParts = blc_parse_mysql_host($host);
 		$dsn = "mysql:host={$hostParts['host']}";
 
-		if($hostParts['port'] !== null){
-			$dsn .= ";port={$hostParts['port']}";
+		$port = $hostParts['port'];
+		if($port === null){
+			$envPort = getenv('DB_PORT');
+			if($envPort !== false && ctype_digit((string) $envPort)){
+				$port = (int) $envPort;
+			}
+		}
+
+		if($port !== null){
+			$dsn .= ";port={$port}";
 		}
 
 		if($databaseName !== ''){
@@ -224,7 +232,16 @@ if(!function_exists('blc_execute_sql_file_with_mysqli')){
 			throw new RuntimeException("Unable to initialize MySQLi.");
 		}
 
-		$port = $hostParts['port'] !== null ? (int) $hostParts['port'] : 3306;
+		$port = $hostParts['port'] !== null ? (int) $hostParts['port'] : null;
+		if($port === null){
+			$envPort = getenv('DB_PORT');
+			if($envPort !== false && ctype_digit((string) $envPort)){
+				$port = (int) $envPort;
+			}
+		}
+		if($port === null){
+			$port = 3306;
+		}
 		if(!@$mysqli->real_connect($hostParts['host'], $user, $pass, $databaseName, $port)){
 			throw new RuntimeException("Database connection failed: " . mysqli_connect_error());
 		}

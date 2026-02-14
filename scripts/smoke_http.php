@@ -121,7 +121,7 @@ $checks = [
     ['id' => 'laravel-migrate-fetch-subcategory', 'method' => 'POST', 'path' => '/_app/migrate/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['<option', "window.open('../login"]],
     ['id' => 'laravel-migrate-proposal-pricing', 'method' => 'POST', 'path' => '/_app/migrate/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['true', 'false', "window.open('../login", 'install.php']],
     ['id' => 'laravel-migrate-proposal-pricing-alias', 'method' => 'POST', 'path' => '/_app/migrate/proposal/pricing_check', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['true', 'false', "window.open('../login", 'install.php']],
-    ['id' => 'laravel-migrate-apis-index', 'path' => '/_app/migrate/apis/index.php?/apis/register', 'expectedStatuses' => [200], 'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found']],
+    ['id' => 'laravel-migrate-apis-index', 'path' => '/_app/migrate/apis/index.php?/apis/register', 'expectedStatuses' => [200], 'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found'], 'dbDependent' => true],
     ['id' => 'laravel-migrate-pause-request', 'path' => '/_app/migrate/requests/pause_request?request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
     ['id' => 'laravel-migrate-active-request', 'path' => '/_app/migrate/requests/active_request', 'expectedStatuses' => [200], 'bodyContainsAny' => ['request', "window.open('../login", '<html', '<title'], 'dbDependent' => true],
     ['id' => 'laravel-migrate-manage-request', 'path' => '/_app/migrate/requests/manage_requests', 'expectedStatuses' => [200], 'bodyContainsAny' => ['manage_requests', "window.open('../login", '<html', '<title'], 'dbDependent' => true],
@@ -138,6 +138,7 @@ $checks = [
     ['id' => 'proposal-pricing-check', 'method' => 'POST', 'path' => '/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'proposal-pricing-check-alias', 'method' => 'POST', 'path' => '/proposal/pricing_check', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
     ['id' => 'apis-index', 'path' => '/apis/index.php?/apis/register', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'], 'dbDependent' => true],
+    ['id' => 'orders-cancel-payment', 'path' => '/cancel_payment.php', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('index','_self')", 'install.php', 'login'], 'dbDependent' => true],
     ['id' => 'requests-pause-request', 'path' => '/requests/pause_request?request_id=0', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
     ['id' => 'admin-include-sanitize', 'path' => '/admin/includes/sanitize_url.php', 'expectedStatuses' => [200]],
     ['id' => 'not-found-static', 'path' => '/this-file-should-not-exist-blc.css', 'expectedStatuses' => [404], 'bodyContainsAny' => ['Not Found']],
@@ -219,6 +220,7 @@ if ($forceRequestsFallback) {
 $originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
 $originalProposalsModuleToggle = getenv('MIGRATE_PROPOSALS');
+$originalOrdersToggle = getenv('MIGRATE_ORDERS');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
 $originalActiveToggle = getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST');
@@ -276,25 +278,24 @@ foreach ($passes as $pass) {
             $_SERVER['MIGRATE_REQUESTS_MODULE'] = $moduleValue;
 
             $proposalsModuleValue = $passLabel === 'legacy' ? 'false' : 'true';
+            $ordersModuleValue = $passLabel === 'legacy' ? 'false' : 'true';
+            $pricingToggleValue = $passLabel === 'legacy'
+                ? ($originalPricingToggle !== false ? $originalPricingToggle : 'false')
+                : 'true';
+            $apisToggleValue = $originalApisToggle !== false ? $originalApisToggle : 'false';
+
             putenv('MIGRATE_PROPOSALS=' . $proposalsModuleValue);
             $_ENV['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
             $_SERVER['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
-
-if ($originalPricingToggle !== false) {
-    putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
-    $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
-    $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
-}
-if ($originalProposalsModuleToggle !== false) {
-    putenv('MIGRATE_PROPOSALS=' . $originalProposalsModuleToggle);
-    $_ENV['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
-    $_SERVER['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
-}
-if ($originalApisToggle !== false) {
-    putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
-    $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
-    $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
-}
+            putenv('MIGRATE_ORDERS=' . $ordersModuleValue);
+            $_ENV['MIGRATE_ORDERS'] = $ordersModuleValue;
+            $_SERVER['MIGRATE_ORDERS'] = $ordersModuleValue;
+            putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $pricingToggleValue);
+            $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $pricingToggleValue;
+            $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $pricingToggleValue;
+            putenv('MIGRATE_APIS_INDEX=' . $apisToggleValue);
+            $_ENV['MIGRATE_APIS_INDEX'] = $apisToggleValue;
+            $_SERVER['MIGRATE_APIS_INDEX'] = $apisToggleValue;
 
             $endpointToggleValue = $passLabel === 'legacy' ? 'false' : '';
             $endpointToggles = [
@@ -357,7 +358,14 @@ if ($originalApisToggle !== false) {
 
             ensureLegacyWriteEnv($basePath);
 
-            $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
+            if ($requestedPort > 0 && isPortAvailable($host, $requestedPort)) {
+                $port = $requestedPort;
+            } else {
+                if ($requestedPort > 0) {
+                    echo "Requested port {$requestedPort} is unavailable; selecting an open fallback port.\n";
+                }
+                $port = findFreePort($host, 18080, 18150);
+            }
             if ($port <= 0) {
                 fwrite(STDERR, "No available port found for built-in server.\n");
                 $exitCode = 1;
@@ -486,6 +494,11 @@ if ($originalProposalsModuleToggle !== false) {
     putenv('MIGRATE_PROPOSALS=' . $originalProposalsModuleToggle);
     $_ENV['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
     $_SERVER['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
+}
+if ($originalOrdersToggle !== false) {
+    putenv('MIGRATE_ORDERS=' . $originalOrdersToggle);
+    $_ENV['MIGRATE_ORDERS'] = $originalOrdersToggle;
+    $_SERVER['MIGRATE_ORDERS'] = $originalOrdersToggle;
 }
 if ($originalApisToggle !== false) {
     putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
@@ -753,6 +766,17 @@ function findFreePort(string $host, int $start, int $end): int
     }
 
     return 0;
+}
+
+function isPortAvailable(string $host, int $port): bool
+{
+    $socket = @stream_socket_server("tcp://{$host}:{$port}", $errno, $errorString);
+    if ($socket === false) {
+        return false;
+    }
+
+    fclose($socket);
+    return true;
 }
 
 function waitForServer(string $baseUrl, int $attempts, int $sleepMicros): bool

@@ -11,10 +11,18 @@ class Database{
 
   private function connect(){
     $skipInstall = getenv('BLC_SKIP_INSTALL_CHECK') === 'true';
+    $requestPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    $scriptName = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $isInstallRequest = in_array($scriptName, ['install.php', 'install2.php', 'install3.php'], true)
+      || preg_match('#^/install(?:2|3)?\.php$#i', $requestPath) === 1;
 
+    // Session DB values are only for installer steps; runtime must use env constants.
     $useSession = !$skipInstall
+      && $isInstallRequest
       && isset($_SESSION["db_host"], $_SESSION["db_username"], $_SESSION["db_pass"], $_SESSION["db_name"])
-      && $_SESSION["db_host"] !== '';
+      && trim((string) $_SESSION["db_host"]) !== ''
+      && trim((string) $_SESSION["db_username"]) !== ''
+      && trim((string) $_SESSION["db_name"]) !== '';
 
     if($useSession){
       $host = (string) $_SESSION["db_host"];

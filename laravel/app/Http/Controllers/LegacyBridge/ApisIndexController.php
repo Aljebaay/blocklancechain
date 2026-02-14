@@ -3,146 +3,119 @@
 namespace App\Http\Controllers\LegacyBridge;
 
 use App\Http\Controllers\Controller;
+use App\Support\LegacyScriptRunner;
 use Illuminate\Http\Request;
-use Symfony\Component\Process\Process;
 
 class ApisIndexController extends Controller
 {
     public function __invoke(Request $request)
     {
         $script = base_path('..' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'apis' . DIRECTORY_SEPARATOR . 'index.php');
-        $result = $this->runLegacyScriptIsolated($script, $request, '/apis/index.php');
+        $result = LegacyScriptRunner::run($request, $script, '/apis/index.php');
 
-        if ($result === null || $result['status'] !== 200 || $result['body'] === '') {
+        if (!$this->isUsableResult($result)) {
             return response('', 500);
         }
 
-        return response($result['body'], $result['status'], [
-            'Content-Type' => 'text/html; charset=UTF-8',
-        ]);
+        $status = (int) ($result['status'] ?? 200);
+        $headers = $this->normalizeHeaders(is_array($result['headers'] ?? null) ? $result['headers'] : []);
+        if (!$this->hasHeader($headers, 'Content-Type')) {
+            $headers['Content-Type'] = 'text/html; charset=UTF-8';
+        }
+
+        return response((string) ($result['body'] ?? ''), $status > 0 ? $status : 200, $headers);
+    }
+
+    private function isUsableResult(?array $result): bool
+    {
+        if (!is_array($result)) {
+            return false;
+        }
+
+        $status = (int) ($result['status'] ?? 0);
+        $body = (string) ($result['body'] ?? '');
+        if ($status <= 0) {
+            return false;
+        }
+
+        if ($body !== '') {
+            return true;
+        }
+
+        $headerLines = is_array($result['headers'] ?? null) ? $result['headers'] : [];
+        return in_array($status, [301, 302, 303, 307, 308], true)
+            && ($headerLines === [] || $this->hasHeaderLine($headerLines, 'Location'));
     }
 
     /**
-     * Execute the legacy script in an isolated PHP process so exit/die cannot kill the bridge.
+     * @param array<int, mixed> $headerLines
+     * @return array<string, string>
      */
-    private function runLegacyScriptIsolated(string $scriptPath, Request $request, string $legacyUri): ?array
+    private function normalizeHeaders(array $headerLines): array
     {
-        if (!is_file($scriptPath)) {
-            return null;
+        $headers = [];
+        foreach ($headerLines as $headerLine) {
+            if (!is_string($headerLine) || $headerLine === '') {
+                continue;
+            }
+
+            $pos = strpos($headerLine, ':');
+            if ($pos === false) {
+                continue;
+            }
+
+            $name = trim(substr($headerLine, 0, $pos));
+            $value = trim(substr($headerLine, $pos + 1));
+            if ($name === '' || $value === '') {
+                continue;
+            }
+
+            if (strcasecmp($name, 'Content-Length') === 0 || strcasecmp($name, 'Transfer-Encoding') === 0) {
+                continue;
+            }
+
+            $headers[$name] = $value;
         }
 
-        $server = array_merge($_SERVER, [
-            'REQUEST_METHOD' => $request->method(),
-            'REQUEST_URI' => $legacyUri . ($request->getQueryString() ? '?' . $request->getQueryString() : ''),
-            'QUERY_STRING' => $request->getQueryString() ?: http_build_query($request->query()),
-            'HTTP_HOST' => $request->getHost(),
-            'HTTPS' => $request->isSecure() ? 'on' : 'off',
-            'DOCUMENT_ROOT' => realpath(base_path('..' . DIRECTORY_SEPARATOR . 'public')) ?: null,
-            'SCRIPT_NAME' => $legacyUri,
-            'PHP_SELF' => $legacyUri,
-            'SCRIPT_FILENAME' => $scriptPath,
-            'PATH_INFO' => $request->getQueryString() && str_starts_with($request->getQueryString(), '/')
-                ? $request->getQueryString()
-                : ($request->server->get('PATH_INFO') ?: null),
-        ]);
-
-        $env = array_merge($_ENV, [
-            'LEGACY_SERVER' => json_encode($server),
-            'LEGACY_GET' => json_encode($request->query->all()),
-            'LEGACY_POST' => json_encode($request->request->all()),
-            'LEGACY_SCRIPT' => $scriptPath,
-            'LEGACY_CWD' => dirname($scriptPath),
-            'LEGACY_STATUS_DEFAULT' => '200',
-        ]);
-
-        $runner = tempnam(sys_get_temp_dir(), 'legacy_runner_');
-        if ($runner === false) {
-            return null;
-        }
-
-        $phpCode = <<<'PHP'
-<?php
-$server = json_decode(getenv('LEGACY_SERVER') ?: '[]', true) ?: [];
-$get = json_decode(getenv('LEGACY_GET') ?: '[]', true) ?: [];
-$post = json_decode(getenv('LEGACY_POST') ?: '[]', true) ?: [];
-$script = getenv('LEGACY_SCRIPT');
-$cwd = getenv('LEGACY_CWD') ?: null;
-$defaultStatus = (int) (getenv('LEGACY_STATUS_DEFAULT') ?: 200);
-
-if ($cwd && is_dir($cwd)) {
-    chdir($cwd);
-}
-
-$_SERVER = array_merge($_SERVER, $server);
-$_GET = $get;
-$_POST = $post;
-$_REQUEST = array_merge($_GET, $_POST);
-http_response_code($defaultStatus);
-
-ob_start();
-register_shutdown_function(function (): void {
-    $status = http_response_code();
-    if ($status === false) {
-        $status = 200;
-    }
-    $captured = ob_get_contents();
-    if ($captured !== false) {
-        ob_end_clean();
-    }
-    echo 'STATUS:' . $status . "\n";
-    if ($captured !== false) {
-        echo $captured;
-    }
-});
-
-require $script;
-PHP;
-        file_put_contents($runner, $phpCode);
-
-        $process = new Process([PHP_BINARY, $runner]);
-        $process->setWorkingDirectory(dirname($scriptPath));
-        $process->setEnv($env);
-        $process->setTimeout(20);
-        $process->run();
-
-        $output = $process->getOutput();
-        @unlink($runner);
-
-        if ($output === '') {
-            $this->logRunnerFailure($scriptPath, $process);
-            return null;
-        }
-
-        $markerPos = strrpos($output, 'STATUS:');
-        if ($markerPos === false) {
-            $this->logRunnerFailure($scriptPath, $process, $output);
-            return null;
-        }
-        $newlinePos = strpos($output, "\n", $markerPos);
-        if ($newlinePos === false) {
-            $this->logRunnerFailure($scriptPath, $process, $output);
-            return null;
-        }
-
-        $statusLine = substr($output, $markerPos + strlen('STATUS:'), $newlinePos - ($markerPos + strlen('STATUS:')));
-        $body = substr($output, $newlinePos + 1);
-        $status = (int) trim($statusLine);
-
-        return [
-            'status' => $status,
-            'body' => $body,
-        ];
+        return $headers;
     }
 
-    private function logRunnerFailure(string $scriptPath, Process $process, string $output = ''): void
+    /**
+     * @param array<string, string> $headers
+     */
+    private function hasHeader(array $headers, string $name): bool
     {
-        $logPath = base_path('storage' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'legacy_runner.log');
-        $context = [
-            'script' => $scriptPath,
-            'exit_code' => $process->getExitCode(),
-            'error_output' => $process->getErrorOutput(),
-            'raw_output' => $output === '' ? $process->getOutput() : $output,
-        ];
-        @file_put_contents($logPath, '[' . date('c') . '] ' . json_encode($context) . PHP_EOL, FILE_APPEND);
+        foreach ($headers as $headerName => $value) {
+            if (strcasecmp($headerName, $name) === 0 && $value !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, mixed> $headerLines
+     */
+    private function hasHeaderLine(array $headerLines, string $name): bool
+    {
+        foreach ($headerLines as $headerLine) {
+            if (!is_string($headerLine) || $headerLine === '') {
+                continue;
+            }
+
+            $pos = strpos($headerLine, ':');
+            if ($pos === false) {
+                continue;
+            }
+
+            $headerName = trim(substr($headerLine, 0, $pos));
+            $headerValue = trim(substr($headerLine, $pos + 1));
+            if ($headerName !== '' && $headerValue !== '' && strcasecmp($headerName, $name) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
