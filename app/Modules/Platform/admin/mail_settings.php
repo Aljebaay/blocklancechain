@@ -65,7 +65,7 @@ echo "<script>window.open('login','_self');</script>";
                             <div class="col-md-6">
                                 <select name="library" class="form-control">
                                     <option value="php_mailer"> Php Mailer </option>
-                                    <option value="swift_mailer" <?= ($library == "swift_mailer")?"selected":""; ?>> Swift Mailer </option>
+                                    <option value="swift_mailer" <?= ($library == "swift_mailer")?"selected":""; ?>> Swift Mailer (Legacy -> PHPMailer) </option>
                                 </select>
                                 <small class="text-muted">If you select <b>Swift Mailer</b>, you need to enable SMTP also for it to work.</small>
                             </div>

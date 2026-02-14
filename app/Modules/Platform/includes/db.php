@@ -3,6 +3,39 @@
 require_once __DIR__ . "/session_bootstrap.php";
 blc_bootstrap_session();
 require_once("config.php");
+
+if(!function_exists('blc_resolve_language_file')){
+	function blc_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
+		$baseDir = realpath($languagesDir);
+		if($baseDir === false){
+			return null;
+		}
+
+		$normalizedTitle = strtolower(trim($languageTitle));
+		if($normalizedTitle === ''){
+			return null;
+		}
+
+		// Allow only expected characters in language file names.
+		if(preg_match('/^[a-z0-9 _().-]+$/', $normalizedTitle) !== 1){
+			return null;
+		}
+
+		$candidate = $baseDir . DIRECTORY_SEPARATOR . $normalizedTitle . '.php';
+		$resolved = realpath($candidate);
+		if($resolved === false){
+			return null;
+		}
+
+		$basePrefix = rtrim($baseDir, "\\/") . DIRECTORY_SEPARATOR;
+		if(strpos($resolved, $basePrefix) !== 0){
+			return null;
+		}
+
+		return $resolved;
+	}
+}
+
 if(isset($_SESSION['sessionStart'])){
 	$_SESSION['seller_user_name'] = $_SESSION['sessionStart'];
 	unset($_SESSION['sessionStart']);
@@ -134,7 +167,14 @@ if(empty(DB_HOST) and empty(DB_USER) and empty(DB_NAME)){
 	$row_language = $db->select("languages",array("id"=>$siteLanguage))->fetch();
 	$lang_dir = $row_language->direction;
 	$template_folder = $row_language->template_folder;
-	require($dir."languages/".strtolower($row_language->title).".php");
+	$languageFile = blc_resolve_language_file($dir . "languages", (string)$row_language->title);
+	if($languageFile === null){
+		$languageFile = blc_resolve_language_file($dir . "languages", "english");
+	}
+	if($languageFile === null){
+		throw new RuntimeException("No valid language file found for runtime.");
+	}
+	require($languageFile);
 
 	require_once "$dir/screens/detect.php";
 	$detect = new Mobile_Detect;

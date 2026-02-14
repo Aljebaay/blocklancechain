@@ -250,14 +250,12 @@ echo '<link href="../../styles/desktop_proposals.css" rel="stylesheet">';
 <link href="../../styles/green-audio-player.css" rel="stylesheet">
 <script type="text/javascript" src="../../js/sweat_alert.js"></script>
 <script type="text/javascript" src="../../js/jquery.min.js"></script>
-<!-- Go to www.addthis.com/dashboard to customize your tools -->
-<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5a39d50ac9681a6c"></script>
 <?php if(!empty($site_favicon)){ ?>
 <link rel="shortcut icon" href="<?= $site_favicon; ?>" type="image/x-icon">
 <?php } ?>
 </head>
 <body class="is-responsive">
-<script src="//platform-api.sharethis.com/js/sharethis.js#property=5c812224d11c6a0011c485fd&product=inline-share-buttons"></script>
+<script src="https://platform-api.sharethis.com/js/sharethis.js#property=5c812224d11c6a0011c485fd&product=inline-share-buttons"></script>
 <?php
 
 	require_once("../includes/header.php");

@@ -57,7 +57,7 @@ $lang["menu"]["logout"] = "Logout";
 
 
 /// Buttons
-$lang["search"]["placeholder"] = "Find Services";
+$lang["search"]["placeholder"] = "Search for services";
 $lang["search"]["button"] = "Search";
 $lang["view_all"] = "VIEW ALL";
 $lang["see_all"] = "See All";
@@ -112,12 +112,13 @@ $lang["sidebar"]["start_selling"]["desc"] = "Sell your services to millions of p
 $lang["sidebar"]["start_selling"]["button"] = "GET STARTED";
 
 /// User Logged Out Home Headings & Descriptions
-$lang["home"]["cards"]["title"] = "Popular Professional Services";
-$lang["home"]["cards"]["desc"] = "Get your project done on time by highly skilled professionals";
-$lang["home"]["categories"]["title"] = "Explore the Marketplace";
-$lang["home"]["categories"]["desc"] = "Get inspired to build your business";
-$lang["home"]["proposals"]["title"] = "Top Featured Proposals/Services";
-$lang["home"]["proposals"]["desc"] = "Practical advice for every stage of doing";
+$lang["home"]["cards"]["title"] = "Popular Services for Growing Teams";
+$lang["home"]["cards"]["desc"] = "Work with trusted freelancers and deliver faster.";
+$lang["home"]["categories"]["title"] = "Browse the Marketplace";
+$lang["home"]["categories"]["desc"] = "Discover services tailored to your next goal.";
+$lang["home"]["proposals"]["title"] = "Featured Services You Can Trust";
+$lang["home"]["proposals"]["desc"] = "Handpicked offers with strong delivery records.";
+$lang["home"]["proposals"]["view_more"] = "View all featured services";
 
 /// User Logged In Home Headings 
 $lang["user_home"]['add_proposal'] = "Add A Proposal";

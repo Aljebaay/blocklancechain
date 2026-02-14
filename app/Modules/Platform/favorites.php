@@ -39,8 +39,7 @@ $login_seller_image = getImageUrl2("sellers","seller_image",$row_login_seller->s
 	<script src="js/ie.js"></script>
 	<script type="text/javascript" src="js/sweat_alert.js"></script>
 	<script type="text/javascript" src="js/jquery.min.js"></script>
-	<!-- Go to www.addthis.com/dashboard to customize your tools -->
-	<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5a39d50ac9681a6c"></script>
+	<script src="https://platform-api.sharethis.com/js/sharethis.js#property=5c812224d11c6a0011c485fd&product=inline-share-buttons"></script>
 	<?php if(!empty($site_favicon)){ ?>
 	<link rel="shortcut icon" href="<?= $site_favicon; ?>" type="image/x-icon">
 	<?php } ?>
@@ -96,8 +95,7 @@ $login_seller_image = getImageUrl2("sellers","seller_image",$row_login_seller->s
                <br>
                <a href="#"><strong><?= $login_seller_user_name; ?></strong></a>
             </div>
-            <!-- Go to www.addthis.com/dashboard to customize your tools -->
-            <div class="addthis_inline_share_toolbox_d0jy"></div>
+            <div class="sharethis-inline-share-buttons"></div>
          </div>
       </div>
    </div>

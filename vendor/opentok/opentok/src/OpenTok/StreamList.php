@@ -2,17 +2,26 @@
 
 namespace OpenTok;
 
-class StreamList {
+/**
+ * An object, returned by the <a href="OpenTok.OpenTok.html#method_listStreams">OpenTok.listStreams()</a>
+ * method, representing a list of streams in an OpenTok session.
+ */
+class StreamList
+{
+    /** @ignore */
+    private ?array $items = null;
 
-    private $data;
-
-    public function __construct($streamListData)
-    {
-        $this->data = $streamListData;
+    /** @ignore */
+    public function __construct(
+        /** @ignore */
+        private $data
+    ) {
     }
 
     /**
      * Returns the number of total streams for the session ID.
+     *
+     * @return int
      */
     public function totalCount()
     {
@@ -21,12 +30,14 @@ class StreamList {
 
     /**
      * Returns an array of Stream objects.
+     *
+     * @return Stream[]
      */
     public function getItems()
     {
-        if (!$this->items) {
-            $items = array();
-            foreach($this->data['items'] as $streamData) {
+        if (!is_array($this->items)) {
+            $items = [];
+            foreach ($this->data['items'] as $streamData) {
                 $items[] = new Stream($streamData);
             }
             $this->items = $items;
@@ -34,7 +45,9 @@ class StreamList {
         return $this->items;
     }
 
-
+    /**
+     * @return array
+     */
     public function jsonSerialize()
     {
         return $this->data;

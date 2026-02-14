@@ -2,6 +2,38 @@
 require_once __DIR__ . '/../includes/session_bootstrap.php';
 
 blc_bootstrap_session();
+
+if(!function_exists('blc_admin_resolve_language_file')){
+	function blc_admin_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
+		$baseDir = realpath($languagesDir);
+		if($baseDir === false){
+			return null;
+		}
+
+		$normalizedTitle = strtolower(trim($languageTitle));
+		if($normalizedTitle === ''){
+			return null;
+		}
+
+		if(preg_match('/^[a-z0-9 _().-]+$/', $normalizedTitle) !== 1){
+			return null;
+		}
+
+		$candidate = $baseDir . DIRECTORY_SEPARATOR . $normalizedTitle . '.php';
+		$resolved = realpath($candidate);
+		if($resolved === false){
+			return null;
+		}
+
+		$basePrefix = rtrim($baseDir, "\\/") . DIRECTORY_SEPARATOR;
+		if(strpos($resolved, $basePrefix) !== 0){
+			return null;
+		}
+
+		return $resolved;
+	}
+}
+
 if(!isset($_SESSION['admin_email'])){
 	
 echo "<script>window.open('login','_self');</script>";
@@ -11,19 +43,27 @@ echo "<script>window.open('login','_self');</script>";
 
 if(isset($_GET['language_settings'])){
 		
-$edit_id = $input->get('language_settings');
+$edit_id = (int)$input->get('language_settings');
 
 $edit_language = $db->select("languages",array('id' => $edit_id));
         
 $row_edit = $edit_language->fetch();
-        
+if(!$row_edit){
+	echo "<script>alert('Language was not found.');</script>";
+	echo "<script>window.open('index?view_languages','_self');</script>";
+	exit;
+}
+
 $id = $row_edit->id;
 
-$title = $row_edit->title;
-    
-$file = strtolower($title);
-
-$file = "../languages/$file.php";
+$title = (string)$row_edit->title;
+$languagesDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . "languages";
+$file = blc_admin_resolve_language_file($languagesDir, $title);
+if($file === null){
+	echo "<script>alert('Invalid language file path.');</script>";
+	echo "<script>window.open('index?view_languages','_self');</script>";
+	exit;
+}
 
 }
 
@@ -69,7 +109,7 @@ $file = "../languages/$file.php";
 
 <div class="form-group">
 
-<textarea name="data" class="form-control" rows="20" required=""><?= file_get_contents($file); ?></textarea>
+<textarea name="data" class="form-control" rows="20" required=""><?= htmlspecialchars((string)@file_get_contents($file), ENT_QUOTES, 'UTF-8'); ?></textarea>
 
 </div>
 
@@ -101,20 +141,30 @@ $file = "../languages/$file.php";
 
 if(isset($_POST['update_language'])){		
     
-$menu_lang = $_POST['data'];
+$menu_lang = (string)$_POST['data'];
 
-$handle = fopen($file, "w");
+if(strpos($menu_lang, '<?php') !== 0){
+	echo "<script>alert('Language file must start with <?php');</script>";
+	echo "<script>window.open('index?language_settings=$id','_self');</script>";
+	exit;
+}
 
-if($handle){
- 
-fwrite($handle, $menu_lang);
-fclose($handle);
+$tmpFile = $file . '.tmp';
+
+$bytesWritten = @file_put_contents($tmpFile, $menu_lang, LOCK_EX);
+
+if($bytesWritten !== false && @rename($tmpFile, $file)){
 
 $insert_log = $db->insert_log($admin_id,"language_settings",$id,"updated");
 
 echo "<script>alert('Language Settings Has Been Updated.');</script>";
 
 echo "<script>window.open('index?view_languages','_self');</script>";
+
+}else{
+	@unlink($tmpFile);
+	echo "<script>alert('Unable to update language file.');</script>";
+	echo "<script>window.open('index?language_settings=$id','_self');</script>";
 
 }
        

@@ -1,12 +1,5 @@
 <?php
 
-use PayPalCheckoutSdk\Core\PayPalHttpClient;
-use PayPalCheckoutSdk\Core\ProductionEnvironment;
-use PayPalCheckoutSdk\Core\SandboxEnvironment;
-use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
-use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
-use PayPalHttp\HttpException;
-
 if(!function_exists("blc_require_vendor_autoload")){
   function blc_require_vendor_autoload($dir){
     $candidates = array(
@@ -24,6 +17,100 @@ if(!function_exists("blc_require_vendor_autoload")){
 }
 
 class Payment {
+
+  private function paypal_api_setup() {
+    global $db;
+
+    $settings = $db->select("payment_settings")->fetch();
+    $clientId = trim((string)$settings->paypal_app_client_id);
+    $clientSecret = trim((string)$settings->paypal_app_client_secret);
+    $paypalSandbox = (string)$settings->paypal_sandbox;
+
+    $apiBase = ($paypalSandbox === "on")
+      ? "https://api-m.sandbox.paypal.com"
+      : "https://api-m.paypal.com";
+
+    return array(
+      "client_id" => $clientId,
+      "client_secret" => $clientSecret,
+      "base_url" => $apiBase
+    );
+  }
+
+  private function paypal_get_access_token($paypalConfig) {
+    if(empty($paypalConfig["client_id"]) || empty($paypalConfig["client_secret"])){
+      throw new RuntimeException("PayPal credentials are not configured.");
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, array(
+      CURLOPT_URL => $paypalConfig["base_url"] . "/v1/oauth2/token",
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_POST => true,
+      CURLOPT_USERPWD => $paypalConfig["client_id"] . ":" . $paypalConfig["client_secret"],
+      CURLOPT_HTTPHEADER => array(
+        "Accept: application/json",
+        "Accept-Language: en_US"
+      ),
+      CURLOPT_POSTFIELDS => "grant_type=client_credentials",
+      CURLOPT_TIMEOUT => 30
+    ));
+
+    $responseBody = curl_exec($ch);
+    $curlError = curl_error($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if($responseBody === false){
+      throw new RuntimeException("PayPal token request failed: " . $curlError);
+    }
+
+    $decoded = json_decode($responseBody, true);
+    if($httpCode >= 400 || !is_array($decoded) || empty($decoded["access_token"])){
+      throw new RuntimeException("PayPal token response was invalid.");
+    }
+
+    return (string)$decoded["access_token"];
+  }
+
+  private function paypal_call_api($method, $path, $accessToken, $paypalConfig, $payload = null) {
+    $headers = array(
+      "Content-Type: application/json",
+      "Authorization: Bearer " . $accessToken
+    );
+
+    $ch = curl_init();
+    curl_setopt_array($ch, array(
+      CURLOPT_URL => rtrim($paypalConfig["base_url"], "/") . $path,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_CUSTOMREQUEST => strtoupper((string)$method),
+      CURLOPT_HTTPHEADER => $headers,
+      CURLOPT_TIMEOUT => 40
+    ));
+
+    if($payload !== null){
+      curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    }
+
+    $responseBody = curl_exec($ch);
+    $curlError = curl_error($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if($responseBody === false){
+      throw new RuntimeException("PayPal API request failed: " . $curlError);
+    }
+
+    $decoded = json_decode($responseBody, true);
+    if(!is_array($decoded)){
+      $decoded = array();
+    }
+
+    return array(
+      "status_code" => $httpCode,
+      "body" => $decoded
+    );
+  }
 
   public function insert_temp_order($data, $currency = '', $method = '') {
 
@@ -135,33 +222,6 @@ class Payment {
   }
 
   /// Paypal Payment Code Starts ////
-  public function paypal_api_setup() {
-
-    global $db;
-    global $dir;
-
-    $get_payment_settings = $db->select("payment_settings");
-    $row_payment_settings = $get_payment_settings->fetch();
-    $paypal_app_client_id = $row_payment_settings->paypal_app_client_id;
-    $paypal_app_client_secret = $row_payment_settings->paypal_app_client_secret;
-    $paypal_sandbox = $row_payment_settings->paypal_sandbox;
-
-    blc_require_vendor_autoload($dir);
-
-    // Creating an environment
-    $clientId = $paypal_app_client_id;
-    $clientSecret = $paypal_app_client_secret;
-
-    if ($paypal_sandbox == "on") {
-      $environment = new SandboxEnvironment($clientId, $clientSecret);
-    } else {
-      $environment = new ProductionEnvironment($clientId, $clientSecret);
-    }
-    $client = new PayPalHttpClient($environment);
-
-    return $client;
-  }
-
   public function paypal($data, $processing_fee) {
     global $db;
     global $site_name;
@@ -171,29 +231,19 @@ class Payment {
     $row_payment_settings = $get_payment_settings->fetch();
     $paypal_currency_code = $row_payment_settings->paypal_currency_code;
 
-    $client = $this->paypal_api_setup();
+    $paypalConfig = $this->paypal_api_setup();
 
     if (!isset($data['desc'])) {
       $data['desc'] = "";
     }
 
-    // Construct a request object and set desired parameters
-    // Here, OrdersCreateRequest() creates a POST request to /v2/checkout/orders
-    $request = new OrdersCreateRequest();
-    $request->prefer('return=representation');
-
-    // $request->body = [];
-
-    $request->body  = [
+    $requestBody = [
       'intent' => 'CAPTURE',
       'application_context' => [
         'return_url' => '',
         'cancel_url' => $site_url . "/cancel_payment",
         'brand_name' => $site_name,
         'locale' => 'en-US',
-        // 'landing_page' => 'BILLING',
-        // 'shipping_preference' => 'SET_PROVIDED_ADDRESS',
-        // 'user_action' => 'PAY_NOW',
       ],
       'purchase_units' => [
         0 => [
@@ -235,58 +285,64 @@ class Payment {
       ],
     ];
 
-    // echo "<pre>";
-    //   print_r($request->body);
-    // echo "</pre>";
-
     try {
-      // Call API with your client and get a response for your call
-      $response = $client->execute($request);
-      // If call returns body in response, you can get the deserialized version from the result attribute of the response
-      // print_r($response);
+      $accessToken = $this->paypal_get_access_token($paypalConfig);
+      $response = $this->paypal_call_api("POST", "/v2/checkout/orders", $accessToken, $paypalConfig, $requestBody);
+      if($response["status_code"] >= 400 || empty($response["body"]["id"])){
+        throw new RuntimeException("PayPal create order request failed.");
+      }
 
-      $data['reference_no'] = $response->result->id;
+      $data['reference_no'] = (string)$response["body"]["id"];
 
       $this->insert_temp_order($data, "", "paypal");
 
-      echo json_encode($response->result, JSON_PRETTY_PRINT), "\n";
-    } catch (HttpException $ex) {
-      echo $ex->statusCode;
-      print_r($ex->getMessage());
+      echo json_encode($response["body"], JSON_PRETTY_PRINT), "\n";
+    } catch (Throwable $ex) {
+      http_response_code(500);
+      echo json_encode(array(
+        "error" => "paypal_create_failed",
+        "message" => $ex->getMessage()
+      ));
     }
   }
 
   public function paypal_capture() {
     global $db;
     global $input;
-    global $site_url;
 
     $login_seller_user_name = $_SESSION['seller_user_name'];
     $select_login_seller = $db->select("sellers", array("seller_user_name" => $login_seller_user_name));
     $row_login_seller = $select_login_seller->fetch();
     $login_seller_id = $row_login_seller->seller_id;
 
-    $orderId = $input->get("order_id");
-
-    /// Paypal api
-    $client = $this->paypal_api_setup();
-
-    $request = new OrdersCaptureRequest($orderId);
-    $request->prefer('return=representation');
+    $orderId = trim((string)$input->get("order_id"));
 
     try {
+      if($orderId === ""){
+        throw new RuntimeException("Missing PayPal order id.");
+      }
+      $paypalConfig = $this->paypal_api_setup();
+      $accessToken = $this->paypal_get_access_token($paypalConfig);
+      $response = $this->paypal_call_api(
+        "POST",
+        "/v2/checkout/orders/" . rawurlencode($orderId) . "/capture",
+        $accessToken,
+        $paypalConfig,
+        array()
+      );
 
-      $update_order = $db->update("temp_orders", ["status" => 'completed'], ["reference_no" => $orderId]);
+      if($response["status_code"] >= 400){
+        throw new RuntimeException("PayPal capture request failed.");
+      }
+      $db->update("temp_orders", ["status" => 'completed'], ["reference_no" => $orderId]);
 
-      // Call API with your client and get a response for your call
-      $response = $client->execute($request);
-      // If call returns body in response, you can get the deserialized version from the result attribute of the response
-      // print_r($response);
-
-      echo json_encode($response->result, JSON_PRETTY_PRINT), "\n";
-    } catch (HttpException $ex) {
-      echo $ex->statusCode;
-      print_r($ex->getMessage());
+      echo json_encode($response["body"], JSON_PRETTY_PRINT), "\n";
+    } catch (Throwable $ex) {
+      http_response_code(500);
+      echo json_encode(array(
+        "error" => "paypal_capture_failed",
+        "message" => $ex->getMessage()
+      ));
     }
   }
 

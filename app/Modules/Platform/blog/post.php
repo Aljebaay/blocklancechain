@@ -32,7 +32,7 @@ require_once __DIR__ . '/../includes/session_bootstrap.php';
   <script type="text/javascript" src="../js/sweat_alert.js"></script>
   <script type="text/javascript" src="../js/jquery.min.js"></script>
   
-  <script src="//platform-api.sharethis.com/js/sharethis.js#property=5c812224d11c6a0011c485fd&product=inline-share-buttons"></script>
+  <script src="https://platform-api.sharethis.com/js/sharethis.js#property=5c812224d11c6a0011c485fd&product=inline-share-buttons"></script>
 
 </head>
 <body class="is-responsive blog">

@@ -221,11 +221,12 @@ $slide_image = $row_slides->slide_image;
         <h1 class="text-center"><?= $lang['home']['proposals']['title']; ?></h1>
         <h4 class="text-center"><?= $lang['home']['proposals']['desc']; ?></h4>
         <?php 
+          $viewMoreFeaturedLabel = $lang['home']['proposals']['view_more'] ?? 'View More';
           $get_proposals = $db->query("select * from proposals where proposal_featured='yes' AND proposal_status='active'");
           $count_proposals = $get_proposals->rowCount();
           if($count_proposals > 1){
           ?>
-        <span class="pull-right text-success"><a href="featured_proposals">View More</a></span>
+        <span class="pull-right text-success"><a href="featured_proposals"><?= $viewMoreFeaturedLabel; ?></a></span>
         <?php } ?>
         <div class="mt-5">
           <!--- home-featured-carousel Starts --->

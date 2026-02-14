@@ -16,14 +16,13 @@ use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- *
  * @property string $chatServiceSid
  * @property string $defaultConversationCreatorRoleSid
  * @property string $defaultConversationRoleSid
  * @property string $defaultChatServiceRoleSid
  * @property string $url
  * @property array $links
+ * @property bool $reachabilityEnabled
  */
 class ConfigurationInstance extends InstanceResource {
     /**
@@ -44,6 +43,7 @@ class ConfigurationInstance extends InstanceResource {
             'defaultChatServiceRoleSid' => Values::array_get($payload, 'default_chat_service_role_sid'),
             'url' => Values::array_get($payload, 'url'),
             'links' => Values::array_get($payload, 'links'),
+            'reachabilityEnabled' => Values::array_get($payload, 'reachability_enabled'),
         ];
 
         $this->solution = ['chatServiceSid' => $chatServiceSid, ];

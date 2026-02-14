@@ -20,8 +20,7 @@
 <?php } ?>
 <?php } ?>
 <center class="mb-3">
-<!-- Go to www.addthis.com/dashboard to customize your tools -->
-<div class="addthis_inline_share_toolbox_d0jy"></div>
+<div class="sharethis-inline-share-buttons"></div>
 </center>
 
 </div><!---  col-md-12 Ends -->

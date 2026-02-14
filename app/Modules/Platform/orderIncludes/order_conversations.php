@@ -9,25 +9,48 @@ require_once("$dir/functions/mailer.php");
 
 if(!isset($_SESSION['seller_user_name'])){
   echo "<script>window.open('login','_self')</script>";
+  exit;
 }
 
 $login_seller_user_name = $_SESSION['seller_user_name'];
 $select_login_seller = $db->select("sellers",array("seller_user_name" => $login_seller_user_name));
 $row_login_seller = $select_login_seller->fetch();
+if(!$row_login_seller){
+  echo "<script>window.open('login','_self')</script>";
+  exit;
+}
 $login_seller_id = $row_login_seller->seller_id;
 
-@$order_id = $input->get('order_id');
+$order_id = (int)$input->get('order_id');
+if($order_id <= 0){
+  echo "<div class='alert alert-warning mb-0'>Order conversation is not available.</div>";
+  return;
+}
 
 $site_email_address = $row_general_settings->site_email_address;  
 $order_auto_complete = $row_general_settings->order_auto_complete;
 
-$get_orders = $db->select("orders",array("order_id" => $order_id));
+$get_orders = $db->query(
+  "select * from orders where order_id=:order_id AND (seller_id=:login_seller_id OR buyer_id=:login_seller_id)",
+  array(
+    "order_id" => $order_id,
+    "login_seller_id" => $login_seller_id
+  )
+);
 $row_orders = $get_orders->fetch();
+if(!$row_orders){
+  echo "<div class='alert alert-warning mb-0'>Order conversation is not available.</div>";
+  return;
+}
 $seller_id = $row_orders->seller_id;
 $buyer_id = $row_orders->buyer_id;
 $order_price = $row_orders->order_price;
 $order_status = $row_orders->order_status;
-$order_complete_time = new DateTime($row_orders->complete_time);
+try{
+  $order_complete_time = new DateTime((string)$row_orders->complete_time);
+}catch(Throwable $ex){
+  $order_complete_time = new DateTime();
+}
 
 //// Get Order Tip  ////
 $get_tip = $db->select("order_tips",array("order_id" => $order_id));
@@ -43,8 +66,12 @@ if($count_tip > 0){
 //// Select Order Buyer Details ///
 $select_buyer = $db->select("sellers",array("seller_id" => $buyer_id));
 $row_buyer = $select_buyer->fetch();
-$buyer_user_name = $row_buyer->seller_user_name;
-$buyer_image = getImageUrl2("sellers","seller_image",$row_buyer->seller_image);
+$buyer_user_name = "Buyer";
+$buyer_image = "";
+if($row_buyer){
+  $buyer_user_name = (string)$row_buyer->seller_user_name;
+  $buyer_image = getImageUrl2("sellers","seller_image",$row_buyer->seller_image);
+}
 
 
 $get_order_conversations =  $db->select("order_conversations",array("order_id" => $order_id));
@@ -61,8 +88,14 @@ $status = $row_order_conversations->status;
 
 $select_seller = $db->select("sellers",array("seller_id" => $sender_id));
 $row_seller = $select_seller->fetch();
-$seller_user_name = $row_seller->seller_user_name;
-$seller_image = getImageUrl2("sellers","seller_image",$row_seller->seller_image);
+$seller_user_name = "User";
+$seller_image = "";
+if($row_seller){
+  $seller_user_name = (string)$row_seller->seller_user_name;
+  $seller_image = getImageUrl2("sellers","seller_image",$row_seller->seller_image);
+}elseif((int)$sender_id === (int)$buyer_id){
+  $seller_user_name = $buyer_user_name;
+}
 
 if($seller_id == $sender_id){
   $receiver_name = "Buyer";

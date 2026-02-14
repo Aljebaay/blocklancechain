@@ -15,55 +15,62 @@ echo "<script>window.open('../login','_self')</script>";
 $login_seller_user_name = $_SESSION['seller_user_name'];
 $select_login_seller = $db->select("sellers",array("seller_user_name" => $login_seller_user_name));
 $row_login_seller = $select_login_seller->fetch();
-$login_seller_id = $row_login_seller->seller_id;
+$login_seller_id = (int)$row_login_seller->seller_id;
 $login_seller_offers = $row_login_seller->seller_offers;
 
 $relevant_requests = $row_general_settings->relevant_requests;
 
-
 $request_child_ids = array();
 
-$select_proposals = $db->query("select DISTINCT proposal_child_id from proposals where proposal_seller_id='$login_seller_id'");
+$select_proposals = $db->query(
+	"select DISTINCT proposal_child_id from proposals where proposal_seller_id=:seller_id",
+	array("seller_id" => $login_seller_id)
+);
 
 while($row_proposals = $select_proposals->fetch()){
 
-$proposal_child_id = $row_proposals->proposal_child_id;
+$proposal_child_id = (int)$row_proposals->proposal_child_id;
 
-array_push($request_child_ids, $proposal_child_id);
+if($proposal_child_id > 0){
+	array_push($request_child_ids, $proposal_child_id);
+}
 
 }
 
-$where_child_id = array();
-
-foreach($request_child_ids as $child_id){
-
-$where_child_id[] = "child_id=" . $child_id; 
-
-}
-
-if(count($where_child_id) > 0){
-
-$requests_query = " and (" . implode(" or ", $where_child_id) . ")";
-
-}
-
-
-
-if($relevant_requests == "no"){ $requests_query = ""; }
-
-if(!empty($requests_query) or $relevant_requests == "no"){
+$should_load_requests = ($relevant_requests == "no" || count($request_child_ids) > 0);
+if($should_load_requests){
 
 $child_id = $input->post('child_id');
-	
-if($child_id == "all"){
-	
-$select_requests = $db->query("select * from buyer_requests where request_status='active'" . $requests_query . " AND NOT seller_id='$login_seller_id' order by 1 DESC");
 
-}else{
-	
-$select_requests = $db->query("select * from buyer_requests where request_status='active' AND child_id=:child_id AND NOT seller_id='$login_seller_id' order by 1 DESC",array("child_id"=>$child_id));
-	
+$where = array(
+	"request_status='active'",
+	"seller_id <> :seller_id"
+);
+$params = array(
+	"seller_id" => $login_seller_id
+);
+
+if($relevant_requests != "no"){
+	$child_placeholders = array();
+	foreach($request_child_ids as $index => $request_child_id){
+		$key = "request_child_id_" . $index;
+		$child_placeholders[] = ":" . $key;
+		$params[$key] = (int)$request_child_id;
+	}
+	if(count($child_placeholders) > 0){
+		$where[] = "child_id IN (" . implode(",", $child_placeholders) . ")";
+	}
 }
+
+if($child_id != "all"){
+	$where[] = "child_id=:child_id";
+	$params["child_id"] = (int)$child_id;
+}
+
+$select_requests = $db->query(
+	"select * from buyer_requests where " . implode(" AND ", $where) . " order by 1 DESC",
+	$params
+);
 
 while($row_requests = $select_requests->fetch()){
 $request_id = $row_requests->request_id;
