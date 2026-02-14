@@ -10,6 +10,7 @@ $platformBasePath = realpath(
 );
 $laravelPublicPath = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public');
 $bridgePrefix = '/_app';
+$migrateFetchToggle = filter_var(getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 if ($uriPath !== '/' && is_file($fullPath)) {
     return false;
@@ -52,6 +53,35 @@ if (strncmp($uriPath, $bridgePrefix, strlen($bridgePrefix)) === 0) {
         require $laravelIndex;
         chdir($oldCwd ?: $docRoot);
         return true;
+    }
+}
+
+if ($migrateFetchToggle && $uriPath === '/requests/fetch_subcategory') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+
+    if (is_file($laravelIndex)) {
+        $oldUri = $_SERVER['REQUEST_URI'] ?? $uriPath;
+        $oldScript = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+        $oldPhpSelf = $_SERVER['PHP_SELF'] ?? '/index.php';
+        $oldCwd = getcwd();
+        try {
+            $_SERVER['REQUEST_URI'] = '/_app/migrate/requests/fetch_subcategory';
+            $_SERVER['SCRIPT_NAME'] = '/index.php';
+            $_SERVER['PHP_SELF'] = '/index.php';
+            chdir(dirname($laravelIndex));
+            require $laravelIndex;
+            chdir($oldCwd ?: $docRoot);
+            return true;
+        } catch (Throwable $bridgeException) {
+            $_SERVER['REQUEST_URI'] = $oldUri;
+            $_SERVER['SCRIPT_NAME'] = $oldScript;
+            $_SERVER['PHP_SELF'] = $oldPhpSelf;
+            if ($oldCwd !== false) {
+                chdir($oldCwd);
+            }
+        }
     }
 }
 
