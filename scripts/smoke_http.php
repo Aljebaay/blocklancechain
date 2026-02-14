@@ -11,6 +11,33 @@ declare(strict_types=1);
  */
 
 $basePath = dirname(__DIR__);
+$envBootstrap = $basePath . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'env.php';
+if (is_file($envBootstrap)) {
+    require_once $envBootstrap;
+    if (function_exists('blc_load_env')) {
+        blc_load_env($basePath);
+    }
+}
+
+$appUrl = getenv('APP_URL');
+$defaultHostFromEnv = '';
+$defaultPortFromEnv = 0;
+if (is_string($appUrl) && $appUrl !== '') {
+    $parsedAppUrl = parse_url($appUrl);
+    if (is_array($parsedAppUrl)) {
+        if (isset($parsedAppUrl['host']) && is_string($parsedAppUrl['host']) && $parsedAppUrl['host'] !== '') {
+            $defaultHostFromEnv = $parsedAppUrl['host'];
+        }
+        if (isset($parsedAppUrl['port'])) {
+            $defaultPortFromEnv = (int) $parsedAppUrl['port'];
+        } elseif ((isset($parsedAppUrl['scheme']) ? strtolower((string) $parsedAppUrl['scheme']) : '') === 'https') {
+            $defaultPortFromEnv = 443;
+        } else {
+            $defaultPortFromEnv = 80;
+        }
+    }
+}
+
 $options = getopt('', ['base-url::', 'host::', 'port::', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
@@ -29,8 +56,12 @@ if (isset($options['help'])) {
     exit(0);
 }
 
-$host = isset($options['host']) && is_string($options['host']) && $options['host'] !== '' ? $options['host'] : '127.0.0.1';
-$requestedPort = isset($options['port']) ? (int) $options['port'] : 0;
+$host = isset($options['host']) && is_string($options['host']) && $options['host'] !== ''
+    ? $options['host']
+    : ($defaultHostFromEnv !== '' ? $defaultHostFromEnv : '127.0.0.1');
+$requestedPort = isset($options['port'])
+    ? (int) $options['port']
+    : ($defaultPortFromEnv > 0 ? $defaultPortFromEnv : 0);
 $baseUrlOption = isset($options['base-url']) && is_string($options['base-url']) ? trim($options['base-url']) : '';
 
 $checks = [

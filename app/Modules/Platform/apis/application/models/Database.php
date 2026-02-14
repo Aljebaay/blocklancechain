@@ -145,7 +145,12 @@ class Database extends CI_Model {
 		$s_username = $row_smtp_settings->username;
 		$s_password = $row_smtp_settings->password;
 		$row_general_settings = $this->db->get("general_settings")->row();
-		$site_url = $row_general_settings->site_url;
+		$app_url_from_env = getenv('APP_URL');
+		if ($app_url_from_env !== false && trim((string) $app_url_from_env) !== '') {
+			$site_url = rtrim((string) $app_url_from_env, "/");
+		} else {
+			$site_url = rtrim((string) $row_general_settings->site_url, "/");
+		}
 		$site_email_address = $row_general_settings->site_email_address;
 		$site_logo = $row_general_settings->site_logo;
 		$site_name = $row_general_settings->site_name;

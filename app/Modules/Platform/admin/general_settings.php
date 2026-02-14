@@ -35,7 +35,12 @@ $s_logo_s3 = $row_general_settings->site_logo_s3;
 
 $s_watermark = $row_general_settings->site_watermark;
 
-$site_url = $row_general_settings->site_url;
+$app_url_from_env = getenv('APP_URL');
+if($app_url_from_env !== false && trim((string)$app_url_from_env) !== ""){
+  $site_url = rtrim((string)$app_url_from_env, "/");
+}else{
+  $site_url = rtrim((string)$row_general_settings->site_url, "/");
+}
 $site_email_address = $row_general_settings->site_email_address;
 $site_copyright = $row_general_settings->site_copyright;
 $site_timezone = $row_general_settings->site_timezone;
@@ -1168,7 +1173,7 @@ if(isset($_POST['general_settings_update'])){
 	$site_desc = $input->post('site_desc');
 	$site_keywords = $input->post('site_keywords');
 	$site_author = $input->post('site_author');
-	$site_url = $input->post('site_url');
+	$site_url = rtrim((string)$input->post('site_url'), "/");
 	$site_email_address = $input->post('site_email_address');
 	$language_switcher = $input->post('language_switcher');
   $enable_google_translate = $input->post('enable_google_translate');
@@ -1305,6 +1310,44 @@ if(isset($_POST['general_settings_update'])){
     ));
 
 		if($update_general_settings){
+      $project_root = dirname(__DIR__, 4);
+      $env_path = $project_root . DIRECTORY_SEPARATOR . ".env";
+      $env_lines = file_exists($env_path) ? file($env_path, FILE_IGNORE_NEW_LINES) : [];
+      if(!is_array($env_lines)){
+        $env_lines = [];
+      }
+
+      $format_env_value = function($value){
+        $value = (string)$value;
+        if($value === ""){
+          return "";
+        }
+        if(preg_match('/[\s#=]/', $value)){
+          return '"' . addcslashes($value, "\\\"") . '"';
+        }
+        return $value;
+      };
+
+      $set_env_value = function($key, $value) use (&$env_lines, $format_env_value){
+        $formatted = $key . "=" . $format_env_value($value);
+        $pattern = '/^\s*' . preg_quote($key, '/') . '\s*=/';
+        $updated = false;
+        foreach($env_lines as $line_number => $line_text){
+          if(preg_match($pattern, $line_text)){
+            $env_lines[$line_number] = $formatted;
+            $updated = true;
+            break;
+          }
+        }
+        if(!$updated){
+          $env_lines[] = $formatted;
+        }
+      };
+
+      $set_env_value('APP_URL', $site_url);
+      $set_env_value('API_BASE_URL', $site_url . '/apis');
+      file_put_contents($env_path, implode(PHP_EOL, $env_lines) . PHP_EOL);
+
 			$insert_log = $db->insert_log($admin_id,"general_settings","","updated");
 			if(updateHtaccess($site_www)){
 				echo "<script>alert_success('General Settings has been updated successfully.','index?general_settings');</script>";
