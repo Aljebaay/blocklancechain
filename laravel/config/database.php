@@ -83,6 +83,26 @@ return [
             ]) : [],
         ],
 
+        'legacy_write' => [
+            'driver' => 'mysql',
+            'url' => env('LEGACY_WRITE_DB_URL', env('LEGACY_DB_URL')),
+            'host' => env('LEGACY_WRITE_DB_HOST', env('LEGACY_DB_HOST', env('DB_HOST', '127.0.0.1'))),
+            'port' => env('LEGACY_WRITE_DB_PORT', env('LEGACY_DB_PORT', env('DB_PORT', '3306'))),
+            'database' => env('LEGACY_WRITE_DB_DATABASE', env('LEGACY_DB_DATABASE', env('DB_DATABASE', 'laravel'))),
+            'username' => env('LEGACY_WRITE_DB_USERNAME', env('LEGACY_DB_USERNAME', env('DB_USERNAME', 'root'))),
+            'password' => env('LEGACY_WRITE_DB_PASSWORD', env('LEGACY_DB_PASSWORD', env('DB_PASSWORD', ''))),
+            'unix_socket' => env('LEGACY_WRITE_DB_SOCKET', env('LEGACY_DB_SOCKET', '')),
+            'charset' => env('LEGACY_WRITE_DB_CHARSET', env('LEGACY_DB_CHARSET', 'utf8mb4')),
+            'collation' => env('LEGACY_WRITE_DB_COLLATION', env('LEGACY_DB_COLLATION', 'utf8mb4_unicode_ci')),
+            'prefix' => env('LEGACY_WRITE_DB_PREFIX', env('LEGACY_DB_PREFIX', '')),
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('LEGACY_WRITE_MYSQL_ATTR_SSL_CA', env('LEGACY_MYSQL_ATTR_SSL_CA')),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

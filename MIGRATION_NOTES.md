@@ -41,3 +41,10 @@
 - Router forwards to Laravel when toggle on; falls back to legacy if Laravel reply is empty/non-200/exception.
 - Smoke tests extended (toggle off/on passes) covering both migrated endpoints; total checks now 19 per pass.
 - No database or response shape changes; outputs are streamed from the legacy scripts to preserve behavior.
+
+## 2026-02-14 — Phase 6: migrate pause_request write endpoint
+- Migrated legacy GET /requests/pause_request to Laravel mirror /_app/migrate/requests/pause_request with identical output (login redirect or pause alert + manage redirect).
+- Added toggle MIGRATE_REQUESTS_PAUSE_REQUEST (default false) with router fallback to legacy on empty/non-200/error.
+- Uses legacy_write connection with transaction to update buyer_requests.request_status='pause'.
+- Smoke extended with migrate and legacy probes for pause_request; toggle off/on passes covered.
+- Added Laravel feature tests covering success, no-op, and unauthenticated flows.

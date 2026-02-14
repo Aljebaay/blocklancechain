@@ -15,12 +15,14 @@ Document bridge patterns for incremental Laravel adoption alongside the legacy p
 - `POST /_app/migrate/requests/fetch_subcategory`
 - `POST /_app/migrate/proposals/ajax/check/pricing`
 - `GET|POST /_app/migrate/apis/index.php`
+- `GET /_app/migrate/requests/pause_request`
 - `GET /_app/debug/routes` (local/APP_DEBUG=true)
 
 ## Migration Toggles
 - `MIGRATE_REQUESTS_FETCH_SUBCATEGORY` (default false)
 - `MIGRATE_PROPOSAL_PRICING_CHECK` (default false)
 - `MIGRATE_APIS_INDEX` (default false)
+- `MIGRATE_REQUESTS_PAUSE_REQUEST` (default false)
   - When enabled, `public/router.php` delegates the matching legacy path to Laravel first; on exception, non-200, or empty body, it falls back to legacy.
 
 ## Adding New Migrated Endpoints Safely

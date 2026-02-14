@@ -13,6 +13,7 @@ $bridgePrefix = '/_app';
 $migrateFetchToggle = filter_var(getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migratePricingToggle = filter_var(getenv('MIGRATE_PROPOSAL_PRICING_CHECK') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $migrateApisToggle = filter_var(getenv('MIGRATE_APIS_INDEX') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$migratePauseToggle = filter_var(getenv('MIGRATE_REQUESTS_PAUSE_REQUEST') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 function blc_require_laravel(string $laravelIndex, string $targetUri): array
 {
@@ -115,6 +116,20 @@ if ($migratePricingToggle && $uriPath === '/proposals/ajax/check/pricing') {
         : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
     if (is_file($laravelIndex)) {
         $targetUri = '/_app/migrate/proposals/ajax/check/pricing' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+        $result = blc_require_laravel($laravelIndex, $targetUri);
+        if ($result['status'] === 200 && $result['body'] !== '') {
+            echo $result['body'];
+            return true;
+        }
+    }
+}
+
+if ($migratePauseToggle && $uriPath === '/requests/pause_request') {
+    $laravelIndex = $laravelPublicPath !== false
+        ? $laravelPublicPath . DIRECTORY_SEPARATOR . 'index.php'
+        : __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'laravel' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php';
+    if (is_file($laravelIndex)) {
+        $targetUri = '/_app/migrate/requests/pause_request' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
         $result = blc_require_laravel($laravelIndex, $targetUri);
         if ($result['status'] === 200 && $result['body'] !== '') {
             echo $result['body'];

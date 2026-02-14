@@ -26,6 +26,7 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 - `POST /_app/migrate/requests/fetch_subcategory` ? HTML `<option>` list (read-only mirror)
 - `POST /_app/migrate/proposals/ajax/check/pricing` ? mirrors legacy pricing check
 - `GET|POST /_app/migrate/apis/index.php` ? mirrors legacy APIs front controller
+- `GET /_app/migrate/requests/pause_request` ? mirrors legacy pause_request (write)
 - `GET /_app/debug/routes` (APP_DEBUG=true or APP_ENV=local) ? route list
 
 ## Environment & DB
@@ -35,6 +36,7 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
   - `MIGRATE_REQUESTS_FETCH_SUBCATEGORY` for `/requests/fetch_subcategory`
   - `MIGRATE_PROPOSAL_PRICING_CHECK` for `/proposals/ajax/check/pricing`
   - `MIGRATE_APIS_INDEX` for `/apis/index.php`
+  - `MIGRATE_REQUESTS_PAUSE_REQUEST` for `/requests/pause_request`
 
 ## Adding New Migrated Endpoints Safely
 1) Use `legacy` connection for legacy data (read-only unless approved later).

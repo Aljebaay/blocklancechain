@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 '/_app/migrate/requests/fetch_subcategory',
                 '/_app/migrate/proposals/ajax/check/pricing',
                 '/_app/migrate/apis/index.php',
+                '/_app/migrate/requests/pause_request',
             ]
         );
     })

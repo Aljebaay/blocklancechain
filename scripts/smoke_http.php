@@ -181,6 +181,18 @@ $checks = [
         'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found'],
     ],
     [
+        'id' => 'laravel-migrate-pause-request',
+        'path' => '/_app/migrate/requests/pause_request?request_id=0',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => [
+            "window.open('manage_requests'",
+            "window.open('../login",
+            'manage_requests',
+            'login',
+        ],
+        'dbDependent' => true,
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
         'expectedStatuses' => [200, 302],
@@ -243,6 +255,18 @@ $checks = [
         'dbDependent' => true,
     ],
     [
+        'id' => 'requests-pause-request',
+        'path' => '/requests/pause_request?request_id=0',
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => [
+            "window.open('manage_requests'",
+            "window.open('../login",
+            'manage_requests',
+            'login',
+        ],
+        'dbDependent' => true,
+    ],
+    [
         'id' => 'admin-include-sanitize',
         'path' => '/admin/includes/sanitize_url.php',
         'expectedStatuses' => [200],
@@ -258,6 +282,7 @@ $checks = [
 $originalToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
+$originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
 $passes = [];
 switch ($toggleOption) {
     case 'on':
@@ -301,6 +326,9 @@ foreach ($passes as $pass) {
             putenv('MIGRATE_APIS_INDEX=' . $envValue);
             $_ENV['MIGRATE_APIS_INDEX'] = $envValue;
             $_SERVER['MIGRATE_APIS_INDEX'] = $envValue;
+            putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $envValue);
+            $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
+            $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
 
             $port = $requestedPort > 0 ? $requestedPort : findFreePort($host, 18080, 18150);
             if ($port <= 0) {
@@ -422,6 +450,11 @@ if ($originalApisToggle !== false) {
     putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
     $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
     $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+}
+if ($originalPauseToggle !== false) {
+    putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $originalPauseToggle);
+    $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
+    $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
 }
 
 if ($exitCode !== 0) {
