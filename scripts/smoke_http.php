@@ -45,7 +45,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'force-fallback-pricing', 'force-fallback-requests', 'record-snapshots', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'force-fallback-pricing', 'force-fallback-proposals', 'force-fallback-requests', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -96,6 +96,7 @@ if (!in_array($modeOption, $validModeOptions, true)) {
     exit(1);
 }
 $forcePricingFallback = array_key_exists('force-fallback-pricing', $options) || filter_var(getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$forceProposalsFallback = array_key_exists('force-fallback-proposals', $options) || filter_var(getenv('FORCE_LARAVEL_PROPOSALS_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $forceRequestsFallback = array_key_exists('force-fallback-requests', $options) || filter_var(getenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 $allowWrites = filter_var(getenv('SMOKE_ALLOW_WRITES') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
@@ -170,6 +171,28 @@ if ($forcePricingFallback) {
     unset($check);
 }
 
+if ($forceProposalsFallback) {
+    foreach ($checks as &$check) {
+        if (str_starts_with($check['id'] ?? '', 'laravel-migrate-proposal-')) {
+            $check['expectedStatuses'] = [500];
+            unset($check['bodyContainsAny']);
+        }
+    }
+    unset($check);
+
+    $checks[] = [
+        'id' => 'proposal-pricing-fallback',
+        'method' => 'POST',
+        'path' => '/proposals/ajax/check/pricing',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'],
+        'dbDependent' => true,
+        'laravelOnly' => true,
+    ];
+}
+
 if ($forceRequestsFallback) {
     foreach ($checks as &$check) {
         if (str_starts_with($check['id'] ?? '', 'laravel-migrate-requests-')) {
@@ -203,6 +226,7 @@ $originalUpdateToggle = getenv('MIGRATE_REQUESTS_UPDATE_REQUEST');
 $originalModuleToggle = getenv('MIGRATE_REQUESTS_MODULE');
 $originalForceFallback = getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL');
 $originalForcePricingFallback = getenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL');
+$originalForceProposalsFallback = getenv('FORCE_LARAVEL_PROPOSALS_FAIL');
 $originalForceRequestsFallback = getenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL');
 
 $passes = [];
@@ -253,16 +277,21 @@ foreach ($passes as $pass) {
             $_ENV['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
             $_SERVER['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
 
-            if ($originalPricingToggle !== false) {
-                putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
-                $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
-                $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
-            }
-            if ($originalApisToggle !== false) {
-                putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
-                $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
-                $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
-            }
+if ($originalPricingToggle !== false) {
+    putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
+    $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+    $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+}
+if ($originalProposalsModuleToggle !== false) {
+    putenv('MIGRATE_PROPOSALS=' . $originalProposalsModuleToggle);
+    $_ENV['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
+    $_SERVER['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
+}
+if ($originalApisToggle !== false) {
+    putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
+    $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+    $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+}
 
             $endpointToggleValue = $passLabel === 'legacy' ? 'false' : '';
             $endpointToggles = [
@@ -302,6 +331,15 @@ foreach ($passes as $pass) {
                 putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=' . $originalForcePricingFallback);
                 $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
                 $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
+            }
+            if ($forceProposalsFallback && $passLabel === 'laravel') {
+                putenv('FORCE_LARAVEL_PROPOSALS_FAIL=true');
+                $_ENV['FORCE_LARAVEL_PROPOSALS_FAIL'] = 'true';
+                $_SERVER['FORCE_LARAVEL_PROPOSALS_FAIL'] = 'true';
+            } elseif ($originalForceProposalsFallback !== false) {
+                putenv('FORCE_LARAVEL_PROPOSALS_FAIL=' . $originalForceProposalsFallback);
+                $_ENV['FORCE_LARAVEL_PROPOSALS_FAIL'] = $originalForceProposalsFallback;
+                $_SERVER['FORCE_LARAVEL_PROPOSALS_FAIL'] = $originalForceProposalsFallback;
             }
 
             if ($forceRequestsFallback && $passLabel === 'laravel') {
@@ -495,6 +533,11 @@ if ($originalForcePricingFallback !== false) {
     putenv('FORCE_LARAVEL_PROPOSAL_PRICING_FAIL=' . $originalForcePricingFallback);
     $_ENV['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
     $_SERVER['FORCE_LARAVEL_PROPOSAL_PRICING_FAIL'] = $originalForcePricingFallback;
+}
+if ($originalForceProposalsFallback !== false) {
+    putenv('FORCE_LARAVEL_PROPOSALS_FAIL=' . $originalForceProposalsFallback);
+    $_ENV['FORCE_LARAVEL_PROPOSALS_FAIL'] = $originalForceProposalsFallback;
+    $_SERVER['FORCE_LARAVEL_PROPOSALS_FAIL'] = $originalForceProposalsFallback;
 }
 if ($originalForceRequestsFallback !== false) {
     putenv('FORCE_LARAVEL_REQUESTS_MODULE_FAIL=' . $originalForceRequestsFallback);
