@@ -8,7 +8,9 @@ declare(strict_types=1);
  *   php scripts/smoke_http.php
  *   php scripts/smoke_http.php --base-url=http://127.0.0.1:8080
  *   php scripts/smoke_http.php --host=127.0.0.1 --port=8080
- *   php scripts/smoke_http.php --toggle=on|off|both
+ *   php scripts/smoke_http.php --toggle=on|off|both              (legacy option for other toggles)
+ *   php scripts/smoke_http.php --mode=legacy|laravel|both        (controls fetch_subcategory toggle, default both)
+ *   php scripts/smoke_http.php --force-fallback                  (forces Laravel fetch_subcategory to fail -> tests router fallback)
  *   php scripts/smoke_http.php --record-snapshots
  */
 
@@ -40,7 +42,7 @@ if (is_string($appUrl) && $appUrl !== '') {
     }
 }
 
-$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'record-snapshots', 'help']);
+$options = getopt('', ['base-url::', 'host::', 'port::', 'toggle::', 'mode::', 'force-fallback', 'record-snapshots', 'help']);
 @ini_set('output_buffering', '0');
 @ini_set('implicit_flush', '1');
 if (function_exists('ob_implicit_flush')) {
@@ -55,7 +57,9 @@ if (isset($options['help'])) {
     echo "  php scripts/smoke_http.php\n";
     echo "  php scripts/smoke_http.php --base-url=http://127.0.0.1:8080\n";
     echo "  php scripts/smoke_http.php --host=127.0.0.1 --port=8080\n";
-    echo "  php scripts/smoke_http.php --toggle=on|off|both   (default both)\n";
+    echo "  php scripts/smoke_http.php --toggle=on|off|both   (default both; applies to non-fetch toggles if used)\n";
+    echo "  php scripts/smoke_http.php --mode=legacy|laravel|both   (default both; controls fetch_subcategory toggle)\n";
+    echo "  php scripts/smoke_http.php --force-fallback   (forces Laravel fetch_subcategory failure to test router fallback)\n";
     echo "  php scripts/smoke_http.php --record-snapshots\n";
     exit(0);
 }
@@ -70,11 +74,20 @@ $baseUrlOption = isset($options['base-url']) && is_string($options['base-url']) 
 $toggleOption = isset($options['toggle']) && is_string($options['toggle']) && $options['toggle'] !== ''
     ? strtolower(trim($options['toggle']))
     : 'both';
+$modeOption = isset($options['mode']) && is_string($options['mode']) && $options['mode'] !== ''
+    ? strtolower(trim($options['mode']))
+    : 'both';
 $recordSnapshots = array_key_exists('record-snapshots', $options);
+$forceFallback = array_key_exists('force-fallback', $options) || filter_var(getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 $validToggleOptions = ['on', 'off', 'both'];
+$validModeOptions = ['legacy', 'laravel', 'both'];
 if (!in_array($toggleOption, $validToggleOptions, true)) {
     fwrite(STDERR, "Invalid --toggle value. Use on, off, or both.\n");
+    exit(1);
+}
+if (!in_array($modeOption, $validModeOptions, true)) {
+    fwrite(STDERR, "Invalid --mode value. Use legacy, laravel, or both.\n");
     exit(1);
 }
 
@@ -84,221 +97,72 @@ if (!is_dir($snapshotsDir)) {
 }
 
 $checks = [
-    [
-        'id' => 'home-page',
-        'path' => '/',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => ['<html', 'install.php', 'login', '<title'],
-        'snapshot' => 'home',
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'login-page',
-        'path' => '/login',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => ['login', '<form', '<title', 'install.php'],
-        'snapshot' => 'login',
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'admin-login',
-        'path' => '/admin/login.php',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => ['ADMIN', 'admin', '<form', '<title'],
-        'snapshot' => 'admin-login',
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'index-alias',
-        'path' => '/index',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => ['<html', 'install.php', 'login'],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'static-css-router',
-        'path' => '/styles/bootstrap.css',
-        'expectedStatuses' => [200],
-        'contentTypeContains' => 'text/css',
-        'minBodyBytes' => 5000,
-    ],
-    [
-        'id' => 'asset-proxy-css',
-        'path' => '/asset_proxy.php?path=styles/bootstrap.css',
-        'expectedStatuses' => [200],
-        'contentTypeContains' => 'text/css',
-        'minBodyBytes' => 5000,
-    ],
-    [
-        'id' => 'logo-image',
-        'path' => '/images/app.png',
-        'expectedStatuses' => [200],
-        'contentTypeContains' => 'image',
-        'minBodyBytes' => 2000,
-    ],
-    [
-        'id' => 'laravel-health',
-        'path' => '/_app/health',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
-    ],
-    [
-        'id' => 'laravel-system-info',
-        'path' => '/_app/system/info',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
-    ],
-    [
-        'id' => 'laravel-migrate-fetch-subcategory',
-        'method' => 'POST',
-        'path' => '/_app/migrate/requests/fetch_subcategory',
-        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
-        'body' => 'category_id=1',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => [
-            '<option',
-            "window.open('../login",
-        ],
-    ],
-    [
-        'id' => 'laravel-migrate-proposal-pricing',
-        'method' => 'POST',
-        'path' => '/_app/migrate/proposals/ajax/check/pricing',
-        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
-        'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => [
-            'true',
-            'false',
-            "window.open('../login",
-            'install.php',
-        ],
-    ],
-    [
-        'id' => 'laravel-migrate-apis-index',
-        'path' => '/_app/migrate/apis/index.php?/apis/register',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found'],
-    ],
-    [
-        'id' => 'laravel-migrate-pause-request',
-        'path' => '/_app/migrate/requests/pause_request?request_id=0',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => [
-            "window.open('manage_requests'",
-            "window.open('../login",
-            'manage_requests',
-            'login',
-        ],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'requests-manage',
-        'path' => '/requests/manage_requests',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => [
-            "window.open('../login",
-            'manage_requests',
-            "window.open('install.php'",
-            'install.php',
-        ],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'requests-active',
-        'path' => '/requests/active_request',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => [
-            'request',
-            "window.open('../login",
-            "window.open('install.php'",
-            'install.php',
-        ],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'requests-fetch-subcategory',
+    ['id' => 'home-page', 'path' => '/', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['<html', 'install.php', 'login', '<title'], 'snapshot' => 'home', 'dbDependent' => true],
+    ['id' => 'login-page', 'path' => '/login', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['login', '<form', '<title', 'install.php'], 'snapshot' => 'login', 'dbDependent' => true],
+    ['id' => 'admin-login', 'path' => '/admin/login.php', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['ADMIN', 'admin', '<form', '<title'], 'snapshot' => 'admin-login', 'dbDependent' => true],
+    ['id' => 'index-alias', 'path' => '/index', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['<html', 'install.php', 'login'], 'dbDependent' => true],
+    ['id' => 'static-css-router', 'path' => '/styles/bootstrap.css', 'expectedStatuses' => [200], 'contentTypeContains' => 'text/css', 'minBodyBytes' => 5000],
+    ['id' => 'asset-proxy-css', 'path' => '/asset_proxy.php?path=styles/bootstrap.css', 'expectedStatuses' => [200], 'contentTypeContains' => 'text/css', 'minBodyBytes' => 5000],
+    ['id' => 'logo-image', 'path' => '/images/app.png', 'expectedStatuses' => [200], 'contentTypeContains' => 'image', 'minBodyBytes' => 2000],
+    ['id' => 'laravel-health', 'path' => '/_app/health', 'expectedStatuses' => [200], 'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"']],
+    ['id' => 'laravel-system-info', 'path' => '/_app/system/info', 'expectedStatuses' => [200], 'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"']],
+    ['id' => 'laravel-migrate-fetch-subcategory', 'method' => 'POST', 'path' => '/_app/migrate/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['<option', "window.open('../login"]],
+    ['id' => 'laravel-migrate-proposal-pricing', 'method' => 'POST', 'path' => '/_app/migrate/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ['true', 'false', "window.open('../login", 'install.php']],
+    ['id' => 'laravel-migrate-apis-index', 'path' => '/_app/migrate/apis/index.php?/apis/register', 'expectedStatuses' => [200], 'bodyContainsAny' => ['CodeIgniter', '<html', '<title', 'ERROR: Not Found']],
+    ['id' => 'laravel-migrate-pause-request', 'path' => '/_app/migrate/requests/pause_request?request_id=0', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
+    ['id' => 'requests-manage', 'path' => '/requests/manage_requests', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('../login", 'manage_requests', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'requests-active', 'path' => '/requests/active_request', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['request', "window.open('../login", "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'requests-fetch-subcategory', 'method' => 'POST', 'path' => '/requests/fetch_subcategory', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'category_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", '<option', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'proposal-pricing-check', 'method' => 'POST', 'path' => '/proposals/ajax/check/pricing', 'headers' => ['Content-Type: application/x-www-form-urlencoded'], 'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1', 'expectedStatuses' => [200], 'bodyContainsAny' => ["window.open('../login", 'false', 'true', "window.open('install.php'", 'install.php'], 'dbDependent' => true],
+    ['id' => 'apis-index', 'path' => '/apis/index.php?/apis/register', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'], 'dbDependent' => true],
+    ['id' => 'requests-pause-request', 'path' => '/requests/pause_request?request_id=0', 'expectedStatuses' => [200, 302], 'bodyContainsAny' => ["window.open('manage_requests'", "window.open('../login", 'manage_requests', 'login'], 'dbDependent' => true],
+    ['id' => 'admin-include-sanitize', 'path' => '/admin/includes/sanitize_url.php', 'expectedStatuses' => [200]],
+    ['id' => 'not-found-static', 'path' => '/this-file-should-not-exist-blc.css', 'expectedStatuses' => [404], 'bodyContainsAny' => ['Not Found']],
+];
+
+if ($forceFallback) {
+    foreach ($checks as &$check) {
+        if (($check['id'] ?? '') === 'laravel-migrate-fetch-subcategory') {
+            $check['expectedStatuses'] = [500];
+            unset($check['bodyContainsAny']);
+        }
+    }
+    unset($check);
+
+    $checks[] = [
+        'id' => 'laravel-migrate-fetch-subcategory-fallback',
         'method' => 'POST',
         'path' => '/requests/fetch_subcategory',
         'headers' => ['Content-Type: application/x-www-form-urlencoded'],
         'body' => 'category_id=1',
         'expectedStatuses' => [200],
-        'bodyContainsAny' => [
-            "window.open('../login",
-            '<option',
-            "window.open('install.php'",
-            'install.php',
-        ],
+        'bodyContainsAny' => ["window.open('../login", '<option', "window.open('install.php'", 'install.php'],
         'dbDependent' => true,
-    ],
-    [
-        'id' => 'proposal-pricing-check',
-        'method' => 'POST',
-        'path' => '/proposals/ajax/check/pricing',
-        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
-        'body' => 'proposal_id=1&proposal_price=5&proposal_revisions=1&delivery_id=1',
-        'expectedStatuses' => [200],
-        'bodyContainsAny' => [
-            "window.open('../login",
-            'false',
-            'true',
-            "window.open('install.php'",
-            'install.php',
-        ],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'apis-index',
-        'path' => '/apis/index.php?/apis/register',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'requests-pause-request',
-        'path' => '/requests/pause_request?request_id=0',
-        'expectedStatuses' => [200, 302],
-        'bodyContainsAny' => [
-            "window.open('manage_requests'",
-            "window.open('../login",
-            'manage_requests',
-            'login',
-        ],
-        'dbDependent' => true,
-    ],
-    [
-        'id' => 'admin-include-sanitize',
-        'path' => '/admin/includes/sanitize_url.php',
-        'expectedStatuses' => [200],
-    ],
-    [
-        'id' => 'not-found-static',
-        'path' => '/this-file-should-not-exist-blc.css',
-        'expectedStatuses' => [404],
-        'bodyContainsAny' => ['Not Found'],
-    ],
-];
+    ];
+}
 
-$originalToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
+$originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
+$originalForceFallback = getenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL');
+
 $passes = [];
-switch ($toggleOption) {
-    case 'on':
-        $passes[] = ['label' => 'toggle-on', 'env' => 'true'];
+switch ($modeOption) {
+    case 'legacy':
+        $passes[] = ['label' => 'legacy', 'fetch' => 'false'];
         break;
-    case 'off':
-        $passes[] = ['label' => 'toggle-off', 'env' => 'false'];
+    case 'laravel':
+        $passes[] = ['label' => 'laravel', 'fetch' => 'true'];
         break;
     default:
-        $passes[] = ['label' => 'toggle-off', 'env' => 'false'];
-        $passes[] = ['label' => 'toggle-on', 'env' => 'true'];
+        $passes[] = ['label' => 'legacy', 'fetch' => 'false'];
+        $passes[] = ['label' => 'laravel', 'fetch' => 'true'];
         break;
 }
 
 if ($baseUrlOption !== '' && count($passes) > 1) {
-    echo "Warning: --base-url provided; running all passes against the same external server (toggle cannot be forced).\n";
+    echo "Warning: --base-url provided; running all passes against the same external server (fetch toggle cannot be forced).\n";
 }
 
 $overall = ['passed' => 0, 'failed' => 0, 'skipped' => 0];
@@ -308,7 +172,7 @@ foreach ($passes as $pass) {
     $serverProcess = null;
     $serverLogs = ['stdout' => '', 'stderr' => ''];
     $passLabel = $pass['label'];
-    $envValue = $pass['env'];
+    $fetchValue = $pass['fetch'];
 
     echo "Preparing HTTP smoke checks ({$passLabel})...\n";
 
@@ -317,18 +181,35 @@ foreach ($passes as $pass) {
             $baseUrl = rtrim($baseUrlOption, '/');
             echo "Using existing server: {$baseUrl}\n";
         } else {
-            putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $envValue);
-            $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
-            $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $envValue;
-            putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $envValue);
-            $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $envValue;
-            $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $envValue;
-            putenv('MIGRATE_APIS_INDEX=' . $envValue);
-            $_ENV['MIGRATE_APIS_INDEX'] = $envValue;
-            $_SERVER['MIGRATE_APIS_INDEX'] = $envValue;
-            putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $envValue);
-            $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
-            $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $envValue;
+            putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $fetchValue);
+            $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $fetchValue;
+            $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $fetchValue;
+
+            if ($originalPricingToggle !== false) {
+                putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
+                $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+                $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+            }
+            if ($originalApisToggle !== false) {
+                putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
+                $_ENV['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+                $_SERVER['MIGRATE_APIS_INDEX'] = $originalApisToggle;
+            }
+            if ($originalPauseToggle !== false) {
+                putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $originalPauseToggle);
+                $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
+                $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
+            }
+
+            if ($forceFallback && $passLabel === 'laravel') {
+                putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=true');
+                $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = 'true';
+                $_SERVER['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = 'true';
+            } elseif ($originalForceFallback !== false) {
+                putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=' . $originalForceFallback);
+                $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
+                $_SERVER['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
+            }
 
             ensureLegacyWriteEnv($basePath);
 
@@ -339,7 +220,7 @@ foreach ($passes as $pass) {
                 break;
             }
 
-            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$envValue}, MIGRATE_PROPOSAL_PRICING_CHECK={$envValue}, MIGRATE_APIS_INDEX={$envValue}...\n";
+            echo "Starting local server on {$host}:{$port} with MIGRATE_REQUESTS_FETCH_SUBCATEGORY={$fetchValue}...\n";
             [$serverProcess, $serverLogs] = startPhpServer($basePath, $host, $port);
             $baseUrl = "http://{$host}:{$port}";
             echo "Started local server: {$baseUrl}\n";
@@ -362,8 +243,6 @@ foreach ($passes as $pass) {
             $durationMs = (int) round((microtime(true) - $started) * 1000);
 
             $id = (string) $check['id'];
-            $ok = true;
-            $reasons = [];
             $dbUnavailable = responseIndicatesDbUnavailable($response);
 
             if (!empty($check['dbDependent']) && $dbUnavailable) {
@@ -438,10 +317,10 @@ foreach ($passes as $pass) {
     }
 }
 
-if ($originalToggle !== false) {
-    putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $originalToggle);
-    $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
-    $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalToggle;
+if ($originalFetchToggle !== false) {
+    putenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY=' . $originalFetchToggle);
+    $_ENV['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalFetchToggle;
+    $_SERVER['MIGRATE_REQUESTS_FETCH_SUBCATEGORY'] = $originalFetchToggle;
 }
 if ($originalPricingToggle !== false) {
     putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
@@ -457,6 +336,11 @@ if ($originalPauseToggle !== false) {
     putenv('MIGRATE_REQUESTS_PAUSE_REQUEST=' . $originalPauseToggle);
     $_ENV['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
     $_SERVER['MIGRATE_REQUESTS_PAUSE_REQUEST'] = $originalPauseToggle;
+}
+if ($originalForceFallback !== false) {
+    putenv('FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=' . $originalForceFallback);
+    $_ENV['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
+    $_SERVER['FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL'] = $originalForceFallback;
 }
 
 if ($exitCode !== 0) {
@@ -547,13 +431,12 @@ function ensureLegacyWriteEnv(string $basePath): void
         $parsed = array_merge($parsed, parseEnvFile($envFile));
     }
 
-    foreach ($missing as $key) {
-        if (isset($parsed[$key]) && $parsed[$key] !== '') {
+    foreach ($required as $key) {
+        if ((getenv($key) === false || getenv($key) === '') && isset($parsed[$key]) && $parsed[$key] !== '') {
             setEnvValue($key, $parsed[$key]);
         }
     }
 
-    // Fallback to legacy read credentials only for smoke server startup (explicitly set, not silent in app).
     foreach ($required as $key) {
         $value = getenv($key);
         if ($value === false || $value === '') {
@@ -680,10 +563,6 @@ function waitForServer(string $baseUrl, int $attempts, int $sleepMicros): bool
     return false;
 }
 
-/**
- * @param array<string,mixed> $check
- * @return array{status:int,body:string,headers:array<string,string>,error:string}
- */
 function httpRequest(string $baseUrl, array $check): array
 {
     $path = isset($check['path']) && is_string($check['path']) ? $check['path'] : '/';
@@ -759,11 +638,6 @@ function httpRequest(string $baseUrl, array $check): array
     ];
 }
 
-/**
- * @param array<string,mixed> $check
- * @param array<string,mixed> $response
- * @return array{bool,array<int,string>}
- */
 function evaluateResponse(array $check, array $response): array
 {
     $errors = [];
@@ -819,11 +693,6 @@ function evaluateResponse(array $check, array $response): array
     return [$errors === [], $errors];
 }
 
-/**
- * Detect responses that likely indicate database connectivity or install pre-check issues.
- *
- * @param array<string,mixed> $response
- */
 function responseIndicatesDbUnavailable(array $response): bool
 {
     $status = isset($response['status']) ? (int) $response['status'] : 0;

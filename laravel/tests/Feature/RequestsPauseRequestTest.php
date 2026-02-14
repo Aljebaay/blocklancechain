@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\LegacyBridge\RequestsPauseRequestController;
+use App\Support\LegacyWriteConnection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 
@@ -24,15 +24,11 @@ class RequestsPauseRequestTest extends TestCase
         $this->startNativeSession();
         $_SESSION['seller_user_name'] = 'alice';
 
-        $connection = new class implements \Stringable {
+        $connection = new class {
             public function __construct()
             {
                 $this->selectResult = (object) ['seller_id' => 5];
                 $this->updateResult = 1;
-            }
-            public function __toString(): string
-            {
-                return 'legacy_write_mock';
             }
             public function selectOne($query, $bindings = [])
             {
@@ -48,8 +44,8 @@ class RequestsPauseRequestTest extends TestCase
             }
         };
 
-        DB::shouldReceive('connection')
-            ->with('legacy_write')
+        Mockery::mock('alias:' . LegacyWriteConnection::class)
+            ->shouldReceive('connection')
             ->andReturn($connection);
 
         $controller = new RequestsPauseRequestController();
@@ -82,8 +78,8 @@ class RequestsPauseRequestTest extends TestCase
             }
         };
 
-        DB::shouldReceive('connection')
-            ->with('legacy_write')
+        Mockery::mock('alias:' . LegacyWriteConnection::class)
+            ->shouldReceive('connection')
             ->andReturn($connection);
 
         $controller = new RequestsPauseRequestController();
