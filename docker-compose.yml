@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  app:
+    image: php:8.2-fpm-alpine
+    container_name: blocklancechain_app
+    working_dir: /app/laravel
+    volumes:
+      - .:/app
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    environment:
+      - PHP_IDE_CONFIG=serverName=blocklancechain
+    expose:
+      - 9000
+    networks:
+      - blocklancechain
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: blocklancechain_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/app
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - blocklancechain
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: blocklancechain_db
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+      MYSQL_DATABASE: blocklancechain
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - blocklancechain
+    ports:
+      - "3306:3306"
+
+volumes:
+  db_data:
+
+networks:
+  blocklancechain:
+    driver: bridge
