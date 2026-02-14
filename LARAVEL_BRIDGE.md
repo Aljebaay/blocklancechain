@@ -50,3 +50,9 @@ Run a Laravel 12 app alongside the legacy PHP runtime without changing existing 
 
 ## Rollback
 - Remove `/_app` delegation blocks and/or toggles; legacy continues unaffected.
+
+## Toggle safety and fallback (Phase 7)
+- /requests/fetch_subcategory is guarded by MIGRATE_REQUESTS_FETCH_SUBCATEGORY (default false).
+- When enabled, router buffers Laravel response and only serves it if status==200 and body is non-empty; otherwise it falls back to legacy public/requests/fetch_subcategory.php.
+- FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL=true forces the Laravel handler to throw, exercising the fallback path.
+- Smoke: use --mode=legacy|laravel|both (default both). In laravel mode with --force-fallback (or env flag), the same probe must still pass via legacy output.

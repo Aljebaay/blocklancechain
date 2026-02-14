@@ -48,3 +48,9 @@
 - Uses legacy_write connection with transaction to update buyer_requests.request_status='pause'.
 - Smoke extended with migrate and legacy probes for pause_request; toggle off/on passes covered.
 - Added Laravel feature tests covering success, no-op, and unauthenticated flows.
+
+## 2026-02-14 — Phase 7: migration toggle hardening
+- Hardened /requests/fetch_subcategory toggle with buffered Laravel include and guaranteed legacy fallback on error/empty/non-200.
+- Added FORCE_LARAVEL_FETCH_SUBCATEGORY_FAIL to simulate failures and verify fallback.
+- Smoke now runs legacy and Laravel modes (and fallback when forced) via --mode flag; snapshots remain per-pass.
+- Bridge docs updated; no business logic or schema changes.
