@@ -102,6 +102,12 @@
 - Smoke includes laravel-only Requests sanity probe; forced fallback remains available via FORCE_LARAVEL_REQUESTS_MODULE_FAIL.
 - Rollback: set MIGRATE_REQUESTS_MODULE=false or set specific endpoint override to false.
 
+## 2026-02-14 — Phase 14: proposals module groundwork
+- Introduced MIGRATE_PROPOSALS module toggle (default false) with buffered router fallback preserved.
+- Converted /proposals/ajax/check/pricing and /proposal/pricing_check to native Laravel controller logic (session bootstrap, proposal/package validation) with JSON parity; fallback to legacy on error/non-200/empty.
+- Smoke harness updates prepare module-on validation by setting MIGRATE_PROPOSALS=true in Laravel mode; pricing probes remain green; artisan tests unchanged.
+- Remaining Proposals P0 (proposal view/sections) still pending; rollback by setting MIGRATE_PROPOSALS=false or endpoint override false.
+
 ## 2026-02-14 — Phase 13: inventory, priorities, and migration matrix
 - Added MIGRATION_MATRIX.md summarizing all modules: endpoint counts (native/runner/unmigrated), priorities (P0/P1/P2), toggles, and fallback status.
 - Identified top P0 endpoints and assigned to upcoming phases: Phase 14 (Proposals), Phase 15 (Orders/Payments), Phase 16 (Messages/Offers), Phase 17 (Admin/APIs with /apis/index.php kept behind toggle).

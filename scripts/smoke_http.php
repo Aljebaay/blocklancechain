@@ -192,6 +192,7 @@ if ($forceRequestsFallback) {
 
 $originalFetchToggle = getenv('MIGRATE_REQUESTS_FETCH_SUBCATEGORY');
 $originalPricingToggle = getenv('MIGRATE_PROPOSAL_PRICING_CHECK');
+$originalProposalsModuleToggle = getenv('MIGRATE_PROPOSALS');
 $originalApisToggle = getenv('MIGRATE_APIS_INDEX');
 $originalPauseToggle = getenv('MIGRATE_REQUESTS_PAUSE_REQUEST');
 $originalActiveToggle = getenv('MIGRATE_REQUESTS_ACTIVE_REQUEST');
@@ -246,6 +247,11 @@ foreach ($passes as $pass) {
             putenv('MIGRATE_REQUESTS_MODULE=' . $moduleValue);
             $_ENV['MIGRATE_REQUESTS_MODULE'] = $moduleValue;
             $_SERVER['MIGRATE_REQUESTS_MODULE'] = $moduleValue;
+
+            $proposalsModuleValue = $passLabel === 'legacy' ? 'false' : 'true';
+            putenv('MIGRATE_PROPOSALS=' . $proposalsModuleValue);
+            $_ENV['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
+            $_SERVER['MIGRATE_PROPOSALS'] = $proposalsModuleValue;
 
             if ($originalPricingToggle !== false) {
                 putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
@@ -434,6 +440,11 @@ if ($originalPricingToggle !== false) {
     putenv('MIGRATE_PROPOSAL_PRICING_CHECK=' . $originalPricingToggle);
     $_ENV['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
     $_SERVER['MIGRATE_PROPOSAL_PRICING_CHECK'] = $originalPricingToggle;
+}
+if ($originalProposalsModuleToggle !== false) {
+    putenv('MIGRATE_PROPOSALS=' . $originalProposalsModuleToggle);
+    $_ENV['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
+    $_SERVER['MIGRATE_PROPOSALS'] = $originalProposalsModuleToggle;
 }
 if ($originalApisToggle !== false) {
     putenv('MIGRATE_APIS_INDEX=' . $originalApisToggle);
