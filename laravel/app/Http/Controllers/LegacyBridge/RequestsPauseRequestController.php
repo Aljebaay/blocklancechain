@@ -10,7 +10,7 @@ class RequestsPauseRequestController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $this->bootstrapLegacySession();
+        $this->bootstrapLegacySession($request);
 
         $sellerUserName = $_SESSION['seller_user_name'] ?? null;
         if (!is_string($sellerUserName) || $sellerUserName === '') {
@@ -53,37 +53,68 @@ class RequestsPauseRequestController extends Controller
         return $this->manageRedirect($affected === 1);
     }
 
-    private function bootstrapLegacySession(): void
+    private function bootstrapLegacySession(Request $request): void
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
+        if (session_status() === PHP_SESSION_ACTIVE && session_name() === 'PHPSESSID') {
             return;
         }
 
-        $projectBase = realpath(base_path('..')) ?: base_path('..');
-        $platformBase = $projectBase . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform';
-
-        $candidatePaths = [
-            $projectBase . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
-            $platformBase . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
-            $platformBase . DIRECTORY_SEPARATOR . '.sessions',
-            rtrim(sys_get_temp_dir(), "\\/") . DIRECTORY_SEPARATOR . 'gig-zone_sessions',
-        ];
-
-        foreach ($candidatePaths as $path) {
-            if (!is_dir($path)) {
-                @mkdir($path, 0777, true);
-            }
-            if (is_dir($path) && is_writable($path)) {
-                session_save_path($path);
-                break;
-            }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
         }
+
+        $_SESSION = [];
 
         @ini_set('session.use_strict_mode', '1');
         @ini_set('session.use_only_cookies', '1');
 
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            @session_start();
+        session_name('PHPSESSID');
+        $legacyCookieId = $request->cookies->get('PHPSESSID');
+        if (is_string($legacyCookieId) && $legacyCookieId !== '') {
+            @session_id($legacyCookieId);
+        } else {
+            unset($_COOKIE['PHPSESSID']);
+            session_id(session_create_id());
+        }
+
+        $bootstrapped = false;
+        $legacyBootstrap = base_path('..' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'session_bootstrap.php');
+        if (is_file($legacyBootstrap)) {
+            require_once $legacyBootstrap;
+            if (function_exists('blc_bootstrap_session')) {
+                blc_bootstrap_session();
+                $bootstrapped = true;
+            }
+        }
+
+        if (! $bootstrapped) {
+            $projectBase = realpath(base_path('..')) ?: base_path('..');
+            $platformBase = $projectBase . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'Platform';
+
+            $candidatePaths = [
+                $projectBase . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
+                $platformBase . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions',
+                $platformBase . DIRECTORY_SEPARATOR . '.sessions',
+                rtrim(sys_get_temp_dir(), "\\/") . DIRECTORY_SEPARATOR . 'gig-zone_sessions',
+            ];
+
+            foreach ($candidatePaths as $path) {
+                if (!is_dir($path)) {
+                    @mkdir($path, 0777, true);
+                }
+                if (is_dir($path) && is_writable($path)) {
+                    session_save_path($path);
+                    break;
+                }
+            }
+
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                @session_start();
+            }
+        }
+
+        if (!is_string($legacyCookieId) || $legacyCookieId === '') {
+            $_SESSION = [];
         }
     }
 
