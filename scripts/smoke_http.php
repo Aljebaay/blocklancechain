@@ -138,6 +138,18 @@ $checks = [
         'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
     ],
     [
+        'id' => 'laravel-migrate-fetch-subcategory',
+        'method' => 'POST',
+        'path' => '/_app/migrate/requests/fetch_subcategory',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => 'category_id=1',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => [
+            '<option',
+            "window.open('../login",
+        ],
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
         'expectedStatuses' => [200, 302],
