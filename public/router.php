@@ -103,7 +103,7 @@ if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|otf|eot|webp|m
     return true;
 }
 
-if (str_starts_with($uriPath, '/includes/')) {
+if (strncmp($uriPath, '/includes/', strlen('/includes/')) === 0) {
     $legacyPath = ltrim($uriPath, '/');
     if (!preg_match('/\.php$/i', $legacyPath)) {
         $legacyPath .= '.php';
