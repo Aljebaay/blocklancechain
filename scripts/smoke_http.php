@@ -182,9 +182,10 @@ $checks = [
     ],
     [
         'id' => 'apis-index',
-        'path' => '/apis/index.php',
-        'expectedStatuses' => [200, 404],
-        'bodyContainsAny' => ['CodeIgniter', 'BASEPATH', '<html', '<title', '404'],
+        'path' => '/apis/index.php?/apis/register',
+        'expectedStatuses' => [200, 302],
+        'bodyContainsAny' => ['invalid', 'CodeIgniter', '<html', '<title'],
+        'dbDependent' => true,
     ],
     [
         'id' => 'admin-include-sanitize',
@@ -242,21 +243,6 @@ try {
         $ok = true;
         $reasons = [];
         $dbUnavailable = responseIndicatesDbUnavailable($response);
-        if (isset($check['snapshot']) && is_string($check['snapshot'])) {
-            $snapshotPath = $snapshotsDir . DIRECTORY_SEPARATOR . $check['snapshot'] . '.snapshot.txt';
-            $bodyPrefix = isset($response['body']) && is_string($response['body']) ? substr($response['body'], 0, 2048) : '';
-
-            if ($recordSnapshots || !is_file($snapshotPath)) {
-                file_put_contents($snapshotPath, $bodyPrefix);
-                echo "SNAP  {$id} saved snapshot to {$snapshotPath}\n";
-            } elseif ($bodyPrefix !== '' && !$dbUnavailable) {
-                $snapshotBody = (string) @file_get_contents($snapshotPath);
-                if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
-                    $ok = false;
-                    $reasons[] = 'Snapshot drift detected';
-                }
-            }
-        }
 
         if (!empty($check['dbDependent']) && $dbUnavailable) {
             $skipped++;
@@ -265,6 +251,26 @@ try {
         }
 
         [$ok, $reasons] = evaluateResponse($check, $response);
+
+        if (isset($check['snapshot']) && is_string($check['snapshot']) && !$dbUnavailable) {
+            $snapshotPath = $snapshotsDir . DIRECTORY_SEPARATOR . $check['snapshot'] . '.snapshot.txt';
+            $bodyPrefix = isset($response['body']) && is_string($response['body']) ? substr($response['body'], 0, 2048) : '';
+
+            if ($recordSnapshots || !is_file($snapshotPath)) {
+                if ($ok) {
+                    file_put_contents($snapshotPath, $bodyPrefix);
+                    echo "SNAP  {$id} saved snapshot to {$snapshotPath}\n";
+                } else {
+                    echo "SNAP-SKIP  {$id} snapshot not recorded (response invalid)\n";
+                }
+            } elseif ($bodyPrefix !== '') {
+                $snapshotBody = (string) @file_get_contents($snapshotPath);
+                if (!snapshotSimilar($bodyPrefix, $snapshotBody)) {
+                    $ok = false;
+                    $reasons[] = 'Snapshot drift detected';
+                }
+            }
+        }
 
         $status = $response['status'];
 

@@ -22,13 +22,13 @@
 - Directory index fallback: if URL maps to a directory containing `index.php`, that index is required with working directory changed.
 - PHP stub fallback: if `{path}.php` exists under `public/`, it is required.
 - Rewrites:
-  - `/categories/{cat}/{child?}` ? sets `$_GET['cat_url']`/`cat_child_url` then loads `public/categories/category.php`.
-  - `/proposals/{username}/{slug...}` (excluding reserved segments `proposal_files|ajax|sections|coupons`) ? sets `username` and `proposal_url`, loads `public/proposals/proposal.php`.
-  - `/blog/{id}` numeric ? sets `id`, loads `public/blog/post.php`.
-  - `/article/{slug...}` ? sets `article_url`, loads `public/article/article.php`.
-  - `/tags/{slug...}` ? sets `tag`, loads `public/tags/tag.php`.
-  - `/pages/{slug...}` ? sets `slug`, loads `public/pages/index.php`.
-  - Single-segment slug (alnum, underscore, hyphen) ? sets `slug`, loads `public/handler.php`.
+  - `/categories/{cat}/{child?}` -> sets `$_GET['cat_url']` and `cat_child_url`, then loads `public/categories/category.php`.
+  - `/proposals/{username}/{slug...}` (excluding reserved `proposal_files|ajax|sections|coupons`) -> sets `username` and `proposal_url`, then loads `public/proposals/proposal.php`.
+  - `/blog/{id}` (numeric) -> sets `id`, then loads `public/blog/post.php`.
+  - `/article/{slug...}` -> sets `article_url`, then loads `public/article/article.php`.
+  - `/tags/{slug...}` -> sets `tag`, then loads `public/tags/tag.php`.
+  - `/pages/{slug...}` -> sets `slug`, then loads `public/pages/index.php`.
+  - Single-segment slug (alnum, underscore, hyphen) -> sets `slug`, then loads `public/handler.php`.
 - Default fallback: `public/index.php`.
 
 ## Endpoint Manifest Overrides (config/endpoints.php)

@@ -23,7 +23,7 @@ Legend: T=tenant-scoped, G=global, U=unknown/needs review
 - plugins, admin_rights, admin_logs, admins
 - spam_words, expenses, app_info, announcement_bar, enquiry_types
 - currency_converter_settings, api_settings (S3, etc.)
-- payment gateway order tables for provider configs (structure global even though rows may be per user): dusupay_orders
+- Payment gateway order tables (global provider config scope): dusupay_orders (present); paypal_orders / mercadopago_orders / paystack_orders / stripe_orders (not in current dump; if introduced, treat as global).
 
 ## Unknown / Needs Review (U)
 - coupons, coupons_used (likely tenant-specific to buyer; confirm scoping in app logic)
@@ -31,7 +31,6 @@ Legend: T=tenant-scoped, G=global, U=unknown/needs review
 - skills_relation (bridges skills to sellers; likely T)
 - home_section language-specific rows (data-global but may vary by tenant in future)
 - support_tickets, support_conversations (currently cross-tenant; confirm access control)
-- admin_logs scope (global but contains actor references)
 - app_info, jwplayer/api keys storage (global)
 - any CodeIgniter-specific cache/log tables under apis/application (not migrated yet)
 
