@@ -132,6 +132,12 @@ $checks = [
         'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
     ],
     [
+        'id' => 'laravel-system-info',
+        'path' => '/_app/system/info',
+        'expectedStatuses' => [200],
+        'bodyContainsAny' => ['"status":"ok"', '"status": "ok"', 'status":"ok"'],
+    ],
+    [
         'id' => 'requests-manage',
         'path' => '/requests/manage_requests',
         'expectedStatuses' => [200, 302],
