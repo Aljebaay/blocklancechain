@@ -32,7 +32,8 @@ class LegacyScriptRunner
             'REQUEST_METHOD' => $request->method(),
             'REQUEST_URI' => $legacyUri . ($request->getQueryString() ? '?' . $request->getQueryString() : ''),
             'QUERY_STRING' => $request->getQueryString() ?: http_build_query($request->query()),
-            'HTTP_HOST' => $request->getHost(),
+            'HTTP_HOST' => $request->getHttpHost(),
+            'SERVER_PORT' => (string) $request->getPort(),
             'HTTPS' => $request->isSecure() ? 'on' : 'off',
             'DOCUMENT_ROOT' => realpath(base_path('legacy' . DIRECTORY_SEPARATOR . 'public')) ?: null,
             'SCRIPT_NAME' => $legacyUri,
@@ -63,6 +64,7 @@ class LegacyScriptRunner
             'LEGACY_SERVER' => json_encode($server),
             'LEGACY_GET' => json_encode($request->query->all()),
             'LEGACY_POST' => json_encode($request->request->all()),
+            'LEGACY_COOKIE' => json_encode($request->cookies->all()),
             'LEGACY_SCRIPT' => $scriptPath,
             'LEGACY_CWD' => dirname($scriptPath),
             'LEGACY_STATUS_DEFAULT' => (string) $defaultStatus,
@@ -97,8 +99,16 @@ if ($cwd && is_dir($cwd)) {
 $_SERVER = array_merge($_SERVER, $server);
 $_GET = $get;
 $_POST = $post;
-$_REQUEST = array_merge($_GET, $_POST);
+$cookies = json_decode(getenv('LEGACY_COOKIE') ?: '[]', true) ?: [];
+$_COOKIE = $cookies;
+$_REQUEST = array_merge($_GET, $_POST, $_COOKIE);
 http_response_code($defaultStatus);
+
+// Restore session ID from cookie so session_start() resumes the existing session.
+$sessName = session_name() ?: 'PHPSESSID';
+if (isset($_COOKIE[$sessName]) && is_string($_COOKIE[$sessName]) && $_COOKIE[$sessName] !== '') {
+    session_id($_COOKIE[$sessName]);
+}
 
 ob_start();
 register_shutdown_function(function (): void {
