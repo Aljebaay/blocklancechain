@@ -159,3 +159,93 @@
 - Added regression tests: `laravel/tests/Feature/LegacyScriptRunnerHeadersTest.php`.
 - Verification: `php laravel/artisan test` and `php scripts/smoke_http.php --mode laravel` both pass.
 
+
+## 2026-02-14 — Phase 16: inventory manifest, parity markers & fallback hardening
+- Created ENDPOINT_MANIFEST.md — comprehensive inventory of all 528 legacy endpoints across every module, with per-endpoint migration status (native/runner/unmigrated), toggle names, and priority assignments (P0–P2).
+- Introduced `X-Handler` response-header parity markers to distinguish which handler served a request:
+  - Laravel middleware `AddHandlerHeader` sets `X-Handler: laravel` on every Laravel response; registered globally in `laravel/bootstrap/app.php`.
+  - Router helper `blc_set_legacy_handler()` sets `X-Handler: legacy` on pure-legacy paths.
+  - Router helper `blc_prepare_legacy_fallback()` calls `header_remove()` + `http_response_code(200)` + `blc_set_legacy_handler()` on all paths that fall back from a failed Laravel attempt, eliminating header leakage.
+- Fixed header-leakage bug: when Laravel attempt fails (non-200 / exception) and router falls through to legacy, previously set response headers (Content-Type, etc.) were not cleaned on orders, proposals-pricing, and general PHP fallback paths. All fallback paths now run `blc_prepare_legacy_fallback()`.
+- Updated `scripts/smoke_http.php`:
+  - Added `expectHandler` key to check definitions (`legacy`, `laravel`, or `auto`).
+  - Extended `evaluateResponse()` to assert `X-Handler` header value when `expectHandler` is present.
+  - Added dedicated `handler-header-*` probes for parity verification in both modes.
+- No database, business logic, or response-shape changes.
+
+
+## 2026-02-15 — Phase 17: Full Laravel restructure (strangler fig completion)
+
+### Structural change
+- **Laravel promoted to project root**: all contents of `laravel/` (app, bootstrap, config, database, public, resources, routes, storage, tests, vendor, artisan, composer.json, .env, etc.) moved to the project root.
+- **Legacy code moved to `legacy/`**: original root directories (app, bootstrap, config, public, scripts, tests, storage, vendor, serve.bat, serve.ps1, composer.json) moved to `legacy/` subdirectory.
+- The project is now a standard Laravel 12 application at the root level.
+
+### New architecture
+```
+root/                   ← Laravel 12 project root
+  app/                  ← Laravel controllers, models, support
+  bootstrap/            ← Laravel bootstrap (incl. env.php for .env loading)
+  config/               ← Laravel config
+  database/             ← Laravel migrations, seeders
+  public/               ← Laravel public (index.php entry point)
+  resources/            ← Blade views, assets
+  routes/               ← web.php with all routes
+  storage/              ← Laravel storage
+  tests/                ← Laravel tests (9 passing)
+  vendor/               ← Laravel dependencies
+  legacy/
+    app/                ← Legacy Modules/Platform code
+    bootstrap/          ← Legacy dispatch.php, app.php, env.php (paths updated)
+    config/             ← Legacy endpoints.generated.php etc.
+    public/             ← ALL 528 legacy PHP endpoints
+    scripts/            ← smoke_http.php etc.
+    tests/              ← Legacy tests
+    storage/            ← Legacy sessions
+    vendor/             ← Legacy dependencies (stripe, paystack, phpmailer)
+  artisan, composer.json, .env, ...
+```
+
+### Routing
+- **Native controller routes** registered at their real public URLs (e.g. `/requests/manage_requests`, `/cancel_payment.php`, `/proposals/{username}/{slug?}`).
+- **Backward compatibility aliases** kept at `/_app/migrate/*` for existing smoke tests and references.
+- **Catch-all route** `/{path?}` → `LegacyBridgeController@handle` — resolves ANY unmigrated request to the matching legacy PHP file in `legacy/public/` via `LegacyScriptRunner` subprocess isolation.
+- CSRF excluded on catch-all and all `_app/migrate` legacy bridge routes (legacy PHP handles its own form validation).
+
+### LegacyBridgeController
+New comprehensive catch-all controller with 7-step resolution:
+1. Static assets (css, js, images, fonts) — served from `legacy/public/`
+2. `/includes/` proxy — maps to legacy includes
+3. Direct `.php` file match
+4. Directory `index.php` match
+5. Extensionless `.php` fallback
+6. Slug-based routes (categories, proposals, blog, article, tags, pages, handler.php)
+7. Final fallback to `legacy/public/index.php`
+
+### Code updates
+- All `base_path('..')` references (16 files) updated to `base_path('legacy')`.
+- Legacy `bootstrap/env.php` shim updated to point to root `bootstrap/env.php` (was `laravel/bootstrap/env.php`).
+- Legacy `bootstrap/app.php` updated to load env from project root.
+- `blc_load_env()` candidate list cleaned (removed dead `laravel/.env` path).
+- `AddHandlerHeader` middleware: only sets `X-Handler: laravel` if not already present (preserves `X-Handler: legacy` from bridge controller).
+- `.gitignore` updated with `legacy/vendor/`.
+- `LegacyPassthroughCsrfTest` updated for new catch-all URI (`{path?}` vs `{any?}`) and new CSRF architecture.
+
+### Verification
+- `php artisan --version` → Laravel Framework 12.51.0
+- `php artisan route:list` → 34 routes registered correctly
+- `php artisan test` → 9 passed (25 assertions)
+- Smoke tests: `/_app/health` (200, X-Handler: laravel), `home.php` (200, X-Handler: legacy), `freelancers.php` (200, X-Handler: legacy), `dashboard.php` (200, X-Handler: legacy)
+- Native routes: `/requests/manage_requests` (200, X-Handler: laravel)
+- Backward compat: `/_app/migrate/requests/manage_requests` (200, X-Handler: laravel)
+
+### Separate vendor directories
+- Root `vendor/` = Laravel deps (symfony/http-foundation ^7.x, etc.)
+- `legacy/vendor/` = Legacy deps (stripe ^7.45, paystack ^1.x, phpmailer, symfony/http-foundation ^5.4.50)
+- No version conflicts — each has its own autoloader
+
+### No breaking changes
+- All existing URLs continue to work
+- Response shapes preserved
+- Legacy PHP files run in subprocess isolation (same LegacyScriptRunner mechanism)
+- Single `.env` at project root serves both Laravel and legacy code

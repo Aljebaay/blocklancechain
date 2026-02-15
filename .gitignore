@@ -1,37 +1,26 @@
-
-# OS / Editor
-.DS_Store
-Thumbs.db
-Desktop.ini
-.idea/
-.vscode/
-
-# Local runtime
-.sessions/*
 *.log
-*.tmp
-*.cache
-
-# Environment / local secrets
+.DS_Store
 .env
-.env.*
-!.env.example
-!.env.exampel
-includes/config.php
-apis/application/config/database.php
-
-# Dependencies (install via Composer)
-vendor/
-!composer.json
-!composer.lock
-
-# Build / package artifacts
-*.zip
-*.tar
-*.tar.gz
-*.7z
-
-# Test / coverage artifacts
-coverage/
+.env.backup
+.env.production
+.phpactor.json
 .phpunit.result.cache
-.sessions
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+/legacy/vendor
+Homestead.json
+Homestead.yaml
+Thumbs.db
+.yarn/*
