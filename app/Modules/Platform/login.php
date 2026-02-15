@@ -180,8 +180,8 @@ if(isset($_SESSION['seller_user_name'])){
 		$select_seller = $db->query("select * from sellers where binary seller_user_name like :u_name OR seller_email=:u_email",array(":u_name"=>$seller_user_name,":u_email"=>$seller_user_name));
 
 		$row_seller = $select_seller->fetch();
-		@$hashed_password = $row_seller->seller_pass;
-		@$seller_status = $row_seller->seller_status;
+		$hashed_password = $row_seller ? $row_seller->seller_pass : '';
+		$seller_status = $row_seller ? $row_seller->seller_status : '';
 		$decrypt_password = password_verify($seller_pass, $hashed_password);
 		
 		if($decrypt_password == 0){
@@ -229,7 +229,7 @@ if(isset($_SESSION['seller_user_name'])){
 		}else{
 
 			// $select_seller = $db->select("sellers",array("seller_user_name"=>$seller_user_name,"seller_pass"=>$hashed_password));
-	    	$select_seller = $db->query("select * from sellers where seller_email=:u_email OR seller_user_name=:u_name AND seller_pass=:u_pass",array("u_email"=>$seller_user_name,"u_name"=>$seller_user_name,"u_pass"=>$hashed_password));
+	    	$select_seller = $db->query("select * from sellers where (seller_email=:u_email OR seller_user_name=:u_name) AND seller_pass=:u_pass",array("u_email"=>$seller_user_name,"u_name"=>$seller_user_name,"u_pass"=>$hashed_password));
 
 	    	$row_seller = $select_seller->fetch();
 

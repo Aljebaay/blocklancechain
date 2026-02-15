@@ -48,7 +48,7 @@
 <div class="rounded-0 carosel_sec">
 	<h3 class="buy_head <?= ($lang_dir == "right" ? 'text-right' : '') ?>"><?= $lang['sidebar']['buy_it_again']; ?></h3>
 	<?php
-	$select_orders = $db->query("select DISTINCT proposal_id from orders WHERE buyer_id='$login_seller_id' AND order_status='completed' AND EXISTS (SELECT * FROM proposals WHERE proposals.proposal_id = orders.proposal_id AND proposals.proposal_status='active')");
+	$select_orders = $db->query("select DISTINCT proposal_id from orders WHERE buyer_id=:buyer_id AND order_status='completed' AND EXISTS (SELECT 1 FROM proposals WHERE proposals.proposal_id = orders.proposal_id AND proposals.proposal_status='active')", array(":buyer_id" => $login_seller_id));
 	$count_orders = $select_orders->rowCount();
 	if ($count_orders == 0) {
 		echo "<p class='text-muted'><i class='fa fa-frown-o'></i> {$lang['sidebar']['no_buy_it_again']} </p>";
@@ -59,11 +59,12 @@
 			<div class="carousel-inner " role="listbox">
 				<?php
 				$i = 0;
-				$select_orders = $db->query("select DISTINCT proposal_id from orders where buyer_id='$login_seller_id' AND order_status='completed' order by 1 DESC");
+				$select_orders = $db->query("select DISTINCT proposal_id from orders where buyer_id=:buyer_id AND order_status='completed' order by 1 DESC", array(":buyer_id" => $login_seller_id));
 				while ($row_orders = $select_orders->fetch()) {
 					$proposal_id = $row_orders->proposal_id;
 
-					$get_proposals = $db->query("select * from proposals where proposal_id='$proposal_id' AND proposal_status='active'");
+					// Optimized: parameterized query instead of string interpolation
+					$get_proposals = $db->query("select * from proposals where proposal_id=:pid AND proposal_status='active'", array(":pid" => $proposal_id));
 					$count_proposals = $get_proposals->rowCount();
 					if ($count_proposals == 1) {
 						$i++;
@@ -73,7 +74,8 @@
 						$proposal_price = $row_proposals->proposal_price;
 						if ($proposal_price == 0) {
 							$get_p_1 = $db->select("proposal_packages", array("proposal_id" => $proposal_id, "package_name" => "Basic"));
-							$proposal_price = $get_p_1->fetch()->price;
+							$row_p_1 = $get_p_1->fetch();
+							$proposal_price = $row_p_1 ? $row_p_1->price : 0;
 						}
 						$proposal_img1 = getImageUrl2("proposals", "proposal_img1", $row_proposals->proposal_img1);
 						$proposal_video = $row_proposals->proposal_video;
@@ -98,24 +100,22 @@
 							$seller_image = "empty-image.png";
 						}
 						// Select Proposal Seller Level
-						@$seller_level = $db->select("seller_levels_meta", array("level_id" => $seller_level, "language_id" => $siteLanguage))->fetch()->title;
-						$proposal_reviews = array();
-						$select_buyer_reviews = $db->select("buyer_reviews", array("proposal_id" => $proposal_id));
-						$count_reviews = $select_buyer_reviews->rowCount();
-						while ($row_buyer_reviews = $select_buyer_reviews->fetch()) {
-							$proposal_buyer_rating = $row_buyer_reviews->buyer_rating;
-							array_push($proposal_reviews, $proposal_buyer_rating);
-						}
-						$total = array_sum($proposal_reviews);
-						@$average_rating = $total / count($proposal_reviews);
+						$sl_result = $db->select("seller_levels_meta", array("level_id" => $seller_level, "language_id" => $siteLanguage));
+						$row_sl = $sl_result ? $sl_result->fetch() : null;
+						$seller_level = ($row_sl && isset($row_sl->title)) ? $row_sl->title : '';
+						// Optimized: use COUNT and AVG query instead of fetching all reviews
+						$review_stats = $db->query("SELECT COUNT(*) as cnt, COALESCE(AVG(buyer_rating), 0) as avg_rating FROM buyer_reviews WHERE proposal_id=:pid", array(":pid" => $proposal_id))->fetch();
+						$count_reviews = $review_stats ? (int)$review_stats->cnt : 0;
+						$average_rating = $review_stats ? (float)$review_stats->avg_rating : 0;
 
 						$get_delivery = $db->select("instant_deliveries", ['proposal_id' => $proposal_id]);
-						$row_delivery = $get_delivery->fetch();
-						$enable_delivery = $row_delivery->enable;
+						$row_delivery = $get_delivery ? $get_delivery->fetch() : null;
+						$enable_delivery = ($row_delivery && isset($row_delivery->enable)) ? $row_delivery->enable : 0;
 
 						if ($videoPlugin == 1) {
-							$proposal_videosettings =  $db->select("proposal_videosettings", array('proposal_id' => $proposal_id))->fetch();
-							$enableVideo = $proposal_videosettings->enable;
+							$pvs = $db->select("proposal_videosettings", array('proposal_id' => $proposal_id));
+							$proposal_videosettings = $pvs ? $pvs->fetch() : null;
+							$enableVideo = ($proposal_videosettings && isset($proposal_videosettings->enable)) ? $proposal_videosettings->enable : 0;
 						} else {
 							$enableVideo = 0;
 						}
@@ -202,7 +202,8 @@
 <div class="rounded-0 mb-3 carosel_sec mt-3">
 	<h3 class="buy_head <?= ($lang_dir == "right" ? 'text-right' : '') ?>"><?= $lang['sidebar']['recently_viewed']; ?></h3>
 	<?php
-	$select_recent = $db->query("select * from recent_proposals WHERE seller_id='$login_seller_id' AND EXISTS (SELECT * FROM proposals WHERE proposals.proposal_id = recent_proposals.proposal_id AND proposals.proposal_status='active') order by 1 DESC LIMIT 0,4");
+	// Optimized: parameterized queries and EXISTS uses SELECT 1 instead of SELECT *
+	$select_recent = $db->query("select * from recent_proposals WHERE seller_id=:seller_id AND EXISTS (SELECT 1 FROM proposals WHERE proposals.proposal_id = recent_proposals.proposal_id AND proposals.proposal_status='active') order by 1 DESC LIMIT 0,4", array(":seller_id" => $login_seller_id));
 	$count_recent = $select_recent->rowCount();
 	if ($count_recent == 0) {
 		echo "<p class='text-muted'> <i class='fa fa-frown-o'></i> {$lang['sidebar']['no_recently_viewed']} </p>";
@@ -213,10 +214,11 @@
 			<div class="carousel-inner " role="listbox">
 				<?php
 				$i = 0;
-				$select_recent = $db->query("select * from recent_proposals where seller_id='$login_seller_id' order by 1 DESC LIMIT 0,4");
+				$select_recent = $db->query("select * from recent_proposals where seller_id=:seller_id order by 1 DESC LIMIT 0,4", array(":seller_id" => $login_seller_id));
 				while ($row_recent = $select_recent->fetch()) {
 					$proposal_id = $row_recent->proposal_id;
-					$get_proposals = $db->query("select * from proposals where proposal_id='$proposal_id' AND proposal_status='active'");
+					// Optimized: parameterized query
+					$get_proposals = $db->query("select * from proposals where proposal_id=:pid AND proposal_status='active'", array(":pid" => $proposal_id));
 					$count_proposals = $get_proposals->rowCount();
 					if ($count_proposals == 1) {
 						$i++;
@@ -251,25 +253,22 @@
 							$seller_image = "empty-image.png";
 						}
 						// Select Proposal Seller Level
-						@$seller_level = $db->select("seller_levels_meta", array("level_id" => $seller_level, "language_id" => $siteLanguage))->fetch()->title;
-						$proposal_reviews = array();
-						$select_buyer_reviews = $db->select("buyer_reviews", array("proposal_id" => $proposal_id));
-						$count_reviews = $select_buyer_reviews->rowCount();
-						while ($row_buyer_reviews = $select_buyer_reviews->fetch()) {
-							$proposal_buyer_rating = $row_buyer_reviews->buyer_rating;
-							array_push($proposal_reviews, $proposal_buyer_rating);
-						}
-						$total = array_sum($proposal_reviews);
-						@$average_rating = $total / count($proposal_reviews);
-
+						$sl_result2 = $db->select("seller_levels_meta", array("level_id" => $seller_level, "language_id" => $siteLanguage));
+						$row_sl2 = $sl_result2 ? $sl_result2->fetch() : null;
+						$seller_level = ($row_sl2 && isset($row_sl2->title)) ? $row_sl2->title : '';
+						// Optimized: use COUNT and AVG query instead of fetching all reviews
+						$review_stats2 = $db->query("SELECT COUNT(*) as cnt, COALESCE(AVG(buyer_rating), 0) as avg_rating FROM buyer_reviews WHERE proposal_id=:pid", array(":pid" => $proposal_id))->fetch();
+						$count_reviews = $review_stats2 ? (int)$review_stats2->cnt : 0;
+						$average_rating = $review_stats2 ? (float)$review_stats2->avg_rating : 0;
 
 						$get_delivery = $db->select("instant_deliveries", ['proposal_id' => $proposal_id]);
-						$row_delivery = $get_delivery->fetch();
-						$enable_delivery = $row_delivery->enable;
+						$row_delivery = $get_delivery ? $get_delivery->fetch() : null;
+						$enable_delivery = ($row_delivery && isset($row_delivery->enable)) ? $row_delivery->enable : 0;
 
 						if ($videoPlugin == 1) {
-							$proposal_videosettings =  $db->select("proposal_videosettings", array('proposal_id' => $proposal_id))->fetch();
-							$enableVideo = $proposal_videosettings->enable;
+							$pvs2 = $db->select("proposal_videosettings", array('proposal_id' => $proposal_id));
+							$proposal_videosettings = $pvs2 ? $pvs2->fetch() : null;
+							$enableVideo = ($proposal_videosettings && isset($proposal_videosettings->enable)) ? $proposal_videosettings->enable : 0;
 						} else {
 							$enableVideo = 0;
 						}

@@ -48,18 +48,19 @@
   <div class="card-body">
     <ul class="nav flex-column">
       <?php
-        $get_proposals = $db->query("select DISTINCT delivery_id from proposals where proposal_tags LIKE '%$tag%' AND proposal_status='active'");
+        $get_proposals = $db->query("select DISTINCT delivery_id from proposals where proposal_tags LIKE :tag AND proposal_status='active'", array(":tag" => '%'.$tag.'%'));
         while($row_proposals = $get_proposals->fetch()){
         $delivery_id = $row_proposals->delivery_id;
         $select_delivery_time = $db->select("delivery_times",array('delivery_id' => $delivery_id));
-        $delivery_title = $select_delivery_time->fetch()->delivery_title;
+        $row_delivery = $select_delivery_time->fetch();
+        $delivery_title = $row_delivery ? $row_delivery->delivery_title : '';
         if(!empty($delivery_title)){
       ?>
       <li class="nav-item checkbox checkbox-success">
         <label>
         <input type="checkbox" value="<?= $delivery_id; ?>" class="get_delivery_time"
           <?php if(isset($delivery_time[$delivery_id])){ echo "checked"; } ?> >
-        <span> <?= $delivery_title; ?> </span>
+        <span> <?= htmlspecialchars($delivery_title); ?> </span>
         </label>
       </li>
       <?php }} ?>
@@ -76,18 +77,19 @@
   <div class="card-body">
     <ul class="nav flex-column">
       <?php
-        $get_proposals = $db->query("select DISTINCT level_id from proposals where proposal_tags LIKE '%$tag%' AND proposal_status='active'");
+        $get_proposals = $db->query("select DISTINCT level_id from proposals where proposal_tags LIKE :tag AND proposal_status='active'", array(":tag" => '%'.$tag.'%'));
         while($row_proposals = $get_proposals->fetch()){
         $level_id = $row_proposals->level_id;
         $select_seller_levels = $db->select("seller_levels",array('level_id' => $level_id));
-        $level_title = $db->select("seller_levels_meta",array("level_id"=>$level_id,"language_id"=>$siteLanguage))->fetch()->title;
+        $row_level_meta = $db->select("seller_levels_meta",array("level_id"=>$level_id,"language_id"=>$siteLanguage))->fetch();
+        $level_title = $row_level_meta ? $row_level_meta->title : '';
         if(!empty($level_title)){
       ?>
       <li class="nav-item checkbox checkbox-primary">
         <label>
         <input type="checkbox" value="<?= $level_id; ?>" class="get_seller_level"
           <?php if(isset($seller_level[$level_id])){ echo "checked"; } ?> >
-        <span> <?= $level_title; ?> </span>
+        <span> <?= htmlspecialchars($level_title); ?> </span>
         </label>
       </li>
       <?php }} ?>
@@ -104,18 +106,19 @@
   <div class="card-body">
     <ul class="nav flex-column">
       <?php
-        $get_proposals = $db->query("select DISTINCT language_id from proposals where not language_id='0' and proposal_tags LIKE '%$tag%' AND proposal_status='active'");
+        $get_proposals = $db->query("select DISTINCT language_id from proposals where not language_id='0' and proposal_tags LIKE :tag AND proposal_status='active'", array(":tag" => '%'.$tag.'%'));
         while($row_proposals = $get_proposals->fetch()){
         $language_id = $row_proposals->language_id;
         $select_seller_languges = $db->select("seller_languages",array('language_id' => $language_id));
-        $language_title = @$select_seller_languges->fetch()->language_title;
+        $row_lang = $select_seller_languges->fetch();
+        $language_title = $row_lang ? $row_lang->language_title : '';
         if(!empty($language_title)){
       ?>
       <li class="nav-item checkbox checkbox-primary">
         <label>
         <input type="checkbox" value="<?= $language_id; ?>" class="get_seller_language"
           <?php if(isset($seller_language[$language_id])){ echo "checked"; } ?> >
-        <span> <?= $language_title; ?> </span>
+        <span> <?= htmlspecialchars($language_title); ?> </span>
         </label>
       </li>
       <?php }} ?>

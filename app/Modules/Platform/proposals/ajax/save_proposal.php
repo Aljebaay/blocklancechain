@@ -59,7 +59,7 @@ if(isset($_POST["proposal_id"])){
 		$proposal_title = $input->post('proposal_title');
 		$sanitize_url = proposalUrl($proposal_title);
 
-		$select_proposal = $db->query("select * from proposals where proposal_seller_id='$login_seller_id' AND proposal_url='$sanitize_url' AND NOT proposal_id='$proposal_id'");
+		$select_proposal = $db->query("select * from proposals where proposal_seller_id=:seller_id AND proposal_url=:url AND NOT proposal_id=:pid", array(":seller_id" => $login_seller_id, ":url" => $sanitize_url, ":pid" => $proposal_id));
 		$count_proposal = $select_proposal->rowCount();
 
 		if($count_proposal ==  1){

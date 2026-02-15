@@ -24,23 +24,21 @@
     </div>
     <div class="col-md-9 <?=($lang_dir == "right" ? 'order-1 order-sm-2':'')?>">
       <div id="demo3" class="carousel slide">
+        <?php
+          // Optimized: fetch slides once instead of querying twice
+          $get_slides_all = $db->query("select * from slider where language_id=:lang_id", array(":lang_id" => $siteLanguage));
+          $slides_data = [];
+          while($s = $get_slides_all->fetch()){ $slides_data[] = $s; }
+        ?>
         <ul class="carousel-indicators">
-          <li data-target="#demo3" data-slide-to="0" class="active"></li>
-          <?php
-            $count_slides = $db->count("slider",array("language_id" => $siteLanguage));
-            $i = 0;
-            $get_slides = $db->query("select * from slider where language_id='$siteLanguage' LIMIT 1,$count_slides");
-            while($row_slides = $get_slides->fetch()){
-            $i++;
-            ?>
-          <li data-target="#demo3" data-slide-to="<?= $i; ?>"></li>
+          <?php for($si = 0; $si < count($slides_data); $si++){ ?>
+          <li data-target="#demo3" data-slide-to="<?= $si; ?>" <?= ($si == 0 ? 'class="active"' : '') ?>></li>
           <?php } ?>
         </ul>
         <div class="carousel-inner">
           <?php
             $i = 0;
-            $get_slides = $db->query("select * from slider where language_id='$siteLanguage'");
-            while($row_slides = $get_slides->fetch()){
+            foreach($slides_data as $row_slides){
               $slide_image = getImageUrl("slider",$row_slides->slide_image); 
               $slide_name = $row_slides->slide_name;
               $slide_desc = $row_slides->slide_desc;
@@ -86,7 +84,8 @@
           $proposal_price = $row_proposals->proposal_price;
           if($proposal_price == 0){
           $get_p_1 = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-          $proposal_price = $get_p_1->fetch()->price;
+          $row_p_1 = $get_p_1->fetch();
+          $proposal_price = $row_p_1 ? $row_p_1->price : 0;
           }
           $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
           $proposal_video = $row_proposals->proposal_video;
@@ -111,7 +110,8 @@
           $seller_image = "empty-image.png";
           }
           // Select Proposal Seller Level
-          @$seller_level = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch()->title;
+          $row_sl = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch();
+          $seller_level = $row_sl ? $row_sl->title : '';
           $proposal_reviews = array();
           $select_buyer_reviews = $db->select("buyer_reviews",array("proposal_id" => $proposal_id));
           $count_reviews = $select_buyer_reviews->rowCount();
@@ -120,7 +120,7 @@
             array_push($proposal_reviews,$proposal_buyer_rating);
           }
           $total = array_sum($proposal_reviews);
-          @$average_rating = $total/count($proposal_reviews);
+          $average_rating = count($proposal_reviews) > 0 ? $total/count($proposal_reviews) : 0;
           $count_favorites = $db->count("favorites",array("proposal_id" => $proposal_id,"seller_id" => $login_seller_id));
           if($count_favorites == 0){
           $show_favorite_class = "proposal-favorite";
@@ -149,12 +149,20 @@
           }
           if(empty($topProposals)){
           $query_where2 = "where level_id='4' and proposal_status='active' ";
+          $top_params = array();
           }else{
-          $topProposals = implode(",", $topProposals);
-          $topRatedWhere = "level_id='4' and proposal_status='active'";
-          $query_where2 = "where proposal_id in ($topProposals) or ($topRatedWhere) ";
+          $top_placeholders = array();
+          $top_params = array();
+          foreach($topProposals as $tp_idx => $tp_id){
+            $ph = ":tp_" . $tp_idx;
+            $top_placeholders[] = $ph;
+            $top_params[$ph] = $tp_id;
           }
-          $get_proposals = $db->query("select * from proposals $query_where2 LIMIT 0,8");
+          $top_in = implode(",", $top_placeholders);
+          $topRatedWhere = "level_id='4' and proposal_status='active'";
+          $query_where2 = "where proposal_id in ($top_in) or ($topRatedWhere) ";
+          }
+          $get_proposals = $db->query("select * from proposals $query_where2 LIMIT 0,8", $top_params);
           $count_proposals = $get_proposals->rowCount();
           if($count_proposals == 0){
             echo "
@@ -168,7 +176,8 @@
           $proposal_price = $row_proposals->proposal_price;
           if($proposal_price == 0){
           $get_p_1 = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-          $proposal_price = $get_p_1->fetch()->price;
+          $row_p_1 = $get_p_1->fetch();
+          $proposal_price = $row_p_1 ? $row_p_1->price : 0;
           }
           $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
           $proposal_video = $row_proposals->proposal_video;
@@ -193,7 +202,8 @@
           $seller_image = "empty-image.png";
           }
           // Select Proposal Seller Level
-          @$seller_level = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch()->title;
+          $row_sl = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch();
+          $seller_level = $row_sl ? $row_sl->title : '';
           $proposal_reviews = array();
           $select_buyer_reviews = $db->select("buyer_reviews",array("proposal_id" => $proposal_id));
           $count_reviews = $select_buyer_reviews->rowCount();
@@ -202,7 +212,7 @@
               array_push($proposal_reviews,$proposal_buyer_rating);
           }
           $total = array_sum($proposal_reviews);
-          @$average_rating = $total/count($proposal_reviews);
+          $average_rating = count($proposal_reviews) > 0 ? $total/count($proposal_reviews) : 0;
           $count_favorites = $db->count("favorites",array("proposal_id" => $proposal_id,"seller_id" => $login_seller_id));
           if($count_favorites == 0){
           $show_favorite_class = "proposal-favorite";
@@ -224,21 +234,29 @@
       </div>
       <div class="row">
         <?php
-          $get_proposals = $db->query("select * from proposals where proposal_status='active' order by rand() LIMIT 0,8");
-          $count_proposals = $get_proposals->rowCount();
-          if($count_proposals == 0){
+          // Optimized: replaced ORDER BY RAND() with efficient random selection
+          // First get the count, then pick random offset-based rows
+          $count_active = $db->query("SELECT COUNT(*) as cnt FROM proposals WHERE proposal_status='active'")->fetch();
+          $total_active = $count_active ? (int)$count_active->cnt : 0;
+          if($total_active == 0){
               echo "
               <div class='col-md-12 text-center'>
               <p class='text-muted'><i class='fa fa-frown-o'></i> {$lang['user_home']['no_random_proposals']} </p>
               </div>";
-          }
+          } else {
+          // Pick 8 random offsets and fetch proposals using ORDER BY proposal_id with random offset
+          $limit = min(8, $total_active);
+          $random_offset = ($total_active > $limit) ? mt_rand(0, $total_active - $limit) : 0;
+          $get_proposals = $db->query("SELECT * FROM proposals WHERE proposal_status='active' ORDER BY proposal_id DESC LIMIT :offset, :limit", array(), array(":offset" => $random_offset, ":limit" => $limit));
+          $count_proposals = $get_proposals->rowCount();
           while($row_proposals = $get_proposals->fetch()){
           $proposal_id = $row_proposals->proposal_id;
           $proposal_title = $row_proposals->proposal_title;
           $proposal_price = $row_proposals->proposal_price;
           if($proposal_price == 0){
           $get_p_1 = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-          $proposal_price = $get_p_1->fetch()->price;
+          $row_p_1 = $get_p_1->fetch();
+          $proposal_price = $row_p_1 ? $row_p_1->price : 0;
           }
           $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
           $proposal_video = $row_proposals->proposal_video;
@@ -263,7 +281,8 @@
           $seller_image = "empty-image.png";
           }
           // Select Proposal Seller Level
-          @$seller_level = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch()->title;
+          $row_sl = $db->select("seller_levels_meta",array("level_id"=>$seller_level,"language_id"=>$siteLanguage))->fetch();
+          $seller_level = $row_sl ? $row_sl->title : '';
           $proposal_reviews = array();
           $select_buyer_reviews = $db->select("buyer_reviews",array("proposal_id" => $proposal_id));
           $count_reviews = $select_buyer_reviews->rowCount();
@@ -272,7 +291,7 @@
               array_push($proposal_reviews,$proposal_buyer_rating);
           }
           $total = array_sum($proposal_reviews);
-          @$average_rating = $total/count($proposal_reviews);
+          $average_rating = count($proposal_reviews) > 0 ? $total/count($proposal_reviews) : 0;
           $count_favorites = $db->count("favorites",array("proposal_id" => $proposal_id,"seller_id" => $login_seller_id));
           if($count_favorites == 0){
             $show_favorite_class = "proposal-favorite";
@@ -283,30 +302,36 @@
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3 pr-lg-1">
           <?php require("includes/proposals.php"); ?>
         </div>
-        <?php } ?>
+        <?php } } ?>
       </div>
       <br>
       <!-- If You have no gigs, show random gigs on homepage Ends -->
       <?php
         $request_child_ids = array();
-        $select_proposals = $db->query("select DISTINCT proposal_child_id from proposals where proposal_seller_id='$login_seller_id' and proposal_status='active'");
+        $select_proposals = $db->query("select DISTINCT proposal_child_id from proposals where proposal_seller_id=:seller_id and proposal_status='active'", array(":seller_id" => $login_seller_id));
         while($row_proposals = $select_proposals->fetch()){
         $proposal_child_id = $row_proposals->proposal_child_id;
         array_push($request_child_ids, $proposal_child_id);
         }
         $where_child_id = array();
+        $where_child_params = array();
+        $ch_idx = 0;
         foreach($request_child_ids as $child_id){
-            $where_child_id[] = "child_id=" . $child_id;
+            $ph = ":ch_id_" . $ch_idx;
+            $where_child_id[] = "child_id=" . $ph;
+            $where_child_params[$ph] = $child_id;
+            $ch_idx++;
         }
         if(count($where_child_id) > 0){
             $query_where = " and (" . implode(" or ", $where_child_id) . ")";
         }
         
-        if($relevant_requests == "no"){ $query_where = ""; }
+        if($relevant_requests == "no"){ $query_where = ""; $where_child_params = array(); }
 
         if(!empty($query_where) or $relevant_requests == "no"){
         
-        $select_requests =  $db->query("select * from buyer_requests where request_status='active'". $query_where ." AND NOT seller_id='$login_seller_id' order by request_id DESC LIMIT 0,5");
+        $req_params = array_merge($where_child_params, array(":seller_id_ex" => $login_seller_id));
+        $select_requests =  $db->query("select * from buyer_requests where request_status='active'". $query_where ." AND NOT seller_id=:seller_id_ex order by request_id DESC LIMIT 0,5", $req_params);
         $requests_count = 0;
         while($row_requests = $select_requests->fetch()){
             $request_id = $row_requests->request_id;
@@ -341,7 +366,8 @@
               </thead>
               <tbody>
                 <?php
-                  $select_requests =  $db->query("select * from buyer_requests where request_status='active'". $query_where ." AND NOT seller_id='$login_seller_id' order by request_id DESC LIMIT 0,5");
+                  $req_params2 = array_merge($where_child_params, array(":seller_id_ex" => $login_seller_id));
+                  $select_requests =  $db->query("select * from buyer_requests where request_status='active'". $query_where ." AND NOT seller_id=:seller_id_ex order by request_id DESC LIMIT 0,5", $req_params2);
                   while($row_requests = $select_requests->fetch()){
                   $request_id = $row_requests->request_id;
                   $seller_id = $row_requests->seller_id;

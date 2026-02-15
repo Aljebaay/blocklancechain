@@ -37,18 +37,19 @@ $proposal_seller_id = $row_proposal_seller->seller_id;
 $proposal_url = urlencode($input->get('proposal_url'));
 
 if(isset($_SESSION['admin_email'])){
-	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id='$proposal_seller_id' AND NOT proposal_status='deleted'",array("url"=>$proposal_url));
+	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id=:seller_id AND NOT proposal_status='deleted'",array("url"=>$proposal_url,"seller_id"=>$proposal_seller_id));
 }elseif(isset($_SESSION['seller_user_name']) AND $_SESSION['seller_user_name'] == $username){
-	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id='$proposal_seller_id' and not proposal_status in ('trash','deleted')",array("url"=>$proposal_url));
+	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id=:seller_id and not proposal_status in ('trash','deleted')",array("url"=>$proposal_url,"seller_id"=>$proposal_seller_id));
 }else{
-	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id='$proposal_seller_id' and not proposal_status in ('draft','admin_pause','pause','pending','trash','declined','modification','trash','deleted')",array("url"=>$proposal_url));
+	$get_proposal = $db->query("select * from proposals where proposal_url=:url and proposal_seller_id=:seller_id and not proposal_status in ('draft','admin_pause','pause','pending','trash','declined','modification','trash','deleted')",array("url"=>$proposal_url,"seller_id"=>$proposal_seller_id));
 }
 $count_proposal = $get_proposal->rowCount();
 if($count_proposal == 0){
 	echo "<script> window.open('../../index.php?not_available','_self') </script>";
 }
 
-$proposal_id = $get_proposal->fetch()->proposal_id;
+$row_fetched_proposal = $get_proposal->fetch();
+$proposal_id = $row_fetched_proposal ? $row_fetched_proposal->proposal_id : 0;
 
 // Select proposal Details From Proposal Id
 $select_proposal = $db->select("proposals",array("proposal_id" => $proposal_id));
@@ -85,19 +86,21 @@ $proposal_referral_code = $row_proposal->proposal_referral_code;
 
 // Select Proposal Category
 $get_cat = $db->select("categories",array('cat_id'=>$proposal_cat_id));
-$proposal_cat_url = $get_cat->fetch()->cat_url;
+$row_cat = $get_cat->fetch();
+$proposal_cat_url = $row_cat ? $row_cat->cat_url : '';
 
 $get_meta = $db->select("cats_meta",array("cat_id"=>$proposal_cat_id,"language_id"=>$siteLanguage));
 $row_meta = $get_meta->fetch();
-@$proposal_cat_title = $row_meta->cat_title;
+$proposal_cat_title = $row_meta ? $row_meta->cat_title : '';
 
 // Select Proposal Child Category
 $get_child = $db->select("categories_children",array('child_id'=>$proposal_child_id));
-$proposal_child_url = $get_child->fetch()->child_url;
+$row_child = $get_child->fetch();
+$proposal_child_url = $row_child ? $row_child->child_url : '';
 
 $get_meta = $db->select("child_cats_meta",array("child_id"=>$proposal_child_id,"language_id"=>$siteLanguage));
 $row_meta = $get_meta->fetch();
-@$proposal_child_title = $row_meta->child_title;
+$proposal_child_title = $row_meta ? $row_meta->child_title : '';
 
 // Select Proposal Delivery Time
 $get_delivery_time = $db->select("delivery_times",array('delivery_id' => $delivery_id));
@@ -117,7 +120,7 @@ while($row_buyer_reviews = $select_buyer_reviews->fetch()){
 	array_push($proposal_reviews,$proposal_buyer_rating);
 }
 $total = array_sum($proposal_reviews);
-@$average_rating = $total/count($proposal_reviews);
+$average_rating = count($proposal_reviews) > 0 ? $total/count($proposal_reviews) : 0;
 
 // Select Proposal Seller Details
 $select_proposal_seller = $db->select("sellers",array("seller_id"=>$proposal_seller_id));
@@ -134,11 +137,12 @@ $proposal_seller_activity = $row_proposal_seller->seller_activity;
 $proposal_seller_status = $row_proposal_seller->seller_status;
 
 // Select Proposal Seller Level
-@$level_title = $db->select("seller_levels_meta",array("level_id"=>$proposal_seller_level,"language_id"=>$siteLanguage))->fetch()->title;
+$row_level = $db->select("seller_levels_meta",array("level_id"=>$proposal_seller_level,"language_id"=>$siteLanguage))->fetch();
+$level_title = $row_level ? $row_level->title : '';
 
 // Update Proposal Views
 if(!isset($_SESSION['seller_user_name'])){
-	$update_proposal_views = $db->query("update proposals set proposal_views=proposal_views+1 where proposal_id='$proposal_id'");
+	$update_proposal_views = $db->query("update proposals set proposal_views=proposal_views+1 where proposal_id=:pid", array(":pid" => $proposal_id));
 }
 
 if(isset($_SESSION['seller_user_name'])){
@@ -147,7 +151,7 @@ if(isset($_SESSION['seller_user_name'])){
 	$row_login_seller = $select_login_seller->fetch();
 	$login_seller_id = $row_login_seller->seller_id;
 	if($proposal_seller_id != $login_seller_id ){
-		$update_proposal_views = $db->query("update proposals set proposal_views=proposal_views+1 where proposal_id='$proposal_id'");
+		$update_proposal_views = $db->query("update proposals set proposal_views=proposal_views+1 where proposal_id=:pid", array(":pid" => $proposal_id));
 	}
 	$select_recent_proposal = $db->select("recent_proposals",array("seller_id"=>$login_seller_id,"proposal_id"=>$proposal_id));
 	$count_recent_proposal = $select_recent_proposal->rowCount();
@@ -211,7 +215,7 @@ if($videoPlugin == 1){
 
 	$get_schedule = $db->select("video_schedules",array("id"=>$days_within_scheduled));
 	$schedule = $get_schedule->fetch();
-	$schedule_title = @$schedule->title;
+	$schedule_title = $schedule ? $schedule->title : '';
 
 }else{
 	$enableVideo = 0;
