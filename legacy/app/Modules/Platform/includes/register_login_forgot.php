@@ -106,6 +106,7 @@ if(isset($_POST['register'])){
 			// This is just an example. In application this will come from Javascript (via an AJAX or something)
 			$timezone_offset_minutes = $input->post('timezone');  // $_GET['timezone_offset_minutes']
 			// Convert minutes to seconds and get timezone
+			$timezone_offset_minutes = is_numeric($timezone_offset_minutes) ? (int) $timezone_offset_minutes : 0;
 			$timezone = timezone_name_from_abbr("", $timezone_offset_minutes*60, false);
 			
 			$insert_seller = $db->insert("sellers",array("seller_name" => $name,"seller_user_name" => $u_name,"seller_email" => $email,"seller_phone" => $phone,"seller_pass" => $encrypted_password,"seller_country"=>$country,"seller_level" => 1,"seller_recent_delivery" => 'none',"seller_rating" => 0,"seller_offers" => 10,"seller_referral" => $referral_code,"seller_ip" => $ip,"seller_verification" => $verification_code,"seller_vacation" => 'off',"seller_register_date" => $regsiter_date,"seller_activity"=>$seller_activity,"seller_timezone"=>$timezone,"seller_status" => 'online'));
