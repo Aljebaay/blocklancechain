@@ -177,7 +177,8 @@ $_SESSION['adminLanguage'] = 1;
 if(isset($_POST['admin_login'])){
 	
   $admin_email = $input->post('admin_email');
-  $admin_pass = $input->post('admin_pass');
+  // Use raw $_POST for password so htmlspecialchars does not corrupt verification
+  $admin_pass = isset($_POST['admin_pass']) && is_string($_POST['admin_pass']) ? $_POST['admin_pass'] : '';
   	
   $select_admins = $db->query("select * from admins where admin_email=:a_email OR admin_user_name=:a_user_name",array("a_email"=>$admin_email,"a_user_name"=>$admin_email));
   $count_admins = $select_admins->rowCount();
@@ -186,6 +187,10 @@ if(isset($_POST['admin_login'])){
     $row_admins = $select_admins->fetch();
     $hash_password = $row_admins->admin_pass;
     $decrypt_password = password_verify($admin_pass, $hash_password);
+    // Backward compatibility: hashes created when Input::post() applied htmlspecialchars to password
+    if (!$decrypt_password && $admin_pass !== '') {
+      $decrypt_password = password_verify(htmlspecialchars($admin_pass, ENT_COMPAT, 'UTF-8'), $hash_password);
+    }
   }else{
     $decrypt_password = 0;
   }

@@ -45,8 +45,15 @@ class Input{
 			$array = filter_var_array($array, FILTER_SANITIZE_STRING); 
 			return $array;
 		}else{
-			$val = htmlspecialchars(filter_input(INPUT_POST,$data), ENT_COMPAT, 'UTF-8'); 
-			return $val;
+			// When running under LegacyScriptRunner (CLI subprocess), filter_input(INPUT_POST, ...) is
+			// always null because there is no real HTTP request. Use $_POST which is populated from env.
+			$val = filter_input(INPUT_POST, $data);
+			if ($val === null && isset($_POST[$data])) {
+				$val = $_POST[$data];
+			}
+			return $val !== null && $val !== false
+				? htmlspecialchars((string) $val, ENT_COMPAT, 'UTF-8')
+				: '';
 		}
 	}
 

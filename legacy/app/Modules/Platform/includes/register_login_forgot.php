@@ -53,8 +53,9 @@ if(isset($_POST['register'])){
 
 		$phone = $country_code." ".$phone;
 
-		$pass = strip_tags($input->post('pass'));
-		$con_pass = strip_tags($input->post('con_pass'));
+		// Use raw $_POST for passwords: Input::post() applies htmlspecialchars which would corrupt the value for hashing/verification
+		$pass = isset($_POST['pass']) && is_string($_POST['pass']) ? $_POST['pass'] : '';
+		$con_pass = isset($_POST['con_pass']) && is_string($_POST['con_pass']) ? $_POST['con_pass'] : '';
 		$referral = strip_tags($input->post('referral'));
 		$country = "";
 		$geoContext = stream_context_create(array(
@@ -194,7 +195,8 @@ if(isset($_POST['login'])){
 	}else{
 
 		$seller_user_name = $input->post('seller_user_name');
-		$seller_pass = $input->post('seller_pass');
+		// Use raw $_POST for password so htmlspecialchars does not corrupt verification
+		$seller_pass = isset($_POST['seller_pass']) && is_string($_POST['seller_pass']) ? $_POST['seller_pass'] : '';
 
 		// $select_seller = $db->query("select * from sellers where seller_user_name=:u_name",array(":u_name"=>$seller_user_name));
 		// $select_seller = $db->query("select * from sellers where seller_user_name=:u_name OR seller_email=:u_email",array(":u_name"=>$seller_user_name,":u_email"=>$seller_user_name));
@@ -204,7 +206,14 @@ if(isset($_POST['login'])){
 		@$hashed_password = $row_seller->seller_pass;
 		@$seller_user_name = $row_seller->seller_user_name;
 		@$seller_status = $row_seller->seller_status;
-		$decrypt_password = password_verify($seller_pass,$hashed_password);
+		$decrypt_password = false;
+		if (is_string($hashed_password) && $hashed_password !== '') {
+			$decrypt_password = password_verify($seller_pass, $hashed_password);
+			// Backward compatibility: hashes created when Input::post() applied htmlspecialchars to password
+			if (!$decrypt_password && $seller_pass !== '') {
+				$decrypt_password = password_verify(htmlspecialchars($seller_pass, ENT_COMPAT, 'UTF-8'), $hashed_password);
+			}
+		}
 		
 		if($decrypt_password == 0){
 		
