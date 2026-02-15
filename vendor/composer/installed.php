@@ -3,7 +3,7 @@
         'name' => 'gig-zone/app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'df1f88b394b7a8b1aea1c1c732646f984f6bca34',
+        'reference' => '4c0f2f527be5096da5c7322298f6d6f4e18c612f',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -121,7 +121,7 @@
         'gig-zone/app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'df1f88b394b7a8b1aea1c1c732646f984f6bca34',
+            'reference' => '4c0f2f527be5096da5c7322298f6d6f4e18c612f',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
