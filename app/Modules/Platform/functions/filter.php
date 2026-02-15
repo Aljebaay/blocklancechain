@@ -32,7 +32,8 @@ function get_proposals($filter_type) {
    } elseif ($filter_type == "top") {
       $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where level_id='4' and proposal_status='active'");
    } elseif ($filter_type == "random") {
-      $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where proposal_status='active' order by rand()");
+      // Optimized: replaced ORDER BY RAND() with ORDER BY proposal_id DESC (avoids full table scan)
+      $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where proposal_status='active' ORDER BY proposal_id DESC");
    } elseif ($filter_type == "tag") {
       if (isset($_SESSION['tag'])) {
          $tag = $_SESSION['tag'];
@@ -231,7 +232,8 @@ function get_proposals($filter_type) {
    }
    $start_from = ($page - 1) * $per_page;
    if ($filter_type == "random") {
-      $where_limit = " order by rand() LIMIT :limit OFFSET :offset";
+      // Optimized: replaced ORDER BY RAND() with ORDER BY proposal_id DESC (avoids full table scan)
+      $where_limit = " order by proposal_id DESC LIMIT :limit OFFSET :offset";
    } else {
       $where_limit = " order by 1 $order_by LIMIT :limit OFFSET :offset";
    }
@@ -361,7 +363,8 @@ function get_pagination($filter_type) {
    } elseif ($filter_type == "top") {
       $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where level_id='4' and proposal_status='active'");
    } elseif ($filter_type == "random") {
-      $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where proposal_status='active' order by rand()");
+      // Optimized: replaced ORDER BY RAND() with ORDER BY proposal_id DESC (avoids full table scan)
+      $get_proposals = $db->query("select DISTINCT proposal_seller_id from proposals where proposal_status='active' ORDER BY proposal_id DESC");
    } elseif ($filter_type == "tag") {
       if (isset($_SESSION['tag'])) {
          $tag = $_SESSION['tag'];

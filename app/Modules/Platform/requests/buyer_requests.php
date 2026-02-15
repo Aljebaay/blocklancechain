@@ -15,15 +15,20 @@ $login_seller_id = $row_login_seller->seller_id;
 $login_seller_offers = $row_login_seller->seller_offers;
 
 $request_child_ids = array();
-$select_proposals = $db->query("select DISTINCT proposal_child_id from proposals where proposal_seller_id='$login_seller_id' and proposal_status='active'");
+$select_proposals = $db->query("select DISTINCT proposal_child_id from proposals where proposal_seller_id=:seller_id and proposal_status='active'", array(":seller_id" => $login_seller_id));
 while ($row_proposals = $select_proposals->fetch()) {
   $proposal_child_id = $row_proposals->proposal_child_id;
   array_push($request_child_ids, $proposal_child_id);
 }
 
 $where_child_id = array();
+$where_child_id_params = array();
+$child_idx = 0;
 foreach ($request_child_ids as $child_id) {
-  $where_child_id[] = "child_id=" . $child_id;
+  $param_name = ":child_id_" . $child_idx;
+  $where_child_id[] = "child_id=" . $param_name;
+  $where_child_id_params[$param_name] = $child_id;
+  $child_idx++;
 }
 
 if (count($where_child_id) > 0) {
@@ -92,7 +97,8 @@ $relevant_requests = $row_general_settings->relevant_requests;
                   $requests_query = "";
                 }
                 if (!empty($requests_query) or $relevant_requests == "no") {
-                  $get_requests = $db->query("select * from buyer_requests where request_status='active'" . $requests_query . " AND NOT seller_id='$login_seller_id' order by request_id DESC");
+                  $req_params = array_merge($where_child_id_params, array(":seller_id_ex" => $login_seller_id));
+                  $get_requests = $db->query("select * from buyer_requests where request_status='active'" . $requests_query . " AND NOT seller_id=:seller_id_ex order by request_id DESC", $req_params);
                   while ($row_requets = $get_requests->fetch()) {
                     $request_id = $row_requets->request_id;
                     $count_offers = $db->count("send_offers", array("request_id" => $request_id, "sender_id" => $login_seller_id));
@@ -122,7 +128,7 @@ $relevant_requests = $row_general_settings->relevant_requests;
                 <option value="all"> All Subcategories </option>
                 <?php
                 if (count($where_child_id) > 0) {
-                  $get_c_cats = $db->query("select * from categories_children where " . $child_cats_query);
+                  $get_c_cats = $db->query("select * from categories_children where " . $child_cats_query, $where_child_id_params);
                   while ($row_c_cats = @$get_c_cats->fetch()) {
                     $child_id = $row_c_cats->child_id;
                     $get_meta = $db->select("child_cats_meta", array("child_id" => $child_id, "language_id" => $siteLanguage));
@@ -147,7 +153,8 @@ $relevant_requests = $row_general_settings->relevant_requests;
                   <?php
 
                   if (!empty($requests_query) or $relevant_requests == "no") {
-                    $select_requests = $db->query("select * from buyer_requests where request_status='active'" . $requests_query . " AND NOT seller_id='$login_seller_id' order by 1 DESC");
+                    $req_params2 = array_merge($where_child_id_params, array(":seller_id_ex" => $login_seller_id));
+                    $select_requests = $db->query("select * from buyer_requests where request_status='active'" . $requests_query . " AND NOT seller_id=:seller_id_ex order by 1 DESC", $req_params2);
                     $count_requests = $select_requests->rowCount();
                     while ($row_requests = $select_requests->fetch()) {
                       $request_id = $row_requests->request_id;

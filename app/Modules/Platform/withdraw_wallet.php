@@ -100,11 +100,12 @@ if (isset($_POST['withdraw'])) {
 
       if ($withdraw['error'] == "ok") {
 
-        $update_seller_account = $db->query("update seller_accounts set current_balance=current_balance-:minus,withdrawn=withdrawn+:plus where seller_id='$login_seller_id'", array("minus" => $amount, "plus" => $amount));
+        try {
+          $db->con->beginTransaction();
 
-        if ($update_seller_account) {
+          $update_seller_account = $db->query("update seller_accounts set current_balance=current_balance-:minus,withdrawn=withdrawn+:plus where seller_id=:seller_id", array("minus" => $amount, "plus" => $amount, "seller_id" => $login_seller_id));
 
-          $update_seller = $db->query("update sellers set seller_payouts=seller_payouts+1 where seller_id='$login_seller_id'");
+          $update_seller = $db->query("update sellers set seller_payouts=seller_payouts+1 where seller_id=:seller_id", array("seller_id" => $login_seller_id));
 
           $date_time = date("M d, Y H:i:s");
           $range = range('A', 'Z');
@@ -114,8 +115,16 @@ if (isset($_POST['withdraw'])) {
 
           $insert_withdrawal = $db->insert("payouts", array("seller_id" => $login_seller_id, "ref" => $ref, "method" => "bitcoin wallet", "amount" => $amount, "date" => $date_time, "status" => 'completed'));
 
+          $db->con->commit();
+
           echo "<script>alert('Your ($$amount) in bitcoin has been transferred to your bitcoin Wallet successfully.');</script>";
 
+          echo "<script>window.open('$site_url/revenue','_self')</script>";
+
+        } catch (Exception $e) {
+          $db->con->rollBack();
+          error_log("Withdrawal failed for seller $login_seller_id: " . $e->getMessage());
+          echo "<script>alert('Sorry, an error occurred during the withdrawal process.');</script>";
           echo "<script>window.open('$site_url/revenue','_self')</script>";
         }
       } else {

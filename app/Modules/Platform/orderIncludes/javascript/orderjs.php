@@ -16,7 +16,7 @@ function matchWords(input){
 }
 
 $(document).ready(function(){
-var ORDER_CHAT_REFRESH_INTERVAL = 8000;
+var ORDER_CHAT_REFRESH_INTERVAL = 20000; // 20 sec (was 8 sec) - reduced to lower server load
 
 // Sticky Code start //
 $("#order-status-bar").sticky({ topSpacing:0,zIndex:500});

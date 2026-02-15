@@ -21,13 +21,14 @@ if(isset($_SESSION['seller_user_name'])){
     gtag('config', '<?= $google_analytics; ?>');
   </script>
 <?php } ?>
-<script src="<?= $site_url; ?>/js/msdropdown.js"></script>
-<script type="text/javascript" src="<?= $site_url; ?>/js/jquery.sticky.js"></script>
+<script src="<?= $site_url; ?>/js/msdropdown.js" defer></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/jquery.sticky.js" defer></script>
 
 <script 
 type="text/javascript" 
 id="custom-js" 
 src="<?= $site_url; ?>/js/customjs.js" 
+defer
 data-logged-id="<?= (isset($_SESSION['seller_user_name']))?$login_seller_id:''; ?>" 
 data-base-url="<?= $site_url; ?>" 
 data-enable-sound="<?= (isset($_SESSION['seller_user_name']))?$login_seller_enable_sound:''; ?>"
@@ -51,8 +52,8 @@ data-disable-messages="<?= (isset($disable_messages))?$disable_messages:'0'; ?>"
   
 <?php } ?>
 
-<script type="text/javascript" src="<?= $site_url; ?>/js/categoriesProposal.js"></script>
-<script type="text/javascript" src="<?= $site_url; ?>/js/popper.min.js"></script>
-<script type="text/javascript" src="<?= $site_url; ?>/js/owl.carousel.min.js"></script>
-<script type="text/javascript" src="<?= $site_url; ?>/js/bootstrap.js"></script>
-<script type="text/javascript" src="<?= $site_url; ?>/js/summernote.js"></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/categoriesProposal.js" defer></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/popper.min.js" defer></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/owl.carousel.min.js" defer></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/bootstrap.js" defer></script>
+<script type="text/javascript" src="<?= $site_url; ?>/js/summernote.js" defer></script>

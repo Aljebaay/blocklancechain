@@ -9,6 +9,17 @@ class Database{
   $this->connect();
   }
 
+  /**
+   * Validate table name to prevent SQL injection via table names.
+   * Only allows alphanumeric characters and underscores.
+   */
+  private function validateTableName($table){
+    if(!preg_match('/^[a-zA-Z0-9_]+$/', $table)){
+      throw new \InvalidArgumentException("Invalid table name: " . htmlspecialchars($table));
+    }
+    return $table;
+  }
+
   private function connect(){
     if(!isset($_SESSION["db_host"]) & !isset($_SESSION["db_username"]) & !isset($_SESSION["db_pass"]) & !isset($_SESSION["db_name"])){
       $host = DB_HOST;
@@ -56,11 +67,12 @@ class Database{
         return false;
       }
     }catch(PDOException $ex){
-      echo "There Is Error In : ".$ex->getMessage();
+      error_log("Database query error: ".$ex->getMessage());
     }
   }
 
   public function count($table,$parameters = ""){
+    $this->validateTableName($table);
     $where = "";
     if(!empty($parameters)){
       $i = 1;
@@ -74,18 +86,19 @@ class Database{
       }
     }
     try{
-      $run_query = $this->con->prepare("select * from $table $where");
-      $run_query->setFetchMode(PDO:: FETCH_OBJ);
+      $run_query = $this->con->prepare("SELECT COUNT(*) as cnt FROM $table $where");
       if(!empty($parameters)){
-      $run_query->execute($values);
+        $run_query->execute($values);
       }else{ $run_query->execute(); }
-      return $run_query->rowCount();
+      $row = $run_query->fetch(PDO::FETCH_OBJ);
+      return $row ? (int)$row->cnt : 0;
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database count error: " . $ex->getMessage());
     }
   }
 
   public function select($table,$parameters = "",$order = ""){
+    $this->validateTableName($table);
     $where = "";
     $order_by = "";
     if(!empty($order)){
@@ -111,11 +124,12 @@ class Database{
         if($run_query->execute()){ return $run_query; }
       }
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database select error: " . $ex->getMessage());
     }
   }
 
   public function insert($table,$parameters = ""){
+    $this->validateTableName($table);
     if(!empty($parameters)){
       $i = 1;
       $count = count($parameters);
@@ -133,11 +147,12 @@ class Database{
       $run_query->setFetchMode(PDO:: FETCH_OBJ);
       if($run_query->execute($values)){ return $run_query; }
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database insert error: " . $ex->getMessage());
     }
   }
 
   public function update($table,$parameters,$where_p = ""){
+    $this->validateTableName($table);
     $i = 1;
     $count = count($parameters);
     $fields = ""; $values = [];
@@ -163,11 +178,12 @@ class Database{
       $run_query->setFetchMode(PDO:: FETCH_OBJ);
       if($run_query->execute($values)){ return $run_query; }
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database update error: " . $ex->getMessage());
     }
   }
 
   public function delete($table,$parameters=''){
+    $this->validateTableName($table);
     $i = 1;
     $where = "";
     $values = [];
@@ -190,7 +206,7 @@ class Database{
         if($run_query->execute()){ return $run_query; }
       }
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database delete error: " . $ex->getMessage());
     }
   }
 
@@ -206,7 +222,7 @@ class Database{
       $run_query->bindParam(':status', $status);
       if($run_query->execute()){ return $run_query; }
     }catch(PDOException $ex){
-      echo "There Is Error In : " . $ex->getMessage();
+      error_log("Database insert_log error: " . $ex->getMessage());
     }
   }
 

@@ -161,7 +161,7 @@ $allowed = array('jpeg','jpg','gif','png');
             foreach($support_conversations as $conversation){ 
 
                 if(!empty($conversation->admin_id)){
-                    $admin = $db->query("select admin_image,admin_user_name from admins where admin_id = ".$conversation->admin_id)->fetch();
+                    $admin = $db->query("select admin_image,admin_user_name from admins where admin_id = :admin_id", array(":admin_id" => $conversation->admin_id))->fetch();
                     $sender_user_name = $admin->admin_user_name;
                     $sender_image = getImageUrl("admins",$admin->admin_image);
                 }else{

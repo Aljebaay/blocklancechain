@@ -43,8 +43,8 @@ class Database extends CI_Model {
 		$user_name = $this->input->post('user_name');
 		$password = $this->input->post('password');
 		$row_seller = $this->db->get_where("sellers", array("seller_user_name" => $user_name))->row();
-		@$hashed_password = $row_seller->seller_pass;
-		@$seller_status = $row_seller->seller_status;
+		$hashed_password = $row_seller ? $row_seller->seller_pass : '';
+		$seller_status = $row_seller ? $row_seller->seller_status : '';
 		$decrypt_password = password_verify($password, $hashed_password);
 
 		if ($decrypt_password == 0) {
@@ -262,6 +262,7 @@ EOT;
 				$mail->send();
 				echo "An email has been sent to your email address with instructions on how to change your password.";
 			} catch (Exception $e) {
+				log_message('error', 'Failed to send password reset email: ' . $e->getMessage());
 			}
 		}
 	}
@@ -447,7 +448,7 @@ EOT;
 
 
 		if ($ratings) {   //## mehdi 
-			$update_seller_rating = $this->db->query("update sellers set seller_rating=$avg where seller_id='$seller_id'");
+			$update_seller_rating = $this->db->query("update sellers set seller_rating=? where seller_id=?", array($avg, $seller_id));
 		}
 
 		//## mehdi خطأ في نسبة التقييمات

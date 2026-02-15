@@ -16,7 +16,7 @@ if(isset($_POST['checkout_submit_order'])){
 	$proposal_id = $_SESSION['c_proposal_id'];
 	$proposal_qty = $_SESSION['c_proposal_qty'];
 	$amount = $_SESSION["c_sub_total"];
-	$update_buyer_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id='$login_seller_id'",array("plus"=>$amount,"minus"=>$amount));
+	$update_buyer_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id=:seller_id",array("plus"=>$amount,"minus"=>$amount,"seller_id"=>$login_seller_id));
 	if($update_buyer_balance){
 		$_SESSION['checkout_seller_id'] = $login_seller_id;
 		$_SESSION['proposal_id'] = $proposal_id;
@@ -90,7 +90,7 @@ if(isset($_POST['cart_submit_order'])){
    }
 
 	$amount = $sub_total;
-	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id='$login_seller_id'",array("plus"=>$amount,"minus"=>$amount));
+	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id=:seller_id",array("plus"=>$amount,"minus"=>$amount,"seller_id"=>$login_seller_id));
 	if($update_balance){
 		$_SESSION['cart_seller_id'] = $login_seller_id;
 		$_SESSION['reference_no'] = $reference_no;
@@ -104,7 +104,7 @@ if(isset($_POST['pay_featured_proposal_listing'])){
 	$get_payment_settings = $db->select("payment_settings");
 	$row_payment_settings = $get_payment_settings->fetch();
 	$amount = $row_payment_settings->featured_fee;
-	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id='$login_seller_id'",array("plus"=>$amount,"minus"=>$amount));
+	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id=:seller_id",array("plus"=>$amount,"minus"=>$amount,"seller_id"=>$login_seller_id));
 	if($update_balance){
 		$_SESSION['proposal_id'] = $proposal_id;
 		$_SESSION['method'] = "shopping_balance";
@@ -117,7 +117,7 @@ if(isset($_POST['view_offers_submit_order'])){
 	$select_offers = $db->select("send_offers",array("offer_id"=>$offer_id));
 	$row_offers = $select_offers->fetch();
 	$amount = $row_offers->amount;
-	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id='$login_seller_id'",array("plus"=>$amount,"minus"=>$amount));
+	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id=:seller_id",array("plus"=>$amount,"minus"=>$amount,"seller_id"=>$login_seller_id));
 	if($update_balance){
 		$_SESSION['offer_id'] = $offer_id;
 		$_SESSION['offer_buyer_id'] = $login_seller_id;
@@ -131,7 +131,7 @@ if(isset($_POST['message_offer_submit_order'])){
 	$select_offers = $db->select("messages_offers",array("offer_id"=>$offer_id));
 	$row_offers = $select_offers->fetch();
 	$amount = $row_offers->amount;
-	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id='$login_seller_id'",array("plus"=>$amount,"minus"=>$amount));
+	$update_balance = $db->query("update seller_accounts set used_purchases=used_purchases+:plus,current_balance=current_balance-:minus where seller_id=:seller_id",array("plus"=>$amount,"minus"=>$amount,"seller_id"=>$login_seller_id));
 	if($update_balance){
 		$_SESSION['message_offer_id'] = $offer_id;
 		$_SESSION['message_offer_buyer_id'] = $login_seller_id;

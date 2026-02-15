@@ -11,7 +11,7 @@
 						<h3 data-toggle="collapse" data-target="#collapsecategories"><?= $lang['categories']; ?></h3>
 						<ul class="collapse show list-unstyled" id="collapsecategories">
 						<?php
-						$get_footer_links = $db->query("select * from footer_links where link_section='categories' AND language_id='$siteLanguage'");
+						$get_footer_links = $db->query("select * from footer_links where link_section='categories' AND language_id=:lang_id", array(":lang_id" => $siteLanguage));
 						while($row_footer_links = $get_footer_links->fetch()){
 						$link_id = $row_footer_links->link_id;
 						$link_title = $row_footer_links->link_title;
@@ -44,16 +44,12 @@
 						<h3 class="h3Border" data-toggle="collapse" data-target="#collapsecategories2"><?= $lang['pages']; ?></h3>
 						<ul class="collapse show list-unstyled" id="collapsecategories2">
 							<?php
-							$pages = $db->select("pages");
+							// Optimized: single JOIN query instead of N+1 queries
+							$pages = $db->query("SELECT p.id, p.url, pm.title FROM pages p LEFT JOIN pages_meta pm ON pm.page_id = p.id AND pm.language_id = :lang_id", array(":lang_id" => $siteLanguage));
 							while($rowPage = $pages->fetch()){
-							
-							$page_id = $rowPage->id;
 							$url = $rowPage->url;
-
-							$get_meta = $db->select("pages_meta",array("page_id" => $page_id,"language_id" => $siteLanguage));
-							$row_meta = $get_meta->fetch();
-							$title = $row_meta->title;
-
+							$title = $rowPage->title;
+							if(empty($title)) continue;
 							?>
 							<li class="list-unstyled-item"><a href="<?= "$site_url/pages/$url"; ?>"><?= $title; ?></a></li>
 							<?php } ?>
@@ -112,18 +108,12 @@
 								<?= "$s_currency_name ($s_currency)"; ?>
 							</option>
 							<?php
-							$get_currencies = $db->select("site_currencies");
+							// Optimized: single JOIN query instead of N+1 queries
+							$get_currencies = $db->query("SELECT sc.id, sc.currency_id, sc.position, c.name, c.symbol FROM site_currencies sc INNER JOIN currencies c ON c.id = sc.currency_id");
 							while($row = $get_currencies->fetch()){
-								
 								$id = $row->id;
-								$currency_id = $row->currency_id;
-								$position = $row->position;
-
-								$get_currency = $db->select("currencies",array("id" => $currency_id));
-								$row_currency = $get_currency->fetch();
-								$name = $row_currency->name;
-								$symbol = $row_currency->symbol;
-
+								$name = $row->name;
+								$symbol = $row->symbol;
 							?>
 							<option data-url="<?= "$site_url/change_currency?id=$id"; ?>" <?php if($id == @$_SESSION["siteCurrency"]){ echo "selected"; } ?>>
 								<?= $name; ?> (<?= $symbol ?>)
@@ -160,7 +150,7 @@
 </footer>
 <!-- end footer -->
 <section class="post_footer">
-<?= $db->select("general_settings")->fetch()->site_copyright; ?>
+<?php $row_gs = $db->select("general_settings")->fetch(); echo $row_gs ? htmlspecialchars($row_gs->site_copyright) : ''; ?>
 </section>
 
 <?php if(!isset($_COOKIE['close_cookie'])){ ?>

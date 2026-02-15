@@ -38,7 +38,7 @@ $n_date = date("F d, Y");
 $insert_notification = $db->insert("notifications",array("receiver_id"=>$seller_id,"sender_id"=>$login_seller_id,"order_id"=>$request_id,"reason"=>"offer","date"=>$n_date,"status"=>"unread"));
 
 $insert_offer = $db->insert("send_offers",array("request_id"=>$request_id,"sender_id"=>$login_seller_id,"proposal_id"=>$proposal_id,"description"=>$description,"delivery_time"=>$delivery_time,"amount"=>$amount,"status"=>'active'));
-$update_seller = $db->query("update sellers set seller_offers=seller_offers-1 where seller_id='$login_seller_id'");
+$update_seller = $db->query("update sellers set seller_offers=seller_offers-1 where seller_id=:seller_id", array(":seller_id" => $login_seller_id));
 
 $data = [];
 $data['template'] = "offer_received";

@@ -86,8 +86,8 @@ $current_version = $row_app->version;
     $zip_file_tmp = $_FILES['zip_file']['tmp_name'];
 
     $allowed = array('zip');
-    $file_extension = pathinfo($zip_file, PATHINFO_EXTENSION);
-    if(!in_array($file_extension,$allowed) & !empty($zip_file)){
+    $file_extension = strtolower(pathinfo($zip_file, PATHINFO_EXTENSION));
+    if(!is_uploaded_file($zip_file_tmp) || (!in_array($file_extension,$allowed,true) && !empty($zip_file))){
       echo "<script>
       swal({
       type: 'warning',

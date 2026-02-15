@@ -13,7 +13,7 @@ $login_seller_vacation = $row_login_seller->seller_vacation;
 
 $count_active_proposals = $db->count("proposals",array("proposal_seller_id" => $login_seller_id, "proposal_status" => 'active'));
 
-$count_pause_proposals = $db->query("select * from proposals where proposal_seller_id=$login_seller_id and (proposal_status='pause' or proposal_status='admin_pause')")->rowCount();
+$count_pause_proposals = $db->query("select * from proposals where proposal_seller_id=:seller_id and (proposal_status='pause' or proposal_status='admin_pause')", array(":seller_id" => $login_seller_id))->rowCount();
 
 $count_pending_proposals = $db->count("proposals",array("proposal_seller_id" => $login_seller_id, "proposal_status" => 'pending'));
 
@@ -183,7 +183,8 @@ if(!isset($_GET['paused']) and !isset($_GET['pending']) and !isset($_GET['modifi
                         $proposal_price = $row_proposals->proposal_price;
 						if($proposal_price == 0){
 							$get_p = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-							$proposal_price = $get_p->fetch()->price;
+							$row_p = $get_p->fetch();
+							$proposal_price = $row_p ? $row_p->price : 0;
 						}
                         $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
                         $proposal_url = $row_proposals->proposal_url;
@@ -250,7 +251,7 @@ if(!isset($_GET['paused']) and !isset($_GET['pending']) and !isset($_GET['modifi
 							</thead>
 							<tbody>
                        <?php
-                       $select_proposals = $db->query("select * from proposals where proposal_seller_id=$login_seller_id and (proposal_status='pause' or proposal_status='admin_pause')");
+                       $select_proposals = $db->query("select * from proposals where proposal_seller_id=:seller_id and (proposal_status='pause' or proposal_status='admin_pause')", array(":seller_id" => $login_seller_id));
                        $count_proposals = $select_proposals->rowCount();
                        while($row_proposals = $select_proposals->fetch()){
                        $proposal_id = $row_proposals->proposal_id;
@@ -259,7 +260,8 @@ if(!isset($_GET['paused']) and !isset($_GET['pending']) and !isset($_GET['modifi
                        $proposal_price = $row_proposals->proposal_price;
          					if($proposal_price == 0){
          					$get_p = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-         					$proposal_price = $get_p->fetch()->price;
+         					$row_p = $get_p->fetch();
+         					$proposal_price = $row_p ? $row_p->price : 0;
          					}
                        $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
                        $proposal_url = $row_proposals->proposal_url;
@@ -334,7 +336,8 @@ EOT;
                                     $proposal_price = $row_proposals->proposal_price;
 									if($proposal_price == 0){
 									$get_p = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-									$proposal_price = $get_p->fetch()->price;
+									$row_p = $get_p->fetch();
+									$proposal_price = $row_p ? $row_p->price : 0;
 									}
                                     $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
                                     $proposal_url = $row_proposals->proposal_url;
@@ -437,7 +440,8 @@ EOT;
                                     $proposal_price = $row_proposals->proposal_price;
 									if($proposal_price == 0){
 									$get_p = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-									$proposal_price = $get_p->fetch()->price;
+									$row_p = $get_p->fetch();
+									$proposal_price = $row_p ? $row_p->price : 0;
 									}
                                     $proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
                                     $proposal_url = $row_proposals->proposal_url;
@@ -492,7 +496,8 @@ EOT;
 									$proposal_price = $row_proposals->proposal_price;
 									if($proposal_price == 0){
 									$get_p = $db->select("proposal_packages",array("proposal_id" => $proposal_id,"package_name" => "Basic"));
-									$proposal_price = $get_p->fetch()->price;
+									$row_p = $get_p->fetch();
+									$proposal_price = $row_p ? $row_p->price : 0;
 									}
 									$proposal_img1 = getImageUrl2("proposals","proposal_img1",$row_proposals->proposal_img1);
 									$proposal_url = $row_proposals->proposal_url;

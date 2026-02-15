@@ -295,16 +295,29 @@ if(isset($_POST['submit'])){
 		$delivery_time = $input->post('delivery_time');
 		$request_file = $_FILES['request_file']['name'];
 		$request_file_tmp = $_FILES['request_file']['tmp_name'];
+		$request_file_size = isset($_FILES['request_file']['size']) ? (int) $_FILES['request_file']['size'] : 0;
+		$maxUploadBytes = 10 * 1024 * 1024; // 10MB
 		$request_date = date("F d, Y");
 		$allowed = array('jpeg','jpg','gif','png','tif','avi','mpeg','mpg','mov','rm','3gp','flv','mp4', 'zip','rar','mp3','wav','pdf','docx','txt');
-		$file_extension = pathinfo($request_file, PATHINFO_EXTENSION);
+		$file_extension = strtolower(pathinfo($request_file, PATHINFO_EXTENSION));
 		if(!empty($request_file)){
-			if(!in_array($file_extension,$allowed)){
+			if($file_extension === '' || !in_array($file_extension,$allowed,true)){
 				echo "<script>alert('{$lang['alert']['extension_not_supported']}')</script>";
 				echo "<script>window.open('post_request','_self')</script>";
 				exit();
 			}
+			if($request_file_size > $maxUploadBytes){
+				echo "<script>alert('File is too large. Maximum size is 10MB.')</script>";
+				echo "<script>window.open('post_request','_self')</script>";
+				exit();
+			}
+			if(!is_uploaded_file($request_file_tmp)){
+				echo "<script>alert('Invalid upload.')</script>";
+				echo "<script>window.open('post_request','_self')</script>";
+				exit();
+			}
 			$request_file = pathinfo($request_file, PATHINFO_FILENAME);
+			$request_file = preg_replace('/[^A-Za-z0-9_-]/', '_', $request_file);
 			$request_file = $request_file."_".time().".$file_extension";
 			uploadToS3("request_files/$request_file",$request_file_tmp);
 		}

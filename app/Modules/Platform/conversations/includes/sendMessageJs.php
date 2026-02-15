@@ -72,8 +72,8 @@ var seller_id = "<?= $seller_id; ?>";
 var message_group_id = "<?= $message_group_id ?>";
 
 var scroll = 0;
-var TYPING_STATUS_INTERVAL = 3000;
-var MESSAGE_REFRESH_INTERVAL = 6000;
+var TYPING_STATUS_INTERVAL = 5000;   // 5 sec (was 3 sec) - reduced to lower server load
+var MESSAGE_REFRESH_INTERVAL = 15000; // 15 sec (was 6 sec) - reduced to lower server load
 
 $(document).off('submit').on('submit','#insert-message-form', function(event){
 	event.preventDefault();
