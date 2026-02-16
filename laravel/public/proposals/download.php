@@ -1,0 +1,67 @@
+<?php
+require_once __DIR__ . '/../includes/session_bootstrap.php';
+
+blc_bootstrap_session();
+if(!isset($_SESSION['seller_user_name'])){
+   header("Location: ../login");
+}
+
+if(!isset($_GET["proposal_id"])){
+   header("Location: ../index");
+}
+
+header('Content-Description: File Transfer');
+header('Content-Type: application/octet-stream');
+header('Expires: 0');
+header('Cache-Control: must-revalidate');
+header('Pragma: public');
+
+require_once("../includes/db.php");
+
+$proposal_id = (int) $input->get('proposal_id');
+if($proposal_id <= 0){
+   header("Location: ../index");
+   exit;
+}
+
+$login_seller_user_name = $_SESSION['seller_user_name'];
+$select_login_seller = $db->select("sellers",array("seller_user_name" => $login_seller_user_name));
+$row_login_seller = $select_login_seller->fetch();
+$login_seller_id = $row_login_seller->seller_id;
+
+$get_p = $db->query("select * from proposals where proposal_id=:proposal_id AND proposal_seller_id=:seller_id",array("proposal_id"=>$proposal_id,"seller_id"=>$login_seller_id));
+$count_proposal = $get_p->rowCount();
+
+$get_delivery = $db->select("instant_deliveries",['proposal_id'=>$proposal_id]);
+$row_delivery = $get_delivery->fetch();
+$file = $row_delivery ? $row_delivery->file : "";
+$isS3 = $row_delivery ? $row_delivery->isS3 : 0;
+$file = basename((string) $file);
+
+if($count_proposal != 0 AND !empty($file)){
+
+   header('Content-Disposition: attachment; filename="' . str_replace('"', '', $file) . '"');
+
+   if($isS3 == 1){
+
+      $downloadFile = "order_files/$file";
+
+      $s3->doesObjectExist($config["bucket"],$downloadFile);
+      $result = $s3->getObject([
+       'Bucket' => $config["bucket"],
+       'Key'    => $downloadFile
+      ]);
+      echo $result['Body'];
+      exit;
+
+   }else{
+      $localFile = "../order_files/$file";
+      if(file_exists($localFile)){
+         readfile($localFile);
+         exit;
+      }
+   }
+
+}else{
+   header("Location: ../index");
+}

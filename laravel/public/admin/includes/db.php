@@ -1,0 +1,132 @@
+<?php
+
+$dir = __DIR__;
+$dir = str_replace("admin/includes", '',$dir);
+$dir = str_replace("admin\includes", '',$dir);
+
+include("$dir/includes/config.php");
+include("$dir/includes/install_state.php");
+
+if(!function_exists('blc_admin_resolve_language_file')){
+	function blc_admin_resolve_language_file(string $languagesDir, string $languageTitle): ?string {
+		$baseDir = realpath($languagesDir);
+		if($baseDir === false){
+			return null;
+		}
+
+		$normalizedTitle = strtolower(trim($languageTitle));
+		if($normalizedTitle === ''){
+			return null;
+		}
+
+		if(preg_match('/^[a-z0-9 _().-]+$/', $normalizedTitle) !== 1){
+			return null;
+		}
+
+		$candidate = $baseDir . DIRECTORY_SEPARATOR . $normalizedTitle . '.php';
+		$resolved = realpath($candidate);
+		if($resolved === false){
+			return null;
+		}
+
+		$basePrefix = rtrim($baseDir, "\\/") . DIRECTORY_SEPARATOR;
+		if(strpos($resolved, $basePrefix) !== 0){
+			return null;
+		}
+
+		return $resolved;
+	}
+}
+
+if(
+	empty(DB_HOST) ||
+	empty(DB_USER) ||
+	empty(DB_NAME) ||
+	!blc_is_installation_complete((string) DB_HOST, (string) DB_USER, (string) DB_PASS, (string) DB_NAME)
+){
+	echo "<script>window.open('../install.php','_self'); </script>";
+	exit();
+}else{
+
+   include $dir.'libs/database.php';
+   include $dir.'libs/input.php';
+   include $dir.'libs/validator.php';
+   include $dir.'libs/flash.php';
+
+   $db->query("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+
+   $get_general_settings = $db->select("general_settings");   
+   $row_general_settings = $get_general_settings->fetch();
+   $site_email_address = $row_general_settings->site_email_address;
+   $site_email_address = $row_general_settings->site_email_address;
+   $app_url_from_env = getenv('APP_URL');
+   if($app_url_from_env !== false && trim((string)$app_url_from_env) !== ""){
+      $site_url = rtrim((string)$app_url_from_env, "/");
+   }else{
+      $site_url = rtrim((string)$row_general_settings->site_url, "/");
+      if(!empty($_SERVER['HTTP_HOST'])){
+         $scheme = "http";
+         if(
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+         ){
+            $scheme = "https";
+         }
+         $site_url = $scheme . "://" . $_SERVER['HTTP_HOST'];
+      }
+   }
+   $tinymce_api_key = $row_general_settings->tinymce_api_key;
+   $site_name = $row_general_settings->site_name;
+   $site_keywords = $row_general_settings->site_keywords;
+   $site_author = $row_general_settings->site_author;
+   $site_desc = $row_general_settings->site_desc;
+   $site_logo_image = $row_general_settings->site_logo_image;
+   $site_currency = $row_general_settings->site_currency;
+   $currency_position = $row_general_settings->currency_position;
+   $currency_format = $row_general_settings->currency_format;
+   $site_timezone = $row_general_settings->site_timezone;
+
+   $get_currencies = $db->select("currencies",array( "id" => $site_currency));
+   $row_currencies = $get_currencies->fetch();
+   $s_currency_name = $row_currencies->name;
+   $s_currency = $row_currencies->symbol;
+
+   $get_smtp_settings = $db->select("smtp_settings");
+   $row_smtp_settings = $get_smtp_settings->fetch();
+   $enable_smtp = $row_smtp_settings->enable_smtp;
+   $s_host = $row_smtp_settings->host;
+   $s_port = $row_smtp_settings->port;
+   $s_secure = $row_smtp_settings->secure;
+   $s_username = $row_smtp_settings->username;
+   $s_password = $row_smtp_settings->password;
+
+   $get_api_settings = $db->select("api_settings");
+   $row_api_settings = $get_api_settings->fetch();
+   $enable_s3 = $row_api_settings->enable_s3;
+
+   include("$dir/includes/s3-config.php");
+
+   if(!isset($_SESSION['adminLanguage'])){
+      $_SESSION['adminLanguage'] = $db->select("languages",["default_lang" =>1])->fetch()->id;
+   }
+
+   $sel_language = $db->select("languages",array( "id" => $_SESSION['adminLanguage']))->fetch();
+   $template_folder = $sel_language->template_folder; 
+   $languageFile = blc_admin_resolve_language_file($dir."languages", (string) $sel_language->title);
+   if($languageFile === null){
+      $languageFile = blc_admin_resolve_language_file($dir."languages", "english");
+   }
+   if($languageFile === null){
+      throw new RuntimeException("No valid admin language file found for runtime.");
+   }
+   require($languageFile);
+
+
+   $site_favicon = getImageUrl2("general_settings","site_favicon",$row_general_settings->site_favicon);
+   $site_logo_image = getImageUrl2("general_settings","site_logo_image",$row_general_settings->site_logo_image);
+   $site_logo = getImageUrl2("general_settings","site_logo",$row_general_settings->site_logo);
+
+}
+
+require_once("$dir/includes/commonFunctions.php");

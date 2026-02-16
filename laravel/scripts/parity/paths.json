@@ -1,0 +1,70 @@
+{
+  "legacyBase": "http://127.0.0.1:8080",
+  "laravelBase": "http://127.0.0.1:8000",
+  "viewport": { "width": 1440, "height": 900 },
+  "paths": [
+    {
+      "id": "home-guest",
+      "path": "/",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Home page (guest)"
+    },
+    {
+      "id": "login",
+      "path": "/login",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Login page"
+    },
+    {
+      "id": "register",
+      "path": "/register",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Register page"
+    },
+    {
+      "id": "categories-index",
+      "path": "/categories",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Categories index page"
+    },
+    {
+      "id": "search",
+      "path": "/search",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Search page"
+    },
+    {
+      "id": "blog-index",
+      "path": "/blog",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Blog index page"
+    },
+    {
+      "id": "categories-show",
+      "path": "/categories/graphics-design",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Category show page (Graphics & Design)"
+    },
+    {
+      "id": "blog-post",
+      "path": "/blog/1",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Blog post page (id=1)"
+    },
+    {
+      "id": "tags-show",
+      "path": "/tags/logo",
+      "method": "GET",
+      "auth": "guest",
+      "description": "Tags page (logo)"
+    }
+  ]
+}
