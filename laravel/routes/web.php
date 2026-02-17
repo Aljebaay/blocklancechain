@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LegacyAjaxController;
+use App\Http\Controllers\LegacyEndpointController;
 use App\Http\Controllers\LegacyComponentController;
 use App\Http\Controllers\LegacyPageController;
 use App\Http\Controllers\LegacyPostController;
@@ -138,6 +139,42 @@ Route::get('/blog/{id}/{slug?}', [LegacyPageController::class, 'blogPost'])->nam
 Route::get('/tags/{tag}', [LegacyPageController::class, 'tagsShow'])->name('tags.show');
 Route::get('/pages/{slug}', [LegacyPageController::class, 'pageShow'])->name('pages.show');
 Route::get('/proposals/{username}/{slug}', [LegacyPageController::class, 'proposalShow'])->name('proposals.show');
+
+// =====================================================================
+// Legacy Endpoint Routes (from config/endpoints.php — exact path parity)
+// Every endpoint path is registered; existing parity routes are skipped.
+// Served by LegacyEndpointController (runs legacy PHP handler).
+// =====================================================================
+$endpointsFile = base_path('../config/endpoints.php');
+if (is_file($endpointsFile)) {
+    $endpoints = require $endpointsFile;
+    $skipUris = [
+        '', 'index', 'login', 'register', 'categories', 'search', 'blog', 'tags', 'pages', 'proposals', 'logout',
+        'admin/login', 'admin/logout',
+        'search_load', 'category_load', 'tag_load', 'featured_load',
+        'includes/comp/c-favorites', 'includes/comp/c-messages-header', 'includes/comp/c-messages-body',
+        'includes/comp/c-notifications-header', 'includes/comp/c-notifications-body',
+        'includes/messagePopup', 'includes/notificationsPopup', 'includes/close_cookies_footer',
+        'search-knowledge',
+    ];
+    if (is_array($endpoints)) {
+        foreach ($endpoints as $endpointId => $entry) {
+            if (!is_array($entry) || !isset($entry['path']) || !is_string($entry['path'])) {
+                continue;
+            }
+            $path = str_replace('\\', '/', $entry['path']);
+            if (!str_ends_with($path, '.php')) {
+                continue;
+            }
+            $uri = substr($path, 0, -4);
+            if ($uri === '' || in_array($uri, $skipUris, true)) {
+                continue;
+            }
+            Route::match(['get', 'post'], '/' . $uri, [LegacyEndpointController::class, 'dispatch'])
+                ->name('legacy.' . str_replace('.', '_', $endpointId));
+        }
+    }
+}
 
 // =====================================================================
 // Vue SPA Fallback (for routes not yet migrated to Blade parity)
