@@ -59,16 +59,16 @@ class PriceService
 
         $formattedPrice = number_format($price, 2, $decPoint, $thousandsSep);
 
-        if (!empty($class)) {
+        if (! empty($class)) {
             $formattedPrice = "<span class='{$class}'>{$formattedPrice}</span>";
         }
 
         if ($showSymbol === 'yes') {
             if ($currencyPosition === 'left') {
-                return $siteCurrencySymbol . $formattedPrice;
+                return $siteCurrencySymbol.$formattedPrice;
             }
 
-            return $formattedPrice . $siteCurrencySymbol;
+            return $formattedPrice.$siteCurrencySymbol;
         }
 
         return $formattedPrice;

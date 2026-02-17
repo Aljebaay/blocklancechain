@@ -29,12 +29,12 @@ class OrderController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
         $validStatuses = ['active', 'completed', 'cancelled', 'delivered', 'all'];
-        if (!in_array($status, $validStatuses, true)) {
+        if (! in_array($status, $validStatuses, true)) {
             abort(404);
         }
 
@@ -63,12 +63,12 @@ class OrderController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
         $validStatuses = ['active', 'completed', 'cancelled', 'delivered', 'all'];
-        if (!in_array($status, $validStatuses, true)) {
+        if (! in_array($status, $validStatuses, true)) {
             abort(404);
         }
 
@@ -97,7 +97,7 @@ class OrderController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 

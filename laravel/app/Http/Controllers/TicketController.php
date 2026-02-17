@@ -28,7 +28,7 @@ class TicketController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -55,7 +55,7 @@ class TicketController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -64,7 +64,7 @@ class TicketController extends Controller
             ->where('seller_id', $seller->seller_id)
             ->first();
 
-        if (!$ticket) {
+        if (! $ticket) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -89,7 +89,7 @@ class TicketController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 

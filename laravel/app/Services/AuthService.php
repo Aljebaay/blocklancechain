@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Seller;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * AuthService - handles authentication logic.
@@ -25,7 +24,7 @@ class AuthService
             ->orWhere('seller_email', $usernameOrEmail)
             ->first();
 
-        if (!$seller) {
+        if (! $seller) {
             return [
                 'success' => false,
                 'error' => 'incorrect_login',
@@ -33,7 +32,7 @@ class AuthService
         }
 
         // Verify password using password_verify (bcrypt)
-        if (!password_verify($password, $seller->seller_pass)) {
+        if (! password_verify($password, $seller->seller_pass)) {
             return [
                 'success' => false,
                 'error' => 'incorrect_login',
@@ -63,7 +62,7 @@ class AuthService
             ->where('seller_pass', $seller->seller_pass)
             ->first();
 
-        if (!$verifiedSeller) {
+        if (! $verifiedSeller) {
             return [
                 'success' => false,
                 'error' => 'incorrect_login',
@@ -115,7 +114,7 @@ class AuthService
     {
         $username = session('seller_user_name');
 
-        if (!$username) {
+        if (! $username) {
             return null;
         }
 

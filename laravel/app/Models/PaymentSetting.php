@@ -50,7 +50,7 @@ class PaymentSetting extends Model
     public static function getCached(): self
     {
         return cache()->remember('payment_settings', 3600, function () {
-            return self::query()->first() ?? new self();
+            return self::query()->first() ?? new self;
         });
     }
 }

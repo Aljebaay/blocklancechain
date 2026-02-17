@@ -29,8 +29,8 @@ class LegacyEndpointController extends Controller
         $this->syncRequestToSuperglobals($request);
 
         $legacyRoot = base_path('..');
-        $dispatchPath = $legacyRoot . DIRECTORY_SEPARATOR . 'bootstrap' . DIRECTORY_SEPARATOR . 'dispatch.php';
-        if (!is_file($dispatchPath)) {
+        $dispatchPath = $legacyRoot.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'dispatch.php';
+        if (! is_file($dispatchPath)) {
             abort(500, 'Legacy dispatcher not found.');
         }
 
@@ -64,6 +64,7 @@ class LegacyEndpointController extends Controller
         // Handler returned without exit()
         if (ob_get_level() > 0) {
             $content = ob_get_clean();
+
             return new Response($content ?? '', 200, ['Content-Type' => 'text/html; charset=UTF-8']);
         }
 
@@ -85,7 +86,7 @@ class LegacyEndpointController extends Controller
         $_SERVER['QUERY_STRING'] = $queryString;
 
         // Preserve other common keys Laravel may have overwritten
-        if (!$request->headers->has('Content-Type')) {
+        if (! $request->headers->has('Content-Type')) {
             $_SERVER['CONTENT_TYPE'] = $request->header('Content-Type', '');
         }
     }
@@ -93,19 +94,19 @@ class LegacyEndpointController extends Controller
     private function resolveEndpointId(string $uri): ?string
     {
         $file = base_path('../config/endpoints.php');
-        if (!is_file($file)) {
+        if (! is_file($file)) {
             return null;
         }
         $endpoints = require $file;
-        if (!is_array($endpoints)) {
+        if (! is_array($endpoints)) {
             return null;
         }
         foreach ($endpoints as $id => $entry) {
-            if (!is_array($entry) || !isset($entry['path']) || !is_string($entry['path'])) {
+            if (! is_array($entry) || ! isset($entry['path']) || ! is_string($entry['path'])) {
                 continue;
             }
             $path = str_replace('\\', '/', $entry['path']);
-            if (!str_ends_with($path, '.php')) {
+            if (! str_ends_with($path, '.php')) {
                 continue;
             }
             $entryUri = trim(substr($path, 0, -4), '/');
@@ -113,6 +114,7 @@ class LegacyEndpointController extends Controller
                 return $id;
             }
         }
+
         return null;
     }
 }

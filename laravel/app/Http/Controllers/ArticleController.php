@@ -29,7 +29,7 @@ class ArticleController extends Controller
             ->where('article_status', 'active')
             ->first();
 
-        if (!$article) {
+        if (! $article) {
             abort(404);
         }
 

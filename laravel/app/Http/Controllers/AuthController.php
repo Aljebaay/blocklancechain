@@ -10,7 +10,6 @@ use App\Services\AuthService;
 use App\Services\SiteSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -51,7 +50,7 @@ class AuthController extends Controller
             $request->validated('seller_pass'),
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -99,7 +98,7 @@ class AuthController extends Controller
     {
         $result = $this->authService->register($request->validated());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],

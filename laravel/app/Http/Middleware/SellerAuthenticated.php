@@ -16,7 +16,7 @@ class SellerAuthenticated
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!session()->has('seller_user_name')) {
+        if (! session()->has('seller_user_name')) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Unauthenticated.'], 401);
             }

@@ -49,7 +49,7 @@ class UserController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -66,7 +66,7 @@ class UserController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 

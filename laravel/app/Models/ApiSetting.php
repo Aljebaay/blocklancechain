@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class ApiSetting extends Model
 {
     protected $table = 'api_settings';
+
     public $timestamps = false;
 
     protected $fillable = [

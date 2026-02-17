@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class AnnouncementBar extends Model
 {
     protected $table = 'announcement_bar';
+
     public $timestamps = false;
 
     protected $fillable = [

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SellerLevelMeta extends Model
 {
     protected $table = 'seller_levels_meta';
+
     public $timestamps = false;
 
     protected $fillable = [

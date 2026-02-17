@@ -16,7 +16,7 @@ class ExampleTest extends TestCase
         try {
             DB::table('general_settings')->first();
         } catch (\Exception $e) {
-            $this->markTestSkipped('Legacy database tables not available: ' . $e->getMessage());
+            $this->markTestSkipped('Legacy database tables not available: '.$e->getMessage());
         }
 
         $response = $this->get('/');

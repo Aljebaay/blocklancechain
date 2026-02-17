@@ -19,11 +19,17 @@ use App\Models\SmtpSetting;
 class SiteSettingsService
 {
     private ?GeneralSetting $generalSettings = null;
+
     private ?PaymentSetting $paymentSettings = null;
+
     private ?SmtpSetting $smtpSettings = null;
+
     private ?ApiSetting $apiSettings = null;
+
     private ?Language $currentLanguage = null;
+
     private ?Currency $siteCurrency = null;
+
     private ?AnnouncementBar $announcementBar = null;
 
     public function getGeneralSettings(): GeneralSetting
@@ -48,7 +54,7 @@ class SiteSettingsService
     {
         if ($this->smtpSettings === null) {
             $this->smtpSettings = cache()->remember('smtp_settings', 3600, function () {
-                return SmtpSetting::query()->first() ?? new SmtpSetting();
+                return SmtpSetting::query()->first() ?? new SmtpSetting;
             });
         }
 
@@ -59,7 +65,7 @@ class SiteSettingsService
     {
         if ($this->apiSettings === null) {
             $this->apiSettings = cache()->remember('api_settings', 3600, function () {
-                return ApiSetting::query()->first() ?? new ApiSetting();
+                return ApiSetting::query()->first() ?? new ApiSetting;
             });
         }
 
@@ -69,7 +75,7 @@ class SiteSettingsService
     public function getSiteUrl(): string
     {
         $envUrl = config('app.url');
-        if (!empty($envUrl)) {
+        if (! empty($envUrl)) {
             return rtrim($envUrl, '/');
         }
 
@@ -94,10 +100,10 @@ class SiteSettingsService
                     session(['siteLanguage' => $defaultLang->id]);
                     $this->currentLanguage = $defaultLang;
                 } else {
-                    $this->currentLanguage = new Language();
+                    $this->currentLanguage = new Language;
                 }
             } else {
-                $this->currentLanguage = Language::find($id) ?? new Language();
+                $this->currentLanguage = Language::find($id) ?? new Language;
             }
         }
 
@@ -108,7 +114,7 @@ class SiteSettingsService
     {
         if ($this->siteCurrency === null) {
             $settings = $this->getGeneralSettings();
-            $this->siteCurrency = Currency::find($settings->site_currency) ?? new Currency();
+            $this->siteCurrency = Currency::find($settings->site_currency) ?? new Currency;
         }
 
         return $this->siteCurrency;
@@ -120,7 +126,7 @@ class SiteSettingsService
 
         if ($this->announcementBar === null) {
             $this->announcementBar = AnnouncementBar::where('language_id', $langId)->first()
-                ?? new AnnouncementBar();
+                ?? new AnnouncementBar;
         }
 
         return $this->announcementBar;

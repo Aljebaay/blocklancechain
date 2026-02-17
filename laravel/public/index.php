@@ -17,28 +17,28 @@ define('LARAVEL_START', microtime(true));
 // Laravel: /admin/login, /admin/logout, /admin/assets.
 // =====================================================================
 $_blcUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-$_blcUri = '/' . trim($_blcUri, '/');
+$_blcUri = '/'.trim($_blcUri, '/');
 
 if (
     str_starts_with($_blcUri, '/admin') &&
-    !str_starts_with($_blcUri, '/admin/assets/')
+    ! str_starts_with($_blcUri, '/admin/assets/')
 ) {
     // login / logout → always go through Laravel (handles password verification + session sync)
     // But redirect .php variants to the clean URL
     if ($_blcUri === '/admin/login.php') {
-        $_blcQs = !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
-        header('Location: /admin/login' . $_blcQs, true, 302);
+        $_blcQs = ! empty($_SERVER['QUERY_STRING']) ? '?'.$_SERVER['QUERY_STRING'] : '';
+        header('Location: /admin/login'.$_blcQs, true, 302);
         exit;
     }
     if ($_blcUri === '/admin/logout.php') {
-        $_blcQs = !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
-        header('Location: /admin/logout' . $_blcQs, true, 302);
+        $_blcQs = ! empty($_SERVER['QUERY_STRING']) ? '?'.$_SERVER['QUERY_STRING'] : '';
+        header('Location: /admin/logout'.$_blcQs, true, 302);
         exit;
     }
     if ($_blcUri === '/admin/login' || $_blcUri === '/admin/logout') {
         // Fall through to Laravel
     } else {
-        $_blcAdminBase = realpath(__DIR__ . '/../../app/Modules/Platform/admin');
+        $_blcAdminBase = realpath(__DIR__.'/../../app/Modules/Platform/admin');
 
         if ($_blcAdminBase !== false) {
             // /admin with no query string → redirect to /admin/index?dashboard
@@ -50,14 +50,14 @@ if (
             // /admin with query string (e.g. /admin?dashboard) → rewrite to index
             if ($_blcUri === '/admin' || $_blcUri === '/admin/') {
                 chdir($_blcAdminBase);
-                require $_blcAdminBase . '/index.php';
+                require $_blcAdminBase.'/index.php';
                 exit;
             }
 
             // /admin/index or /admin/index?page → serve index.php
             if ($_blcUri === '/admin/index' || $_blcUri === '/admin/index.php') {
                 chdir($_blcAdminBase);
-                require $_blcAdminBase . '/index.php';
+                require $_blcAdminBase.'/index.php';
                 exit;
             }
 
@@ -72,7 +72,7 @@ if (
                 // Static file requests (css, js, images, fonts) — NOT .php
                 if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|mp4|webm|pdf|json)$/i', $_blcSub)) {
                     $_blcSub = str_replace(['..', '\\'], ['', '/'], $_blcSub);
-                    $_blcStatic = $_blcAdminBase . '/' . $_blcSub;
+                    $_blcStatic = $_blcAdminBase.'/'.$_blcSub;
                     $_blcStaticResolved = realpath($_blcStatic);
                     if (
                         $_blcStaticResolved !== false &&
@@ -81,22 +81,22 @@ if (
                     ) {
                         $_blcExt = strtolower(pathinfo($_blcStaticResolved, PATHINFO_EXTENSION));
                         $_blcMime = [
-                            'css'   => 'text/css',
-                            'js'    => 'application/javascript',
-                            'json'  => 'application/json',
-                            'png'   => 'image/png',
-                            'jpg'   => 'image/jpeg',
-                            'jpeg'  => 'image/jpeg',
-                            'gif'   => 'image/gif',
-                            'svg'   => 'image/svg+xml',
-                            'ico'   => 'image/x-icon',
+                            'css' => 'text/css',
+                            'js' => 'application/javascript',
+                            'json' => 'application/json',
+                            'png' => 'image/png',
+                            'jpg' => 'image/jpeg',
+                            'jpeg' => 'image/jpeg',
+                            'gif' => 'image/gif',
+                            'svg' => 'image/svg+xml',
+                            'ico' => 'image/x-icon',
                             'woff2' => 'font/woff2',
-                            'woff'  => 'font/woff',
-                            'ttf'   => 'font/ttf',
-                            'eot'   => 'application/vnd.ms-fontobject',
-                            'map'   => 'application/json',
+                            'woff' => 'font/woff',
+                            'ttf' => 'font/ttf',
+                            'eot' => 'application/vnd.ms-fontobject',
+                            'map' => 'application/json',
                         ][$_blcExt] ?? 'application/octet-stream';
-                        header('Content-Type: ' . $_blcMime);
+                        header('Content-Type: '.$_blcMime);
                         header('Cache-Control: public, max-age=86400');
                         readfile($_blcStaticResolved);
                         exit;
@@ -109,7 +109,7 @@ if (
                 // Handle .php extension URLs: /admin/something.php → require something.php
                 if (str_ends_with($_blcSub, '.php')) {
                     $_blcSubSafe = basename($_blcSub); // e.g. "proceed.php"
-                    $_blcCandidate = $_blcAdminBase . '/' . $_blcSubSafe;
+                    $_blcCandidate = $_blcAdminBase.'/'.$_blcSubSafe;
                     if (is_file($_blcCandidate)) {
                         chdir($_blcAdminBase);
                         require $_blcCandidate;
@@ -119,7 +119,7 @@ if (
 
                 // PHP sub-page without extension: check if {subpage}.php exists
                 $_blcSubSafe = basename($_blcSub);
-                $_blcCandidate = $_blcAdminBase . '/' . $_blcSubSafe . '.php';
+                $_blcCandidate = $_blcAdminBase.'/'.$_blcSubSafe.'.php';
                 if (is_file($_blcCandidate)) {
                     chdir($_blcAdminBase);
                     require $_blcCandidate;
@@ -133,7 +133,7 @@ if (
                 }
 
                 chdir($_blcAdminBase);
-                require $_blcAdminBase . '/index.php';
+                require $_blcAdminBase.'/index.php';
                 exit;
             }
         }

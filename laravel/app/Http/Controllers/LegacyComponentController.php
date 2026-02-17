@@ -86,27 +86,27 @@ class LegacyComponentController extends Controller
         $countAll = DB::table('inbox_sellers')
             ->where(function ($q) use ($sellerId) {
                 $q->where('receiver_id', $sellerId)
-                  ->orWhere('sender_id', $sellerId);
+                    ->orWhere('sender_id', $sellerId);
             })
             ->where('message_status', '!=', 'empty')
             ->count();
 
         $data = [
             'lang' => [
-                'inbox'      => $this->getLangString('popup', 'inbox', 'Inbox'),
+                'inbox' => $this->getLangString('popup', 'inbox', 'Inbox'),
                 'view_inbox' => $this->getLangString('popup', 'view_inbox', 'View Inbox'),
-                'no_inbox'   => $this->getLangString('popup', 'no_inbox', 'No Messages'),
+                'no_inbox' => $this->getLangString('popup', 'no_inbox', 'No Messages'),
             ],
             'count_all_inbox_sellers' => $countAll,
-            'see_all'                 => $this->getLangString(null, 'see_all', 'See All'),
-            'messages'                => [],
+            'see_all' => $this->getLangString(null, 'see_all', 'See All'),
+            'messages' => [],
         ];
 
         // Get latest 4 conversations
         $inboxSellers = DB::table('inbox_sellers')
             ->where(function ($q) use ($sellerId) {
                 $q->where('receiver_id', $sellerId)
-                  ->orWhere('sender_id', $sellerId);
+                    ->orWhere('sender_id', $sellerId);
             })
             ->where('message_status', '!=', 'empty')
             ->orderByDesc('time')
@@ -130,6 +130,7 @@ class LegacyComponentController extends Controller
 
             if ($hidden) {
                 $data['count_all_inbox_sellers'] = max(0, $data['count_all_inbox_sellers'] - 1);
+
                 continue;
             }
 
@@ -154,7 +155,7 @@ class LegacyComponentController extends Controller
                 ->first();
 
             $messageDesc = strip_tags($inboxMessage->message_desc ?? '');
-            $msg['date']   = $inboxMessage->message_date ?? '';
+            $msg['date'] = $inboxMessage->message_date ?? '';
             $msg['status'] = $inboxMessage->message_status ?? '';
 
             if ($messageDesc === '') {
@@ -213,13 +214,13 @@ class LegacyComponentController extends Controller
 
         $data = [
             'lang' => [
-                'notifications'      => $this->getLangString('popup', 'notifications', 'Notifications'),
+                'notifications' => $this->getLangString('popup', 'notifications', 'Notifications'),
                 'view_notifications' => $this->getLangString('popup', 'view_notifications', 'View Notifications'),
-                'no_notifications'   => $this->getLangString('popup', 'no_notifications', 'No Notifications'),
+                'no_notifications' => $this->getLangString('popup', 'no_notifications', 'No Notifications'),
             ],
             'count_all_notifications' => $countAll,
-            'see_all'                 => $this->getLangString(null, 'see_all', 'See All'),
-            'notifications'           => [],
+            'see_all' => $this->getLangString(null, 'see_all', 'See All'),
+            'notifications' => [],
         ];
 
         $notifications = DB::table('notifications')
@@ -232,11 +233,11 @@ class LegacyComponentController extends Controller
         foreach ($notifications as $row) {
             $i++;
             $n = [];
-            $n['id']       = $row->notification_id;
+            $n['id'] = $row->notification_id;
             $n['order_id'] = $row->order_id;
-            $n['date']     = $row->date;
-            $reason        = $row->reason;
-            $senderIdRaw   = $row->sender_id;
+            $n['date'] = $row->date;
+            $reason = $row->reason;
+            $senderIdRaw = $row->sender_id;
 
             // Check if sender is admin
             if (str_contains((string) $senderIdRaw, 'admin')) {
@@ -254,7 +255,7 @@ class LegacyComponentController extends Controller
                     ->where('seller_id', $senderIdRaw)
                     ->first();
                 $senderUserName = (string) ($sender->seller_user_name ?? '');
-                $senderImage    = (string) ($sender->seller_image ?? '');
+                $senderImage = (string) ($sender->seller_image ?? '');
                 $n['sender_user_name'] = ucfirst($senderUserName);
                 if ($senderImage === '') {
                     $n['sender_image'] = "$siteUrl/user_images/empty-image.png";
@@ -264,7 +265,7 @@ class LegacyComponentController extends Controller
             }
 
             $n['message'] = $this->getNotificationMessage($reason);
-            $n['class']   = ($row->status === 'unread')
+            $n['class'] = ($row->status === 'unread')
                 ? 'header-message-div-unread'
                 : 'header-message-div';
 
@@ -330,14 +331,14 @@ class LegacyComponentController extends Controller
                 ->where('message_id', $row->message_id)
                 ->first();
 
-            $msg['desc']           = substr(strip_tags($inboxMessage->message_desc ?? ''), 0, 250);
-            $msg['date']           = $inboxMessage->message_date ?? '';
-            $msg['offer_id']       = $inboxMessage->message_offer_id ?? '';
+            $msg['desc'] = substr(strip_tags($inboxMessage->message_desc ?? ''), 0, 250);
+            $msg['date'] = $inboxMessage->message_date ?? '';
+            $msg['offer_id'] = $inboxMessage->message_offer_id ?? '';
             $msg['message_status'] = $inboxMessage->message_status ?? '';
 
-            if (empty($msg['desc']) && !empty($msg['offer_id'])) {
+            if (empty($msg['desc']) && ! empty($msg['offer_id'])) {
                 $msg['sender_user_name'] = 'Offer waiting!';
-                $msg['desc']             = 'You have a new offer in your inbox.';
+                $msg['desc'] = 'You have a new offer in your inbox.';
             }
 
             $data[$i] = $msg;
@@ -373,15 +374,15 @@ class LegacyComponentController extends Controller
         foreach ($activeNotifications as $row) {
             $i++;
             $notificationId = $row->notification_id;
-            $reason         = $row->reason;
+            $reason = $row->reason;
 
             $n = [];
             $n['notification_id'] = $notificationId;
-            $n['sender_id']       = $row->sender_id;
-            $n['order_id']        = $row->order_id;
-            $n['reason']          = $reason;
-            $n['date']            = $row->date;
-            $n['status']          = $row->status;
+            $n['sender_id'] = $row->sender_id;
+            $n['order_id'] = $row->order_id;
+            $n['reason'] = $reason;
+            $n['date'] = $row->date;
+            $n['status'] = $row->status;
 
             // Get sender details
             $senderIdRaw = $row->sender_id;
@@ -412,8 +413,8 @@ class LegacyComponentController extends Controller
             }
 
             $n['sender_user_name'] = $senderUserName;
-            $n['sender_image']     = $senderImage;
-            $n['message']          = $this->getNotificationMessage($reason);
+            $n['sender_image'] = $senderImage;
+            $n['message'] = $this->getNotificationMessage($reason);
 
             // Check if there are more active unread notifications
             $moreCount = DB::table('notifications')
@@ -455,10 +456,10 @@ class LegacyComponentController extends Controller
         $close = (string) $request->input('close', '');
 
         if ($close === 'close_cookies') {
-            $cookieName  = 'close_cookie';
+            $cookieName = 'close_cookie';
             $cookieValue = 'Cookie Bar';
         } else {
-            $cookieName  = 'close_announcement';
+            $cookieName = 'close_announcement';
             $cookieValue = (string) $request->input('time', '');
         }
 
@@ -475,33 +476,33 @@ class LegacyComponentController extends Controller
     private function getNotificationMessage(string $reason): string
     {
         $messages = [
-            'referral_approved'              => 'Has approved your user referral. you have got the commission.',
-            'proposal_referral_approved'     => 'Has approved your proposal referral. you have got the commission.',
-            'modification'                   => 'Has sent modification to your proposal.',
-            'declined'                       => 'Has Declined your proposal. Please submit a valid proposal.',
-            'approved'                       => 'Has approved your proposal. Thanks for posting.',
-            'unapproved_request'             => 'Has unapproved your request. Please submit a valid request.',
-            'approved_request'               => 'Has approved your request. Thanks for posting.',
-            'offer'                          => 'Has just sent you an offer on your request click here to view.',
-            'order'                          => 'Has just sent you an order.',
-            'order_tip'                      => 'Has has given you an tip.',
-            'order_message'                  => 'Updated the order.',
-            'order_revision'                 => 'Requested for a revision.',
-            'order_completed'                => 'Completed your order.',
-            'order_delivered'                => 'Delivered your order.',
-            'cancellation_request'           => 'Wants to cancel the order.',
-            'decline_cancellation_request'   => 'Declined your cancellation request.',
-            'accept_cancellation_request'    => 'Accepted cancellation request.',
-            'cancelled_by_customer_support'  => 'Order has been cancelled by admin.',
-            'buyer_order_review'             => 'Please review and rate your buyer.',
-            'seller_order_review'            => 'Please review and rate your seller.',
-            'order_cancelled'                => 'Your order has been cancelled.',
-            'withdrawal_declined'            => 'your withdrawal request has been declined. click here to view reason.',
-            'withdrawal_approved'            => 'your withdrawal request has been completed. click here to view.',
-            'extendTimeDeclined'             => 'Has Declined your extention.',
-            'extendTimeAccepted'             => 'Has accepted your extension. Time was increased successfully.',
-            'buyerExtendTimeAccepted'        => 'Time increased successfully.',
-            'ticket_reply'                   => 'just responded to your ticket.',
+            'referral_approved' => 'Has approved your user referral. you have got the commission.',
+            'proposal_referral_approved' => 'Has approved your proposal referral. you have got the commission.',
+            'modification' => 'Has sent modification to your proposal.',
+            'declined' => 'Has Declined your proposal. Please submit a valid proposal.',
+            'approved' => 'Has approved your proposal. Thanks for posting.',
+            'unapproved_request' => 'Has unapproved your request. Please submit a valid request.',
+            'approved_request' => 'Has approved your request. Thanks for posting.',
+            'offer' => 'Has just sent you an offer on your request click here to view.',
+            'order' => 'Has just sent you an order.',
+            'order_tip' => 'Has has given you an tip.',
+            'order_message' => 'Updated the order.',
+            'order_revision' => 'Requested for a revision.',
+            'order_completed' => 'Completed your order.',
+            'order_delivered' => 'Delivered your order.',
+            'cancellation_request' => 'Wants to cancel the order.',
+            'decline_cancellation_request' => 'Declined your cancellation request.',
+            'accept_cancellation_request' => 'Accepted cancellation request.',
+            'cancelled_by_customer_support' => 'Order has been cancelled by admin.',
+            'buyer_order_review' => 'Please review and rate your buyer.',
+            'seller_order_review' => 'Please review and rate your seller.',
+            'order_cancelled' => 'Your order has been cancelled.',
+            'withdrawal_declined' => 'your withdrawal request has been declined. click here to view reason.',
+            'withdrawal_approved' => 'your withdrawal request has been completed. click here to view.',
+            'extendTimeDeclined' => 'Has Declined your extention.',
+            'extendTimeAccepted' => 'Has accepted your extension. Time was increased successfully.',
+            'buyerExtendTimeAccepted' => 'Time increased successfully.',
+            'ticket_reply' => 'just responded to your ticket.',
         ];
 
         return $messages[$reason] ?? '';
@@ -515,10 +516,10 @@ class LegacyComponentController extends Controller
     public function searchKnowledge(Request $request): JsonResponse
     {
         $search = strip_tags((string) $request->input('q', ''));
-        $cat    = (string) $request->input('cat', '');
+        $cat = (string) $request->input('cat', '');
         $siteLanguage = (int) session('siteLanguage', 1);
 
-        if (!empty($cat)) {
+        if (! empty($cat)) {
             $articles = DB::table('knowledge_bank as kb')
                 ->join('article_cat as ac', 'ac.article_cat_id', '=', 'kb.cat_id')
                 ->where('kb.cat_id', $cat)
@@ -538,9 +539,9 @@ class LegacyComponentController extends Controller
 
         if ($articles->count() > 0) {
             $output['results'] = $articles->toArray();
-            $output['count']   = $articles->count();
+            $output['count'] = $articles->count();
         } else {
-            $output['count']   = 0;
+            $output['count'] = 0;
             $output['message'] = "Sorry, we couldn't find any results for your search.";
         }
 
@@ -557,6 +558,7 @@ class LegacyComponentController extends Controller
         if ($group !== null) {
             return $lang[$group][$key] ?? $default;
         }
+
         return $lang[$key] ?? $default;
     }
 }

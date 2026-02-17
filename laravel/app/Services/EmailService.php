@@ -53,8 +53,8 @@ class EmailService
 
         $subject = "Welcome to {$siteName}!";
         $body = "<h2>Welcome to {$siteName}, {$username}!</h2>"
-            . "<p>Thank you for joining our marketplace. You can now start exploring services and offering your own.</p>"
-            . "<p>Best regards,<br>{$siteName} Team</p>";
+            .'<p>Thank you for joining our marketplace. You can now start exploring services and offering your own.</p>'
+            ."<p>Best regards,<br>{$siteName} Team</p>";
 
         return $this->send($to, $subject, $body);
     }
@@ -68,9 +68,9 @@ class EmailService
         $siteName = $settings->site_name ?? 'GigZone';
 
         $subject = "Order #{$orderNumber} - Status Update";
-        $body = "<h2>Order Update</h2>"
-            . "<p>Your order <strong>#{$orderNumber}</strong> status has been updated to: <strong>{$status}</strong>.</p>"
-            . "<p>Best regards,<br>{$siteName} Team</p>";
+        $body = '<h2>Order Update</h2>'
+            ."<p>Your order <strong>#{$orderNumber}</strong> status has been updated to: <strong>{$status}</strong>.</p>"
+            ."<p>Best regards,<br>{$siteName} Team</p>";
 
         return $this->send($to, $subject, $body);
     }

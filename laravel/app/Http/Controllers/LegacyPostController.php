@@ -49,6 +49,7 @@ class LegacyPostController extends Controller
         // ── Home-page search form ───────────────────────────────────
         if ($request->has('search_query')) {
             session(['search_query' => $request->input('search_query', '')]);
+
             return redirect('/search');
         }
 
@@ -105,6 +106,7 @@ class LegacyPostController extends Controller
 
         if (empty($username) || empty($password)) {
             session()->flash('login_errors', ['Username and password are required.']);
+
             return redirect()->back();
         }
 
@@ -112,28 +114,31 @@ class LegacyPostController extends Controller
             ->where('seller_user_name', $username)
             ->first();
 
-        if (!$seller) {
+        if (! $seller) {
             // Legacy also checks by email
             $seller = DB::table('sellers')
                 ->where('seller_email', $username)
                 ->first();
         }
 
-        if (!$seller || !password_verify($password, $seller->seller_pass)) {
+        if (! $seller || ! password_verify($password, $seller->seller_pass)) {
             // Legacy outputs a SweetAlert warning inline (no redirect in the original),
             // but we use PRG with flash. The login view checks 'login_warning' for swal.
             session()->flash('login_warning', $request->session()->get('lang.alert.incorrect_login', 'Password or username is incorrect. Please try again.'));
+
             return redirect()->back();
         }
 
         // Check seller status (legacy checks)
         if ($seller->seller_status === 'deactivated') {
             session()->flash('login_warning', $request->session()->get('lang.alert.deactivated', 'Your account has been deactivated.'));
+
             return redirect()->back();
         }
 
         if ($seller->seller_status === 'block-ban') {
             session()->flash('login_warning', $request->session()->get('lang.alert.blocked', 'Your account has been blocked.'));
+
             return redirect()->back();
         }
 
@@ -141,8 +146,8 @@ class LegacyPostController extends Controller
         $request->session()->regenerate();
         session([
             'seller_user_name' => $seller->seller_user_name,
-            'seller_id'        => $seller->seller_id,
-            'seller_email'     => $seller->seller_email,
+            'seller_id' => $seller->seller_id,
+            'seller_email' => $seller->seller_email,
         ]);
 
         return redirect('/');
@@ -160,26 +165,37 @@ class LegacyPostController extends Controller
      */
     private function handleRegister(Request $request): RedirectResponse
     {
-        $name       = strip_tags((string) $request->input('name', ''));
-        $uName      = strip_tags((string) $request->input('u_name', ''));
-        $email      = strip_tags((string) $request->input('email', ''));
-        $pass       = strip_tags((string) $request->input('pass', ''));
-        $conPass    = strip_tags((string) $request->input('con_pass', ''));
-        $phone      = strip_tags((string) $request->input('phone', ''));
+        $name = strip_tags((string) $request->input('name', ''));
+        $uName = strip_tags((string) $request->input('u_name', ''));
+        $email = strip_tags((string) $request->input('email', ''));
+        $pass = strip_tags((string) $request->input('pass', ''));
+        $conPass = strip_tags((string) $request->input('con_pass', ''));
+        $phone = strip_tags((string) $request->input('phone', ''));
         $countryCode = strip_tags((string) $request->input('country_code', ''));
-        $referral   = strip_tags((string) $request->input('referral', ''));
+        $referral = strip_tags((string) $request->input('referral', ''));
 
         $errors = [];
 
-        if (empty($name))    $errors[] = 'Full Name Is Required.';
-        if (empty($uName))   $errors[] = 'User Name Is Required.';
-        if (empty($email))   $errors[] = 'Email Is Required.';
-        if (empty($pass))    $errors[] = 'Password Is Required.';
-        if (empty($conPass)) $errors[] = 'Confirm Password Is Required.';
+        if (empty($name)) {
+            $errors[] = 'Full Name Is Required.';
+        }
+        if (empty($uName)) {
+            $errors[] = 'User Name Is Required.';
+        }
+        if (empty($email)) {
+            $errors[] = 'Email Is Required.';
+        }
+        if (empty($pass)) {
+            $errors[] = 'Password Is Required.';
+        }
+        if (empty($conPass)) {
+            $errors[] = 'Confirm Password Is Required.';
+        }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             session()->flash('register_errors', $errors);
             session()->flash('form_data', $request->only(['name', 'u_name', 'email', 'phone', 'country_code']));
+
             return redirect('/');
         }
 
@@ -210,9 +226,10 @@ class LegacyPostController extends Controller
             $errors[] = 'Password must contain at least 6 characters.';
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             session()->flash('register_errors', $errors);
             session()->flash('form_data', $request->only(['name', 'u_name', 'email', 'phone', 'country_code']));
+
             return redirect('/');
         }
 
@@ -220,7 +237,7 @@ class LegacyPostController extends Controller
         $country = '';
         try {
             $ctx = stream_context_create(['http' => ['timeout' => 3]]);
-            $geo = @file_get_contents('https://www.geoplugin.net/json.gp?ip=' . rawurlencode((string) $request->ip()), false, $ctx);
+            $geo = @file_get_contents('https://www.geoplugin.net/json.gp?ip='.rawurlencode((string) $request->ip()), false, $ctx);
             if (is_string($geo) && $geo !== '') {
                 $data = json_decode($geo, true);
                 if (is_array($data) && isset($data['geoplugin_countryName'])) {
@@ -231,21 +248,21 @@ class LegacyPostController extends Controller
             // Silently ignore geo lookup failures
         }
 
-        $fullPhone = trim($countryCode . ' ' . $phone);
+        $fullPhone = trim($countryCode.' '.$phone);
         $date = date('F d, Y');
 
         DB::table('sellers')->insert([
-            'seller_user_name'   => $uName,
-            'seller_name'        => $name,
-            'seller_email'       => $email,
-            'seller_pass'        => password_hash($pass, PASSWORD_DEFAULT),
-            'seller_phone'       => $fullPhone,
-            'seller_country'     => $country,
-            'seller_status'      => 'active',
+            'seller_user_name' => $uName,
+            'seller_name' => $name,
+            'seller_email' => $email,
+            'seller_pass' => password_hash($pass, PASSWORD_DEFAULT),
+            'seller_phone' => $fullPhone,
+            'seller_country' => $country,
+            'seller_status' => 'active',
             'seller_member_since' => $date,
-            'seller_rating'      => 0,
-            'seller_level'       => 0,
-            'seller_balance'     => 0,
+            'seller_rating' => 0,
+            'seller_level' => 0,
+            'seller_balance' => 0,
         ]);
 
         $newSeller = DB::table('sellers')->where('seller_user_name', $uName)->first();
@@ -254,8 +271,8 @@ class LegacyPostController extends Controller
         $request->session()->regenerate();
         session([
             'seller_user_name' => $newSeller->seller_user_name,
-            'seller_id'        => $newSeller->seller_id,
-            'seller_email'     => $newSeller->seller_email,
+            'seller_id' => $newSeller->seller_id,
+            'seller_email' => $newSeller->seller_email,
         ]);
 
         return redirect('/');
@@ -273,19 +290,22 @@ class LegacyPostController extends Controller
 
         if (empty($email)) {
             session()->flash('forgot_errors', ['Email address is required.']);
+
             return redirect()->back();
         }
 
         $seller = DB::table('sellers')->where('seller_email', $email)->first();
 
-        if (!$seller) {
+        if (! $seller) {
             session()->flash('forgot_errors', ['This email address is not registered.']);
+
             return redirect()->back();
         }
 
         // TODO: Implement password reset email sending to match legacy
         // For now, flash a success message
         session()->flash('forgot_success', 'If that email is registered, a reset link has been sent.');
+
         return redirect()->back();
     }
 
@@ -301,7 +321,7 @@ class LegacyPostController extends Controller
     {
         $sellerId = session('seller_id');
 
-        if (!$sellerId) {
+        if (! $sellerId) {
             return redirect()->back();
         }
 
@@ -321,10 +341,10 @@ class LegacyPostController extends Controller
         }
 
         DB::table('post_comments')->insert([
-            'post_id'   => $postId,
+            'post_id' => $postId,
             'seller_id' => $sellerId,
-            'comment'   => $comment,
-            'date'      => date('F m, Y'),
+            'comment' => $comment,
+            'date' => date('F m, Y'),
         ]);
 
         return redirect()->back();

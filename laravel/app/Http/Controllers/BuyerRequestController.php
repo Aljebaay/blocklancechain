@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Models\BuyerRequest;
 use App\Services\AuthService;
 use App\Services\SiteSettingsService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -48,7 +47,7 @@ class BuyerRequestController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -66,7 +65,7 @@ class BuyerRequestController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -89,7 +88,7 @@ class BuyerRequestController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 

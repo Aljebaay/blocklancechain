@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Loads all the global variables that legacy db.php sets up.
@@ -23,7 +22,7 @@ class LegacyDataService
 
         // Site language (default to first language with default_lang=1)
         $siteLanguage = session('siteLanguage');
-        if (!$siteLanguage) {
+        if (! $siteLanguage) {
             $defaultLang = DB::table('languages')->where('default_lang', 1)->first();
             $siteLanguage = $defaultLang ? $defaultLang->id : 1;
             session(['siteLanguage' => $siteLanguage]);
@@ -32,7 +31,7 @@ class LegacyDataService
 
         // General settings
         $gs = DB::table('general_settings')->first();
-        if (!$gs) {
+        if (! $gs) {
             return $data;
         }
 
@@ -112,7 +111,7 @@ class LegacyDataService
 
         // Device detection (simplified - assume desktop for SSR)
         $data['deviceType'] = 'computer';
-        $data['proposals_stylesheet'] = '<link href="' . $siteUrl . '/styles/desktop_proposals.css" rel="stylesheet">';
+        $data['proposals_stylesheet'] = '<link href="'.$siteUrl.'/styles/desktop_proposals.css" rel="stylesheet">';
 
         // Row general settings object (needed by some templates)
         $data['row_general_settings'] = $gs;
@@ -127,15 +126,15 @@ class LegacyDataService
     private function loadLanguageStrings(string $langTitle, string $siteName = ''): array
     {
         $langTitle = strtolower(trim($langTitle));
-        if (!preg_match('/^[a-z0-9 _().-]+$/', $langTitle)) {
+        if (! preg_match('/^[a-z0-9 _().-]+$/', $langTitle)) {
             $langTitle = 'english';
         }
 
         $legacyLangDir = base_path('../app/Modules/Platform/languages');
-        $langFile = $legacyLangDir . '/' . $langTitle . '.php';
+        $langFile = $legacyLangDir.'/'.$langTitle.'.php';
 
-        if (!file_exists($langFile)) {
-            $langFile = $legacyLangDir . '/english.php';
+        if (! file_exists($langFile)) {
+            $langFile = $legacyLangDir.'/english.php';
         }
 
         if (file_exists($langFile)) {
@@ -242,8 +241,9 @@ class LegacyDataService
 
     private function buildMediaUrl(string $siteUrl, string $mainFolder, string $folder, string $key): string
     {
-        $parts = array_filter([$mainFolder, $folder, $key], fn($p) => $p !== null && $p !== '');
-        return $siteUrl . '/' . implode('/', $parts);
+        $parts = array_filter([$mainFolder, $folder, $key], fn ($p) => $p !== null && $p !== '');
+
+        return $siteUrl.'/'.implode('/', $parts);
     }
 
     /**
@@ -259,8 +259,9 @@ class LegacyDataService
                 ->where('seller_user_name', $sellerUserName)
                 ->first();
 
-            if (!$seller) {
+            if (! $seller) {
                 session()->forget('seller_user_name');
+
                 return $data;
             }
 
@@ -273,7 +274,7 @@ class LegacyDataService
             $account = DB::table('seller_accounts')
                 ->where('seller_id', $seller->seller_id)
                 ->first();
-            if (!$account) {
+            if (! $account) {
                 DB::table('seller_accounts')->insert(['seller_id' => $seller->seller_id]);
                 $account = DB::table('seller_accounts')
                     ->where('seller_id', $seller->seller_id)
@@ -321,7 +322,7 @@ class LegacyDataService
             })
             ->select('pages.id', 'pages.url', 'pages_meta.title')
             ->get()
-            ->filter(fn($page) => !empty($page->title));
+            ->filter(fn ($page) => ! empty($page->title));
 
         // Languages for switcher
         $data['all_languages'] = DB::table('languages')->get();
@@ -437,9 +438,9 @@ class LegacyDataService
             $data['auth_top_proposals'] = DB::table('proposals')
                 ->where(function ($q) use ($topIds) {
                     $q->whereIn('proposal_id', $topIds)
-                      ->orWhere(function ($q2) {
-                          $q2->where('level_id', 4)->where('proposal_status', 'active');
-                      });
+                        ->orWhere(function ($q2) {
+                            $q2->where('level_id', 4)->where('proposal_status', 'active');
+                        });
                 })
                 ->limit(8)
                 ->get();
@@ -477,7 +478,7 @@ class LegacyDataService
             ->orderByDesc('request_id')
             ->limit(5);
 
-        if ($relevantRequests !== 'no' && !empty($childIds)) {
+        if ($relevantRequests !== 'no' && ! empty($childIds)) {
             $requestsQuery->whereIn('child_id', $childIds);
         }
 
@@ -489,9 +490,9 @@ class LegacyDataService
             ->where('order_status', 'completed')
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
-                  ->from('proposals')
-                  ->whereColumn('proposals.proposal_id', 'orders.proposal_id')
-                  ->where('proposals.proposal_status', 'active');
+                    ->from('proposals')
+                    ->whereColumn('proposals.proposal_id', 'orders.proposal_id')
+                    ->where('proposals.proposal_status', 'active');
             })
             ->distinct()
             ->pluck('proposal_id')
@@ -502,9 +503,9 @@ class LegacyDataService
             ->where('seller_id', $loginSellerId)
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
-                  ->from('proposals')
-                  ->whereColumn('proposals.proposal_id', 'recent_proposals.proposal_id')
-                  ->where('proposals.proposal_status', 'active');
+                    ->from('proposals')
+                    ->whereColumn('proposals.proposal_id', 'recent_proposals.proposal_id')
+                    ->where('proposals.proposal_status', 'active');
             })
             ->orderByDesc('recent_proposals.recent_id')
             ->limit(4)
@@ -559,14 +560,14 @@ class LegacyDataService
 
         $formattedPrice = number_format($price, 2, $decPoint, $thousandsSep);
 
-        if (!empty($class)) {
+        if (! empty($class)) {
             $formattedPrice = "<span class='{$class}'>{$formattedPrice}</span>";
         }
 
         if ($showSymbol === 'yes') {
             return ($currencyPosition === 'left')
-                ? $siteCurrencySymbol . $formattedPrice
-                : $formattedPrice . $siteCurrencySymbol;
+                ? $siteCurrencySymbol.$formattedPrice
+                : $formattedPrice.$siteCurrencySymbol;
         }
 
         return $formattedPrice;
@@ -584,7 +585,7 @@ class LegacyDataService
         }
 
         if ($prepend) {
-            return $siteUrl . '/' . ltrim($url, '/');
+            return $siteUrl.'/'.ltrim($url, '/');
         }
 
         return $url;

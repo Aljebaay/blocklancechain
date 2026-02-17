@@ -16,7 +16,7 @@ class AdminAuthenticated
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!session()->has('admin_email')) {
+        if (! session()->has('admin_email')) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Unauthenticated.'], 401);
             }

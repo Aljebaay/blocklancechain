@@ -63,7 +63,7 @@ class GeneralSetting extends Model
     public static function getCached(): self
     {
         return cache()->remember('general_settings', 3600, function () {
-            return self::query()->first() ?? new self();
+            return self::query()->first() ?? new self;
         });
     }
 }

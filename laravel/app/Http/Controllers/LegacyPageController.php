@@ -38,6 +38,7 @@ class LegacyPageController extends Controller
 
         if ($isLoggedIn) {
             $globals = $this->legacyData->loadAuthHomeData($globals);
+
             return view('legacy.home-auth', $globals);
         }
 
@@ -137,8 +138,8 @@ class LegacyPageController extends Controller
         $sLang = $globals['siteLanguage'] ?? 1;
 
         $cat = DB::table('categories')->where('cat_url', urlencode($catUrl))->first();
-        if (!$cat) {
-            return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+        if (! $cat) {
+            return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
         }
 
         $catMeta = DB::table('cats_meta')->where('cat_id', $cat->cat_id)->where('language_id', $sLang)->first();
@@ -154,8 +155,8 @@ class LegacyPageController extends Controller
                 ->where('child_parent_id', $cat->cat_id)
                 ->where('child_url', urlencode($childUrl))
                 ->first();
-            if (!$child) {
-                return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+            if (! $child) {
+                return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
             }
             $childMeta = DB::table('child_cats_meta')->where('child_id', $child->child_id)->where('language_id', $sLang)->first();
             $globals['page_child_title'] = $childMeta->child_title ?? '';
@@ -184,8 +185,8 @@ class LegacyPageController extends Controller
         $sLang = $globals['siteLanguage'] ?? 1;
 
         $seller = DB::table('sellers')->where('seller_user_name', $username)->first();
-        if (!$seller) {
-            return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+        if (! $seller) {
+            return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
         }
 
         $proposalUrl = urlencode($slug);
@@ -195,8 +196,8 @@ class LegacyPageController extends Controller
             ->whereNotIn('proposal_status', ['draft', 'admin_pause', 'pause', 'pending', 'trash', 'declined', 'modification', 'deleted'])
             ->first();
 
-        if (!$proposal) {
-            return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+        if (! $proposal) {
+            return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
         }
 
         $globals['proposal_id'] = $proposal->proposal_id;
@@ -299,8 +300,8 @@ class LegacyPageController extends Controller
 
         $sLang = $globals['siteLanguage'] ?? 1;
         $page = DB::table('pages')->where('url', urlencode($slug))->first();
-        if (!$page) {
-            return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+        if (! $page) {
+            return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
         }
 
         $meta = DB::table('pages_meta')->where('page_id', $page->id)->where('language_id', $sLang)->first();
@@ -328,8 +329,8 @@ class LegacyPageController extends Controller
             ->whereNotIn('seller_status', ['deactivated', 'block-ban'])
             ->first();
 
-        if (!$seller) {
-            return response("<script>window.open('" . ($globals['site_url'] ?? '') . "/index?not_available','_self');</script>");
+        if (! $seller) {
+            return response("<script>window.open('".($globals['site_url'] ?? '')."/index?not_available','_self');</script>");
         }
 
         return view('legacy.user-profile', $globals);

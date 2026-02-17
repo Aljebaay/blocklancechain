@@ -68,7 +68,7 @@ class ProposalManagementController extends Controller
         $updated = Proposal::where('proposal_id', $proposalId)
             ->update(['proposal_status' => $validated['status']]);
 
-        if (!$updated) {
+        if (! $updated) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -82,7 +82,7 @@ class ProposalManagementController extends Controller
     {
         $proposal = Proposal::find($proposalId);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -100,7 +100,7 @@ class ProposalManagementController extends Controller
     {
         $proposal = Proposal::find($proposalId);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 

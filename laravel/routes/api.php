@@ -46,7 +46,7 @@ Route::prefix('v1')->group(function () {
         $service = app(\App\Services\ProposalService::class);
         $proposal = $service->getProposalBySlug($username, $proposalUrl);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -62,7 +62,7 @@ Route::prefix('v1')->group(function () {
         $service = app(\App\Services\ProposalService::class);
         $proposal = $service->getProposalById($id);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -130,7 +130,7 @@ Route::prefix('v1')->group(function () {
             ->with(['proposals' => fn ($q) => $q->where('proposal_status', 'active')->with(['seller', 'buyerReviews'])])
             ->first();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -161,7 +161,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/blog/{id}', function (int $id) {
         $post = \App\Models\Blog::find($id);
 
-        if (!$post) {
+        if (! $post) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -177,7 +177,7 @@ Route::prefix('v1')->group(function () {
             ->where('page_status', 'active')
             ->first();
 
-        if (!$page) {
+        if (! $page) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -213,7 +213,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/proposals/my', function () {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -232,12 +232,12 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/orders/buying/{status?}', function (string $status = 'active') {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $validStatuses = ['active', 'completed', 'cancelled', 'delivered', 'all'];
-        if (!in_array($status, $validStatuses, true)) {
+        if (! in_array($status, $validStatuses, true)) {
             return response()->json(['success' => false, 'error' => 'invalid_status'], 400);
         }
 
@@ -263,12 +263,12 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/orders/selling/{status?}', function (string $status = 'active') {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $validStatuses = ['active', 'completed', 'cancelled', 'delivered', 'all'];
-        if (!in_array($status, $validStatuses, true)) {
+        if (! in_array($status, $validStatuses, true)) {
             return response()->json(['success' => false, 'error' => 'invalid_status'], 400);
         }
 
@@ -294,7 +294,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/orders/{orderId}', function (int $orderId) {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -303,7 +303,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
             'buyerReview', 'sellerReview', 'messages.sender',
         ])->find($orderId);
 
-        if (!$order || ($order->buyer_id !== $seller->seller_id && $order->seller_id !== $seller->seller_id)) {
+        if (! $order || ($order->buyer_id !== $seller->seller_id && $order->seller_id !== $seller->seller_id)) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -317,7 +317,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/conversations', function (Request $request) {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -344,14 +344,14 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/conversations/{conversationId}', function (int $conversationId) {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $conversation = \App\Models\Conversation::with(['messages.sender', 'sender', 'receiver'])
             ->find($conversationId);
 
-        if (!$conversation || ($conversation->sender_id !== $seller->seller_id && $conversation->receiver_id !== $seller->seller_id)) {
+        if (! $conversation || ($conversation->sender_id !== $seller->seller_id && $conversation->receiver_id !== $seller->seller_id)) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -369,14 +369,14 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::post('/conversations/{conversationId}/message', function (Request $request, int $conversationId) {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $request->validate(['message' => ['required', 'string', 'max:5000']]);
 
         $conversation = \App\Models\Conversation::find($conversationId);
-        if (!$conversation || ($conversation->sender_id !== $seller->seller_id && $conversation->receiver_id !== $seller->seller_id)) {
+        if (! $conversation || ($conversation->sender_id !== $seller->seller_id && $conversation->receiver_id !== $seller->seller_id)) {
             return response()->json(['success' => false, 'error' => 'forbidden'], 403);
         }
 
@@ -400,7 +400,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::get('/settings/user', function () {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -413,7 +413,7 @@ Route::prefix('v1')->middleware('seller.auth')->group(function () {
     Route::post('/settings/user', function (Request $request) {
         $authService = app(\App\Services\AuthService::class);
         $seller = $authService->currentSeller();
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
@@ -468,6 +468,7 @@ Route::prefix('v1/admin')->middleware('admin.auth')->group(function () {
     // General settings
     Route::get('/settings', function () {
         $service = app(\App\Services\SiteSettingsService::class);
+
         return response()->json([
             'success' => true,
             'data' => $service->getGeneralSettings(),
@@ -480,6 +481,7 @@ Route::prefix('v1/admin')->middleware('admin.auth')->group(function () {
             $settings->update($request->only($settings->getFillable()));
             app(\App\Services\SiteSettingsService::class)->clearCache();
         }
+
         return response()->json(['success' => true]);
     })->name('api.admin.settings.update');
 

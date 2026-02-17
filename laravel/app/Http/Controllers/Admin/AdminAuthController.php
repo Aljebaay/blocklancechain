@@ -28,7 +28,7 @@ class AdminAuthController extends Controller
     {
         // #region agent log
         $hasAdmin = session()->has('admin_email');
-        file_put_contents(base_path('../.cursor/debug.log'), json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:showLogin', 'message'=>'Show login page', 'data'=>['has_admin_email'=>$hasAdmin, 'redirect_to'=>$hasAdmin ? '/admin' : null], 'hypothesisId'=>'D,E'])."\n", FILE_APPEND);
+        file_put_contents(base_path('../.cursor/debug.log'), json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:showLogin', 'message' => 'Show login page', 'data' => ['has_admin_email' => $hasAdmin, 'redirect_to' => $hasAdmin ? '/admin' : null], 'hypothesisId' => 'D,E'])."\n", FILE_APPEND);
         // #endregion
 
         if ($hasAdmin) {
@@ -49,44 +49,46 @@ class AdminAuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $adminEmail = strip_tags((string) $request->input('admin_email', ''));
-        $adminPass  = (string) $request->input('admin_pass', '');
+        $adminPass = (string) $request->input('admin_pass', '');
 
         // #region agent log
         $logPath = base_path('../.cursor/debug.log');
-        file_put_contents($logPath, json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:login:entry', 'message'=>'Admin login attempt', 'data'=>['email_empty'=>empty($adminEmail), 'pass_empty'=>empty($adminPass)], 'hypothesisId'=>'A'])."\n", FILE_APPEND);
+        file_put_contents($logPath, json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:login:entry', 'message' => 'Admin login attempt', 'data' => ['email_empty' => empty($adminEmail), 'pass_empty' => empty($adminPass)], 'hypothesisId' => 'A'])."\n", FILE_APPEND);
         // #endregion
 
         if (empty($adminEmail) || empty($adminPass)) {
             session()->flash('admin_login_error', 'Email and password are required.');
+
             return redirect('/admin/login');
         }
 
         $admin = DB::table('admins')
             ->where(function ($q) use ($adminEmail) {
                 $q->where('admin_email', $adminEmail)
-                  ->orWhere('admin_user_name', $adminEmail);
+                    ->orWhere('admin_user_name', $adminEmail);
             })
             ->first();
 
         // #region agent log
-        file_put_contents($logPath, json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:login:after_query', 'message'=>'Admin lookup result', 'data'=>['admin_found'=>($admin !== null), 'admin_id'=>$admin !== null ? $admin->admin_id : null], 'hypothesisId'=>'A'])."\n", FILE_APPEND);
+        file_put_contents($logPath, json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:login:after_query', 'message' => 'Admin lookup result', 'data' => ['admin_found' => ($admin !== null), 'admin_id' => $admin !== null ? $admin->admin_id : null], 'hypothesisId' => 'A'])."\n", FILE_APPEND);
         // #endregion
 
         $passwordOk = $admin && $this->verifyAdminPassword($adminPass, $admin);
-        if (!$admin || !$passwordOk) {
+        if (! $admin || ! $passwordOk) {
             // #region agent log
-            file_put_contents($logPath, json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:login:reject', 'message'=>'Login rejected', 'data'=>['no_admin'=>($admin === null), 'password_ok'=>$passwordOk], 'hypothesisId'=>'B'])."\n", FILE_APPEND);
+            file_put_contents($logPath, json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:login:reject', 'message' => 'Login rejected', 'data' => ['no_admin' => ($admin === null), 'password_ok' => $passwordOk], 'hypothesisId' => 'B'])."\n", FILE_APPEND);
             // #endregion
             session()->flash('admin_login_error', 'Opps! password or username is incorrect. Please try again.');
+
             return redirect('/admin/login');
         }
 
         // #region agent log
-        file_put_contents($logPath, json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:login:password_ok', 'message'=>'Password verified', 'data'=>['admin_id'=>$admin->admin_id], 'hypothesisId'=>'B'])."\n", FILE_APPEND);
+        file_put_contents($logPath, json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:login:password_ok', 'message' => 'Password verified', 'data' => ['admin_id' => $admin->admin_id], 'hypothesisId' => 'B'])."\n", FILE_APPEND);
         // #endregion
 
         // Handle "Remember Me" exactly like legacy
-        if (!empty($request->input('remember'))) {
+        if (! empty($request->input('remember'))) {
             session(['r_email' => $adminEmail, 'r_passoword' => $adminPass]);
         } else {
             session()->forget(['r_email', 'r_passoword']);
@@ -95,22 +97,22 @@ class AdminAuthController extends Controller
         session()->regenerate();
 
         session([
-            'admin_email'    => $adminEmail,
-            'admin_id'       => $admin->admin_id ?? null,
-            'admin_name'     => $admin->admin_name ?? 'Admin',
-            'loggedin_time'  => time(),
-            'adminLanguage'  => 1,
+            'admin_email' => $adminEmail,
+            'admin_id' => $admin->admin_id ?? null,
+            'admin_name' => $admin->admin_name ?? 'Admin',
+            'loggedin_time' => time(),
+            'adminLanguage' => 1,
         ]);
 
         // #region agent log
-        file_put_contents(base_path('../.cursor/debug.log'), json_encode(['id'=>'log_'.uniqid(), 'timestamp'=>time()*1000, 'location'=>'AdminAuthController.php:login:success', 'message'=>'Redirecting with success', 'data'=>['redirect_to'=>'/admin/login', 'session_has_admin_email'=>session()->has('admin_email')], 'hypothesisId'=>'C,D'])."\n", FILE_APPEND);
+        file_put_contents(base_path('../.cursor/debug.log'), json_encode(['id' => 'log_'.uniqid(), 'timestamp' => time() * 1000, 'location' => 'AdminAuthController.php:login:success', 'message' => 'Redirecting with success', 'data' => ['redirect_to' => '/admin/login', 'session_has_admin_email' => session()->has('admin_email')], 'hypothesisId' => 'C,D'])."\n", FILE_APPEND);
         // #endregion
 
         // Sync to native PHP session so the legacy admin panel can read $_SESSION
         $this->syncNativeSession([
-            'admin_email'   => $adminEmail,
-            'admin_id'      => $admin->admin_id ?? null,
-            'admin_name'    => $admin->admin_name ?? 'Admin',
+            'admin_email' => $adminEmail,
+            'admin_id' => $admin->admin_id ?? null,
+            'admin_name' => $admin->admin_name ?? 'Admin',
             'loggedin_time' => time(),
             'adminLanguage' => 1,
         ]);
@@ -145,14 +147,17 @@ class AdminAuthController extends Controller
         if (strlen($storedHash) === 32 && ctype_xdigit($storedHash)) {
             if (md5($password) === $storedHash) {
                 $this->upgradePasswordHash($admin->admin_id, $password);
+
                 return true;
             }
+
             return false;
         }
 
         // 3. Try plaintext comparison
         if ($password === $storedHash) {
             $this->upgradePasswordHash($admin->admin_id, $password);
+
             return true;
         }
 

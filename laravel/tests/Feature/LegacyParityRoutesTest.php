@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
@@ -48,7 +49,7 @@ class LegacyParityRoutesTest extends TestCase
      */
     private function seedLegacyTables(): void
     {
-        if (!Schema::hasTable('general_settings')) {
+        if (! Schema::hasTable('general_settings')) {
             Schema::create('general_settings', function ($table) {
                 $table->increments('id');
                 $table->text('site_name')->default('TestSite');
@@ -87,14 +88,14 @@ class LegacyParityRoutesTest extends TestCase
             });
 
             DB::table('general_settings')->insert([
-                'site_name'          => 'TestSite',
-                'site_url'           => 'http://localhost',
+                'site_name' => 'TestSite',
+                'site_url' => 'http://localhost',
                 'site_email_address' => 'admin@test.com',
-                'site_title'         => 'TestSite',
+                'site_title' => 'TestSite',
             ]);
         }
 
-        if (!Schema::hasTable('sellers')) {
+        if (! Schema::hasTable('sellers')) {
             Schema::create('sellers', function ($table) {
                 $table->increments('seller_id');
                 $table->string('seller_name', 255)->default('');
@@ -138,7 +139,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('admins')) {
+        if (! Schema::hasTable('admins')) {
             Schema::create('admins', function ($table) {
                 $table->increments('admin_id');
                 $table->text('admin_name')->default('');
@@ -162,7 +163,7 @@ class LegacyParityRoutesTest extends TestCase
      */
     private function seedSupportTables(): void
     {
-        if (!Schema::hasTable('categories')) {
+        if (! Schema::hasTable('categories')) {
             Schema::create('categories', function ($table) {
                 $table->increments('cat_id');
                 $table->text('cat_name')->default('');
@@ -175,7 +176,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('child_categories')) {
+        if (! Schema::hasTable('child_categories')) {
             Schema::create('child_categories', function ($table) {
                 $table->increments('id');
                 $table->integer('parent_id')->default(0);
@@ -185,7 +186,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('languages')) {
+        if (! Schema::hasTable('languages')) {
             Schema::create('languages', function ($table) {
                 $table->increments('language_id');
                 $table->text('language_name')->default('');
@@ -200,7 +201,7 @@ class LegacyParityRoutesTest extends TestCase
             ]);
         }
 
-        if (!Schema::hasTable('language_data')) {
+        if (! Schema::hasTable('language_data')) {
             Schema::create('language_data', function ($table) {
                 $table->increments('id');
                 $table->integer('language_id')->default(0);
@@ -209,7 +210,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('pages')) {
+        if (! Schema::hasTable('pages')) {
             Schema::create('pages', function ($table) {
                 $table->increments('page_id');
                 $table->text('page_title')->default('');
@@ -219,7 +220,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('proposals')) {
+        if (! Schema::hasTable('proposals')) {
             Schema::create('proposals', function ($table) {
                 $table->increments('proposal_id');
                 $table->integer('seller_id')->default(0);
@@ -236,7 +237,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('reviews')) {
+        if (! Schema::hasTable('reviews')) {
             Schema::create('reviews', function ($table) {
                 $table->increments('review_id');
                 $table->integer('proposal_id')->default(0);
@@ -244,7 +245,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('countries')) {
+        if (! Schema::hasTable('countries')) {
             Schema::create('countries', function ($table) {
                 $table->increments('id');
                 $table->string('country_name', 255)->default('');
@@ -252,7 +253,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('order_notifications')) {
+        if (! Schema::hasTable('order_notifications')) {
             Schema::create('order_notifications', function ($table) {
                 $table->increments('id');
                 $table->integer('seller_id')->default(0);
@@ -265,7 +266,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('conversations')) {
+        if (! Schema::hasTable('conversations')) {
             Schema::create('conversations', function ($table) {
                 $table->increments('message_group_id');
                 $table->integer('seller_a_id')->default(0);
@@ -273,7 +274,7 @@ class LegacyParityRoutesTest extends TestCase
             });
         }
 
-        if (!Schema::hasTable('inbox_sellers')) {
+        if (! Schema::hasTable('inbox_sellers')) {
             Schema::create('inbox_sellers', function ($table) {
                 $table->increments('inbox_seller_id');
                 $table->integer('message_group_id')->default(0);
@@ -287,108 +288,108 @@ class LegacyParityRoutesTest extends TestCase
     //  Bug A: POST / must not throw MethodNotAllowed
     // ─────────────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function post_root_with_login_payload_does_not_throw_method_not_allowed(): void
     {
         DB::table('sellers')->insert([
             'seller_user_name' => 'testuser',
-            'seller_name'      => 'Test User',
-            'seller_email'     => 'test@test.com',
-            'seller_pass'      => password_hash('secret123', PASSWORD_DEFAULT),
-            'seller_status'    => 'active',
+            'seller_name' => 'Test User',
+            'seller_email' => 'test@test.com',
+            'seller_pass' => password_hash('secret123', PASSWORD_DEFAULT),
+            'seller_status' => 'active',
         ]);
 
         $response = $this->post('/', [
-            '_token'           => csrf_token(),
+            '_token' => csrf_token(),
             'seller_user_name' => 'testuser',
-            'seller_pass'      => 'secret123',
-            'login'            => 'Login Now',
+            'seller_pass' => 'secret123',
+            'login' => 'Login Now',
         ]);
 
         $response->assertStatus(302);
         $response->assertRedirect('/');
     }
 
-    /** @test */
+    #[Test]
     public function post_root_with_register_payload_does_not_throw_method_not_allowed(): void
     {
         $response = $this->post('/', [
-            '_token'       => csrf_token(),
-            'name'         => 'New User',
-            'u_name'       => 'newuser',
-            'email'        => 'new@test.com',
-            'pass'         => 'secret123',
-            'con_pass'     => 'secret123',
-            'phone'        => '1234567',
+            '_token' => csrf_token(),
+            'name' => 'New User',
+            'u_name' => 'newuser',
+            'email' => 'new@test.com',
+            'pass' => 'secret123',
+            'con_pass' => 'secret123',
+            'phone' => '1234567',
             'country_code' => '+1',
-            'register'     => 'Register',
+            'register' => 'Register',
         ]);
 
         $response->assertStatus(302);
         $response->assertRedirect('/');
     }
 
-    /** @test */
+    #[Test]
     public function post_root_with_forgot_payload_does_not_throw_method_not_allowed(): void
     {
         $response = $this->post('/', [
-            '_token'      => csrf_token(),
+            '_token' => csrf_token(),
             'forgot_email' => 'nobody@test.com',
-            'forgot'       => 'submit',
+            'forgot' => 'submit',
         ]);
 
         $response->assertStatus(302);
     }
 
-    /** @test */
+    #[Test]
     public function post_root_login_with_valid_credentials_sets_session(): void
     {
         DB::table('sellers')->insert([
             'seller_user_name' => 'testuser',
-            'seller_name'      => 'Test User',
-            'seller_email'     => 'test@test.com',
-            'seller_pass'      => password_hash('secret123', PASSWORD_DEFAULT),
-            'seller_status'    => 'active',
+            'seller_name' => 'Test User',
+            'seller_email' => 'test@test.com',
+            'seller_pass' => password_hash('secret123', PASSWORD_DEFAULT),
+            'seller_status' => 'active',
         ]);
 
         $response = $this->post('/', [
-            '_token'           => csrf_token(),
+            '_token' => csrf_token(),
             'seller_user_name' => 'testuser',
-            'seller_pass'      => 'secret123',
-            'login'            => 'Login Now',
+            'seller_pass' => 'secret123',
+            'login' => 'Login Now',
         ]);
 
         $response->assertRedirect('/');
         $response->assertSessionHas('seller_user_name', 'testuser');
     }
 
-    /** @test */
+    #[Test]
     public function post_root_login_with_invalid_credentials_flashes_error(): void
     {
         $response = $this->post('/', [
-            '_token'           => csrf_token(),
+            '_token' => csrf_token(),
             'seller_user_name' => 'nonexistent',
-            'seller_pass'      => 'wrongpass',
-            'login'            => 'Login Now',
+            'seller_pass' => 'wrongpass',
+            'login' => 'Login Now',
         ]);
 
         $response->assertStatus(302);
-        $response->assertSessionHas('login_errors');
+        $response->assertSessionHas('login_warning');
     }
 
-    /** @test */
+    #[Test]
     public function post_root_register_with_valid_data_creates_seller(): void
     {
         $response = $this->post('/', [
-            '_token'       => csrf_token(),
-            'name'         => 'Brand New User',
-            'u_name'       => 'brandnew',
-            'email'        => 'brand@new.com',
-            'pass'         => 'secret123',
-            'con_pass'     => 'secret123',
-            'phone'        => '5551234',
+            '_token' => csrf_token(),
+            'name' => 'Brand New User',
+            'u_name' => 'brandnew',
+            'email' => 'brand@new.com',
+            'pass' => 'secret123',
+            'con_pass' => 'secret123',
+            'phone' => '5551234',
             'country_code' => '+1',
-            'register'     => 'Register',
+            'register' => 'Register',
         ]);
 
         $response->assertRedirect('/');
@@ -396,25 +397,25 @@ class LegacyParityRoutesTest extends TestCase
         $response->assertSessionHas('seller_user_name', 'brandnew');
     }
 
-    /** @test */
+    #[Test]
     public function post_root_register_with_duplicate_username_flashes_error(): void
     {
         DB::table('sellers')->insert([
             'seller_user_name' => 'taken',
-            'seller_name'      => 'Existing',
-            'seller_email'     => 'existing@test.com',
-            'seller_pass'      => password_hash('secret', PASSWORD_DEFAULT),
-            'seller_status'    => 'active',
+            'seller_name' => 'Existing',
+            'seller_email' => 'existing@test.com',
+            'seller_pass' => password_hash('secret', PASSWORD_DEFAULT),
+            'seller_status' => 'active',
         ]);
 
         $response = $this->post('/', [
-            '_token'       => csrf_token(),
-            'name'         => 'Another',
-            'u_name'       => 'taken',
-            'email'        => 'another@test.com',
-            'pass'         => 'secret123',
-            'con_pass'     => 'secret123',
-            'register'     => 'Register',
+            '_token' => csrf_token(),
+            'name' => 'Another',
+            'u_name' => 'taken',
+            'email' => 'another@test.com',
+            'pass' => 'secret123',
+            'con_pass' => 'secret123',
+            'register' => 'Register',
         ]);
 
         $response->assertRedirect('/');
@@ -425,22 +426,22 @@ class LegacyParityRoutesTest extends TestCase
     //  POST /login (standalone login page)
     // ─────────────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function post_login_with_access_button_works(): void
     {
         DB::table('sellers')->insert([
             'seller_user_name' => 'loginuser',
-            'seller_name'      => 'Login User',
-            'seller_email'     => 'login@test.com',
-            'seller_pass'      => password_hash('mypassword', PASSWORD_DEFAULT),
-            'seller_status'    => 'active',
+            'seller_name' => 'Login User',
+            'seller_email' => 'login@test.com',
+            'seller_pass' => password_hash('mypassword', PASSWORD_DEFAULT),
+            'seller_status' => 'active',
         ]);
 
         $response = $this->post('/login', [
-            '_token'           => csrf_token(),
+            '_token' => csrf_token(),
             'seller_user_name' => 'loginuser',
-            'seller_pass'      => 'mypassword',
-            'access'           => 'Login',
+            'seller_pass' => 'mypassword',
+            'access' => 'Login',
         ]);
 
         $response->assertRedirect('/');
@@ -451,7 +452,7 @@ class LegacyParityRoutesTest extends TestCase
     //  Bug B: GET /admin/login must return 200
     // ─────────────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function get_admin_login_returns_200(): void
     {
         $response = $this->get('/admin/login');
@@ -462,7 +463,7 @@ class LegacyParityRoutesTest extends TestCase
         $response->assertSee('admin_pass');
     }
 
-    /** @test */
+    #[Test]
     public function get_admin_login_contains_form_posting_to_self(): void
     {
         $response = $this->get('/admin/login');
@@ -472,20 +473,20 @@ class LegacyParityRoutesTest extends TestCase
         $response->assertSee('name="admin_login"', false);
     }
 
-    /** @test */
+    #[Test]
     public function post_admin_login_with_valid_credentials_redirects(): void
     {
         DB::table('admins')->insert([
-            'admin_name'      => 'Admin',
+            'admin_name' => 'Admin',
             'admin_user_name' => 'admin',
-            'admin_email'     => 'admin@test.com',
-            'admin_pass'      => password_hash('adminpass', PASSWORD_DEFAULT),
+            'admin_email' => 'admin@test.com',
+            'admin_pass' => password_hash('adminpass', PASSWORD_DEFAULT),
         ]);
 
         $response = $this->post('/admin/login', [
-            '_token'      => csrf_token(),
+            '_token' => csrf_token(),
             'admin_email' => 'admin@test.com',
-            'admin_pass'  => 'adminpass',
+            'admin_pass' => 'adminpass',
             'admin_login' => 'Sign in',
         ]);
 
@@ -493,13 +494,13 @@ class LegacyParityRoutesTest extends TestCase
         $response->assertSessionHas('admin_email');
     }
 
-    /** @test */
+    #[Test]
     public function post_admin_login_with_invalid_credentials_flashes_error(): void
     {
         $response = $this->post('/admin/login', [
-            '_token'      => csrf_token(),
+            '_token' => csrf_token(),
             'admin_email' => 'wrong@test.com',
-            'admin_pass'  => 'wrongpass',
+            'admin_pass' => 'wrongpass',
             'admin_login' => 'Sign in',
         ]);
 
@@ -512,22 +513,22 @@ class LegacyParityRoutesTest extends TestCase
     //  POST /index should also work (legacy alias)
     // ─────────────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function post_index_with_login_payload_works(): void
     {
         DB::table('sellers')->insert([
             'seller_user_name' => 'indexuser',
-            'seller_name'      => 'Index User',
-            'seller_email'     => 'index@test.com',
-            'seller_pass'      => password_hash('pass123', PASSWORD_DEFAULT),
-            'seller_status'    => 'active',
+            'seller_name' => 'Index User',
+            'seller_email' => 'index@test.com',
+            'seller_pass' => password_hash('pass123', PASSWORD_DEFAULT),
+            'seller_status' => 'active',
         ]);
 
         $response = $this->post('/index', [
-            '_token'           => csrf_token(),
+            '_token' => csrf_token(),
             'seller_user_name' => 'indexuser',
-            'seller_pass'      => 'pass123',
-            'login'            => 'Login Now',
+            'seller_pass' => 'pass123',
+            'login' => 'Login Now',
         ]);
 
         $response->assertRedirect('/');
@@ -537,17 +538,17 @@ class LegacyParityRoutesTest extends TestCase
     //  POST /register should also work
     // ─────────────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function post_register_with_legacy_fields_works(): void
     {
         $response = $this->post('/register', [
-            '_token'       => csrf_token(),
-            'name'         => 'Reg User',
-            'u_name'       => 'reguser',
-            'email'        => 'reg@test.com',
-            'pass'         => 'secret123',
-            'con_pass'     => 'secret123',
-            'register'     => 'Register',
+            '_token' => csrf_token(),
+            'name' => 'Reg User',
+            'u_name' => 'reguser',
+            'email' => 'reg@test.com',
+            'pass' => 'secret123',
+            'con_pass' => 'secret123',
+            'register' => 'Register',
         ]);
 
         $response->assertRedirect('/');

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SellerLevel extends Model
 {
     protected $table = 'seller_levels';
+
     public $timestamps = false;
 
     protected $fillable = [

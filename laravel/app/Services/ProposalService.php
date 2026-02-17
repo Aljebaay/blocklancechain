@@ -21,9 +21,9 @@ class ProposalService
      * Get proposals with filtering and pagination.
      * Replaces legacy get_proposals() function.
      *
-     * @param string $type - search, category, featured, top, random, tag
-     * @param array $filters - request filters
-     * @param int $perPage - items per page
+     * @param  string  $type  - search, category, featured, top, random, tag
+     * @param  array  $filters  - request filters
+     * @param  int  $perPage  - items per page
      */
     public function getProposals(
         string $type,
@@ -140,7 +140,7 @@ class ProposalService
     {
         switch ($type) {
             case 'search':
-                if (!empty($filters['search'])) {
+                if (! empty($filters['search'])) {
                     $search = $filters['search'];
                     $query->where(function (Builder $q) use ($search) {
                         $q->where('proposal_title', 'LIKE', "%{$search}%")
@@ -150,16 +150,16 @@ class ProposalService
                 break;
 
             case 'category':
-                if (!empty($filters['category_id'])) {
+                if (! empty($filters['category_id'])) {
                     $query->where('proposal_category', $filters['category_id']);
                 }
-                if (!empty($filters['sub_category_id'])) {
+                if (! empty($filters['sub_category_id'])) {
                     $query->where('proposal_sub_category', $filters['sub_category_id']);
                 }
                 break;
 
             case 'tag':
-                if (!empty($filters['tag'])) {
+                if (! empty($filters['tag'])) {
                     $query->where('proposal_tags', 'LIKE', "%{$filters['tag']}%");
                 }
                 break;
@@ -174,20 +174,20 @@ class ProposalService
     private function applyCommonFilters(Builder $query, array $filters): Builder
     {
         // Price range filter
-        if (!empty($filters['min_price'])) {
+        if (! empty($filters['min_price'])) {
             $query->where('proposal_price', '>=', (float) $filters['min_price']);
         }
-        if (!empty($filters['max_price'])) {
+        if (! empty($filters['max_price'])) {
             $query->where('proposal_price', '<=', (float) $filters['max_price']);
         }
 
         // Delivery time filter
-        if (!empty($filters['delivery_time'])) {
+        if (! empty($filters['delivery_time'])) {
             $query->where('proposal_delivery_time', '<=', (int) $filters['delivery_time']);
         }
 
         // Seller level filter
-        if (!empty($filters['seller_level'])) {
+        if (! empty($filters['seller_level'])) {
             $query->whereHas('seller', function (Builder $q) use ($filters) {
                 if (is_array($filters['seller_level'])) {
                     $q->whereIn('seller_level', $filters['seller_level']);
@@ -198,7 +198,7 @@ class ProposalService
         }
 
         // Seller country filter
-        if (!empty($filters['seller_country'])) {
+        if (! empty($filters['seller_country'])) {
             $query->whereHas('seller', function (Builder $q) use ($filters) {
                 if (is_array($filters['seller_country'])) {
                     $q->whereIn('seller_country', $filters['seller_country']);
@@ -209,7 +209,7 @@ class ProposalService
         }
 
         // Online sellers only filter
-        if (!empty($filters['online_sellers'])) {
+        if (! empty($filters['online_sellers'])) {
             $threshold = now()->subSeconds(10)->format('Y-m-d H:i:s');
             $query->whereHas('seller', function (Builder $q) use ($threshold) {
                 $q->where('seller_activity', '>', $threshold);

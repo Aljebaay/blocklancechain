@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProposalExtra extends Model
 {
     protected $table = 'proposal_extras';
+
     public $timestamps = false;
 
     protected $fillable = [

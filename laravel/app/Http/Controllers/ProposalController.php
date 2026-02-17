@@ -8,7 +8,6 @@ use App\Services\AuthService;
 use App\Services\ProposalService;
 use App\Services\SiteSettingsService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -32,7 +31,7 @@ class ProposalController extends Controller
     {
         $proposal = $this->proposalService->getProposalBySlug($username, $proposalUrl);
 
-        if (!$proposal) {
+        if (! $proposal) {
             abort(404);
         }
 
@@ -55,7 +54,7 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -76,7 +75,7 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -94,13 +93,13 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
         $proposal = $this->proposalService->getProposalById($proposalId);
 
-        if (!$proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
+        if (! $proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
             abort(404);
         }
 
@@ -119,13 +118,13 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $proposal = $this->proposalService->getProposalById($proposalId);
 
-        if (!$proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
+        if (! $proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -142,13 +141,13 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $proposal = $this->proposalService->getProposalById($proposalId);
 
-        if (!$proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
+        if (! $proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -165,13 +164,13 @@ class ProposalController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
         $proposal = $this->proposalService->getProposalById($proposalId);
 
-        if (!$proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
+        if (! $proposal || $proposal->proposal_seller_id !== $seller->seller_id) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 

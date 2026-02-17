@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderMessage extends Model
 {
     protected $table = 'order_messages';
+
     public $timestamps = false;
 
     protected $fillable = [

@@ -143,6 +143,7 @@ class LegacyAjaxController extends Controller
     private function getOnlineSellerIds(): array
     {
         $threshold = date('Y-m-d H:i:s', strtotime('-10 seconds'));
+
         return DB::table('sellers')
             ->where('seller_activity', '>', $threshold)
             ->pluck('seller_id')
@@ -167,13 +168,13 @@ class LegacyAjaxController extends Controller
             foreach ($onlineSellers as $value) {
                 if ($value != 0) {
                     $onlineIds = $this->getOnlineSellerIds();
-                    if (!empty($onlineIds)) {
+                    if (! empty($onlineIds)) {
                         $placeholders = implode(',', array_fill(0, count($onlineIds), '?'));
                         $extraWhere .= " AND proposal_seller_id IN ({$placeholders})";
                         $extraBindings = array_merge($extraBindings, $onlineIds);
                     } else {
                         // No online sellers — force empty results
-                        $extraWhere .= " AND 1=0";
+                        $extraWhere .= ' AND 1=0';
                     }
                     $wherePath .= "online_sellers[]={$value}&";
                     break; // Only process once
@@ -184,7 +185,7 @@ class LegacyAjaxController extends Controller
         // Instant delivery filter
         $instantDelivery = 0;
         $instantDeliveryArr = $request->input('instant_delivery', []);
-        if (is_array($instantDeliveryArr) && !empty($instantDeliveryArr)) {
+        if (is_array($instantDeliveryArr) && ! empty($instantDeliveryArr)) {
             $instantDelivery = (int) $instantDeliveryArr[0];
             $wherePath .= "instant_delivery[]={$instantDelivery}&";
         }
@@ -192,7 +193,7 @@ class LegacyAjaxController extends Controller
         // Order
         $orderArr = $request->input('order', []);
         $orderBy = 'DESC';
-        if (is_array($orderArr) && !empty($orderArr)) {
+        if (is_array($orderArr) && ! empty($orderArr)) {
             $orderBy = strtoupper($orderArr[0]) === 'ASC' ? 'ASC' : 'DESC';
             $wherePath .= "order[]={$orderBy}&";
         }
@@ -200,8 +201,8 @@ class LegacyAjaxController extends Controller
         // Seller country filter
         $sellerCountry = $request->input('seller_country', []);
         if (is_array($sellerCountry)) {
-            $countryValues = array_filter($sellerCountry, fn($v) => $v !== 'undefined' && $v !== '');
-            if (!empty($countryValues)) {
+            $countryValues = array_filter($sellerCountry, fn ($v) => $v !== 'undefined' && $v !== '');
+            if (! empty($countryValues)) {
                 $placeholders = implode(',', array_fill(0, count($countryValues), '?'));
                 $extraWhere .= " AND sellers.seller_country IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($countryValues));
@@ -214,8 +215,8 @@ class LegacyAjaxController extends Controller
         // Seller city filter
         $sellerCity = $request->input('seller_city', []);
         if (is_array($sellerCity)) {
-            $cityValues = array_filter($sellerCity, fn($v) => $v !== 'undefined' && $v !== '');
-            if (!empty($cityValues)) {
+            $cityValues = array_filter($sellerCity, fn ($v) => $v !== 'undefined' && $v !== '');
+            if (! empty($cityValues)) {
                 $placeholders = implode(',', array_fill(0, count($cityValues), '?'));
                 $extraWhere .= " AND sellers.seller_city IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($cityValues));
@@ -228,8 +229,8 @@ class LegacyAjaxController extends Controller
         // Category filter (for search page sidebar)
         $catId = $request->input('cat_id', []);
         if (is_array($catId)) {
-            $catValues = array_filter($catId, fn($v) => (int) $v !== 0);
-            if (!empty($catValues)) {
+            $catValues = array_filter($catId, fn ($v) => (int) $v !== 0);
+            if (! empty($catValues)) {
                 $placeholders = implode(',', array_fill(0, count($catValues), '?'));
                 $extraWhere .= " AND proposal_cat_id IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($catValues));
@@ -242,8 +243,8 @@ class LegacyAjaxController extends Controller
         // Delivery time filter
         $deliveryTime = $request->input('delivery_time', []);
         if (is_array($deliveryTime)) {
-            $deliveryValues = array_filter($deliveryTime, fn($v) => (int) $v !== 0);
-            if (!empty($deliveryValues)) {
+            $deliveryValues = array_filter($deliveryTime, fn ($v) => (int) $v !== 0);
+            if (! empty($deliveryValues)) {
                 $placeholders = implode(',', array_fill(0, count($deliveryValues), '?'));
                 $extraWhere .= " AND delivery_id IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($deliveryValues));
@@ -256,8 +257,8 @@ class LegacyAjaxController extends Controller
         // Seller level filter
         $sellerLevel = $request->input('seller_level', []);
         if (is_array($sellerLevel)) {
-            $levelValues = array_filter($sellerLevel, fn($v) => (int) $v !== 0);
-            if (!empty($levelValues)) {
+            $levelValues = array_filter($sellerLevel, fn ($v) => (int) $v !== 0);
+            if (! empty($levelValues)) {
                 $placeholders = implode(',', array_fill(0, count($levelValues), '?'));
                 $extraWhere .= " AND level_id IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($levelValues));
@@ -270,8 +271,8 @@ class LegacyAjaxController extends Controller
         // Seller language filter
         $sellerLanguage = $request->input('seller_language', []);
         if (is_array($sellerLanguage)) {
-            $langValues = array_filter($sellerLanguage, fn($v) => (int) $v !== 0);
-            if (!empty($langValues)) {
+            $langValues = array_filter($sellerLanguage, fn ($v) => (int) $v !== 0);
+            if (! empty($langValues)) {
                 $placeholders = implode(',', array_fill(0, count($langValues), '?'));
                 $extraWhere .= " AND language_id IN ({$placeholders})";
                 $extraBindings = array_merge($extraBindings, array_values($langValues));
@@ -283,7 +284,7 @@ class LegacyAjaxController extends Controller
 
         // Instant delivery join condition
         if ($instantDelivery === 1) {
-            $extraWhere .= " AND instant_deliveries.enable=1";
+            $extraWhere .= ' AND instant_deliveries.enable=1';
         }
 
         return [$extraWhere, $extraBindings, $wherePath, $orderBy];
@@ -303,16 +304,16 @@ class LegacyAjaxController extends Controller
         $offset = ($page - 1) * $perPage;
 
         $orderClause = $filterType === 'random'
-            ? "ORDER BY proposal_id DESC"
+            ? 'ORDER BY proposal_id DESC'
             : "ORDER BY proposals.proposal_id {$orderBy}";
 
-        $fullWhere = $baseWhere . $extraWhere;
+        $fullWhere = $baseWhere.$extraWhere;
         $allBindings = array_merge($baseBindings, $extraBindings, [$perPage, $offset]);
 
-        $sql = "SELECT DISTINCT proposals.* FROM proposals "
-             . "JOIN sellers ON proposals.proposal_seller_id = sellers.seller_id "
-             . "JOIN instant_deliveries ON proposals.proposal_id = instant_deliveries.proposal_id "
-             . "WHERE {$fullWhere} {$orderClause} LIMIT ? OFFSET ?";
+        $sql = 'SELECT DISTINCT proposals.* FROM proposals '
+             .'JOIN sellers ON proposals.proposal_seller_id = sellers.seller_id '
+             .'JOIN instant_deliveries ON proposals.proposal_id = instant_deliveries.proposal_id '
+             ."WHERE {$fullWhere} {$orderClause} LIMIT ? OFFSET ?";
 
         $proposals = DB::select($sql, $allBindings);
 
@@ -326,11 +327,11 @@ class LegacyAjaxController extends Controller
 
         foreach ($proposals as $proposal) {
             $cardHtml = view('legacy.partials.proposal-card', array_merge($globals, [
-                'proposal'    => $proposal,
-                'legacyData'  => $this->legacyData,
+                'proposal' => $proposal,
+                'legacyData' => $this->legacyData,
             ]))->render();
 
-            $html .= '<div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">' . $cardHtml . '</div>';
+            $html .= '<div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">'.$cardHtml.'</div>';
         }
 
         return response($html)->header('Content-Type', 'text/html');
@@ -345,13 +346,13 @@ class LegacyAjaxController extends Controller
         [$baseWhere, $baseBindings] = $this->baseWhere($filterType);
         [$extraWhere, $extraBindings, $wherePath] = $this->applyFilters($request);
 
-        $fullWhere = $baseWhere . $extraWhere;
+        $fullWhere = $baseWhere.$extraWhere;
         $allBindings = array_merge($baseBindings, $extraBindings);
 
-        $sql = "SELECT COUNT(DISTINCT proposals.proposal_id) as cnt FROM proposals "
-             . "JOIN sellers ON proposals.proposal_seller_id = sellers.seller_id "
-             . "JOIN instant_deliveries ON proposals.proposal_id = instant_deliveries.proposal_id "
-             . "WHERE {$fullWhere}";
+        $sql = 'SELECT COUNT(DISTINCT proposals.proposal_id) as cnt FROM proposals '
+             .'JOIN sellers ON proposals.proposal_seller_id = sellers.seller_id '
+             .'JOIN instant_deliveries ON proposals.proposal_id = instant_deliveries.proposal_id '
+             ."WHERE {$fullWhere}";
 
         $countResult = DB::select($sql, $allBindings);
         $totalRecords = $countResult[0]->cnt ?? 0;
@@ -415,12 +416,12 @@ class LegacyAjaxController extends Controller
         $lang = $globals['lang'] ?? [];
 
         $message = match ($filterType) {
-            'search'   => $lang['search']['no_results'] ?? 'No proposals found.',
+            'search' => $lang['search']['no_results'] ?? 'No proposals found.',
             'category' => session()->has('cat_child_id')
                 ? ($lang['sub_category']['no_results'] ?? 'No proposals found in this subcategory.')
                 : ($lang['category']['no_results'] ?? 'No proposals found in this category.'),
-            'tag'      => $lang['tag_proposals']['no_results'] ?? 'No proposals found with this tag.',
-            default    => $lang['search']['no_results'] ?? 'No proposals found.',
+            'tag' => $lang['tag_proposals']['no_results'] ?? 'No proposals found with this tag.',
+            default => $lang['search']['no_results'] ?? 'No proposals found.',
         };
 
         $html = "<div class='col-md-12'><h1 class='text-center mt-4'><i class='fa fa-meh-o'></i> {$message}</h1></div>";

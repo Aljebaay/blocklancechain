@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LegacyAjaxController;
-use App\Http\Controllers\LegacyEndpointController;
 use App\Http\Controllers\LegacyComponentController;
+use App\Http\Controllers\LegacyEndpointController;
 use App\Http\Controllers\LegacyPageController;
 use App\Http\Controllers\LegacyPostController;
 use Illuminate\Support\Facades\Route;
@@ -102,14 +102,14 @@ $serveAdminAsset = function (string $publicSubPath, string $legacySubPath): \Sym
     }
 
     $parts = explode('/', $path);
-    $fullPath = $base . \DIRECTORY_SEPARATOR . implode(\DIRECTORY_SEPARATOR, $parts);
+    $fullPath = $base.\DIRECTORY_SEPARATOR.implode(\DIRECTORY_SEPARATOR, $parts);
     $resolved = realpath($fullPath);
-    if ($resolved === false || !is_file($resolved)) {
+    if ($resolved === false || ! is_file($resolved)) {
         abort(404);
     }
 
     $baseReal = realpath($base);
-    if ($baseReal === false || !str_starts_with($resolved, $baseReal)) {
+    if ($baseReal === false || ! str_starts_with($resolved, $baseReal)) {
         abort(404);
     }
 
@@ -159,19 +159,19 @@ if (is_file($endpointsFile)) {
     ];
     if (is_array($endpoints)) {
         foreach ($endpoints as $endpointId => $entry) {
-            if (!is_array($entry) || !isset($entry['path']) || !is_string($entry['path'])) {
+            if (! is_array($entry) || ! isset($entry['path']) || ! is_string($entry['path'])) {
                 continue;
             }
             $path = str_replace('\\', '/', $entry['path']);
-            if (!str_ends_with($path, '.php')) {
+            if (! str_ends_with($path, '.php')) {
                 continue;
             }
             $uri = substr($path, 0, -4);
             if ($uri === '' || in_array($uri, $skipUris, true)) {
                 continue;
             }
-            Route::match(['get', 'post'], '/' . $uri, [LegacyEndpointController::class, 'dispatch'])
-                ->name('legacy.' . str_replace('.', '_', $endpointId));
+            Route::match(['get', 'post'], '/'.$uri, [LegacyEndpointController::class, 'dispatch'])
+                ->name('legacy.'.str_replace('.', '_', $endpointId));
         }
     }
 }

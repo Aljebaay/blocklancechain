@@ -58,7 +58,7 @@ class UserManagementController extends Controller
         $seller = Seller::with(['proposals', 'buyerReviews'])
             ->find($sellerId);
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -80,7 +80,7 @@ class UserManagementController extends Controller
         $updated = Seller::where('seller_id', $sellerId)
             ->update(['seller_status' => $validated['status']]);
 
-        if (!$updated) {
+        if (! $updated) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 
@@ -100,7 +100,7 @@ class UserManagementController extends Controller
         $updated = Seller::where('seller_id', $sellerId)
             ->update(['seller_balance' => $validated['balance']]);
 
-        if (!$updated) {
+        if (! $updated) {
             return response()->json(['success' => false, 'error' => 'not_found'], 404);
         }
 

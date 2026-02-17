@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\InboxMessage;
-use App\Models\Seller;
 use App\Services\AuthService;
 use App\Services\SiteSettingsService;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +31,7 @@ class ConversationController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -57,7 +56,7 @@ class ConversationController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             abort(403);
         }
 
@@ -92,7 +91,7 @@ class ConversationController extends Controller
     {
         $seller = $this->authService->currentSeller();
 
-        if (!$seller) {
+        if (! $seller) {
             return response()->json(['success' => false, 'error' => 'unauthorized'], 403);
         }
 
