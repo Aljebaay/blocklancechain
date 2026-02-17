@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(php artisan:*)",
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(node -e:*)",
+      "Bash(grep:*)",
+      "Bash(python3:*)",
+      "Bash(for:*)",
+      "Bash(do)",
+      "Bash(if [ -f \"$f\" ])",
+      "Bash(then echo \"OK: $f\")",
+      "Bash(else echo \"MISSING: $f\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(php -r:*)",
+      "Bash(curl:*)"
     ]
   }
 }

@@ -172,11 +172,11 @@
       <!-- Modal header end -->
       <div class="modal-body">
         <!-- Modal body start -->
-        @if(session('login_modal_errors'))
+        @if(session('login_errors'))
         <div class="alert alert-danger">
           <!--- alert alert-danger Starts --->
           <ul class="list-unstyled mb-0">
-            @foreach(session('login_modal_errors') as $idx => $error)
+            @foreach(session('login_errors') as $idx => $error)
             <li class="list-unstyled-item">{{ $idx + 1 }}. {{ ucfirst($error) }}</li>
             @endforeach
           </ul>

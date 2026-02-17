@@ -40,7 +40,7 @@ $seller_language = [];
       @endphp
       <li class="nav-item">
         <span class="nav-link {{ $sid_cat_id == $session_cat_id ? 'active' : '' }}{{ $sid_cat_id == $child_parent_id ? 'active' : '' }}">     
-        <a href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($sid_cat_url) }}" class="text-success"> {{ $sid_cat_title }}</a> 
+        <a href="{{ $site_url }}/categories/{{ rawurlencode($sid_cat_url) }}" class="text-success"> {{ $sid_cat_title }}</a> 
         <a class="h5 text-success float-right" data-toggle="collapse" data-target="#cat_{{ $sid_cat_id }}">
         <i class="fa fa-arrow-circle-down"></i>
         </a>
@@ -58,7 +58,7 @@ $seller_language = [];
           @endphp
           @if(!empty($sid_child_title))
           <li>
-            <a class="nav-link text-success {{ $sid_child_id == $session_cat_child_id ? 'active' : '' }}" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($sid_cat_url) }}&cat_child_url={{ rawurlencode($sid_child_url) }}">
+            <a class="nav-link text-success {{ $sid_child_id == $session_cat_child_id ? 'active' : '' }}" href="{{ $site_url }}/categories/{{ rawurlencode($sid_cat_url) }}/{{ rawurlencode($sid_child_url) }}">
             {{ $sid_child_title }}
             </a>
           </li>

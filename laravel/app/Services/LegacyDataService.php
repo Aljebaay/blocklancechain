@@ -403,6 +403,176 @@ class LegacyDataService
     }
 
     /**
+     * Load authenticated user home page data.
+     * Legacy: user_home.php + includes/user_home_sidebar.php
+     */
+    public function loadAuthHomeData(array $globals): array
+    {
+        $data = $globals;
+        $siteLanguage = $globals['siteLanguage'];
+        $langDir = $globals['lang_dir'] ?? 'left';
+        $loginSellerId = $globals['seller_id'] ?? 0;
+
+        // Auth slider (different from guest - uses 'slider' table)
+        $data['auth_slides'] = DB::table('slider')
+            ->where('language_id', $siteLanguage)
+            ->get();
+
+        // Featured proposals for auth home (limit 8)
+        $data['auth_featured_proposals'] = DB::table('proposals')
+            ->where('proposal_featured', 'yes')
+            ->where('proposal_status', 'active')
+            ->limit(8)
+            ->get();
+
+        // Top proposals
+        $topIds = DB::table('top_proposals')->pluck('proposal_id')->toArray();
+        if (empty($topIds)) {
+            $data['auth_top_proposals'] = DB::table('proposals')
+                ->where('level_id', 4)
+                ->where('proposal_status', 'active')
+                ->limit(8)
+                ->get();
+        } else {
+            $data['auth_top_proposals'] = DB::table('proposals')
+                ->where(function ($q) use ($topIds) {
+                    $q->whereIn('proposal_id', $topIds)
+                      ->orWhere(function ($q2) {
+                          $q2->where('level_id', 4)->where('proposal_status', 'active');
+                      });
+                })
+                ->limit(8)
+                ->get();
+        }
+
+        // Random proposals
+        $totalActive = DB::table('proposals')->where('proposal_status', 'active')->count();
+        if ($totalActive > 0) {
+            $limit = min(8, $totalActive);
+            $randomOffset = $totalActive > $limit ? mt_rand(0, $totalActive - $limit) : 0;
+            $data['auth_random_proposals'] = DB::table('proposals')
+                ->where('proposal_status', 'active')
+                ->orderByDesc('proposal_id')
+                ->offset($randomOffset)
+                ->limit($limit)
+                ->get();
+        } else {
+            $data['auth_random_proposals'] = collect();
+        }
+
+        // Buyer requests relevant to this seller
+        $childIds = DB::table('proposals')
+            ->where('proposal_seller_id', $loginSellerId)
+            ->where('proposal_status', 'active')
+            ->distinct()
+            ->pluck('proposal_child_id')
+            ->toArray();
+
+        $gs = DB::table('general_settings')->first();
+        $relevantRequests = $gs->relevant_requests ?? 'no';
+
+        $requestsQuery = DB::table('buyer_requests')
+            ->where('request_status', 'active')
+            ->where('seller_id', '!=', $loginSellerId)
+            ->orderByDesc('request_id')
+            ->limit(5);
+
+        if ($relevantRequests !== 'no' && !empty($childIds)) {
+            $requestsQuery->whereIn('child_id', $childIds);
+        }
+
+        $data['auth_buyer_requests'] = $requestsQuery->get();
+
+        // Sidebar data: buy it again (completed orders with active proposals)
+        $data['sidebar_buy_again'] = DB::table('orders')
+            ->where('buyer_id', $loginSellerId)
+            ->where('order_status', 'completed')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('proposals')
+                  ->whereColumn('proposals.proposal_id', 'orders.proposal_id')
+                  ->where('proposals.proposal_status', 'active');
+            })
+            ->distinct()
+            ->pluck('proposal_id')
+            ->toArray();
+
+        // Recently viewed proposals
+        $data['sidebar_recently_viewed'] = DB::table('recent_proposals')
+            ->where('seller_id', $loginSellerId)
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('proposals')
+                  ->whereColumn('proposals.proposal_id', 'recent_proposals.proposal_id')
+                  ->where('proposals.proposal_status', 'active');
+            })
+            ->orderByDesc('recent_proposals.recent_id')
+            ->limit(4)
+            ->pluck('proposal_id')
+            ->toArray();
+
+        // Seller offers quota
+        $loginSeller = DB::table('sellers')->where('seller_id', $loginSellerId)->first();
+        $data['login_seller_name'] = $loginSeller->seller_name ?? '';
+        $data['login_user_name'] = $loginSeller->seller_user_name ?? '';
+        $data['login_seller_offers'] = $loginSeller->seller_offers ?? '0';
+
+        return $data;
+    }
+
+    /**
+     * Replicate legacy showPrice() from commonFunctions.php.
+     * Handles currency symbol, position, conversion, and formatting.
+     */
+    public function showPrice(float|int|string|null $price, string $class = '', string $showSymbol = 'yes'): string
+    {
+        $price = ($price === null || $price === '') ? 0 : (float) $price;
+
+        $gs = DB::table('general_settings')->first();
+        $currencyPosition = $gs->currency_position ?? 'left';
+        $currencyFormat = $gs->currency_format ?? '';
+        $siteCurrencySymbol = $gs->s_currency ?? '$';
+
+        // Session-based currency conversion
+        $sessionCurrencyId = session('siteCurrency');
+        if ($sessionCurrencyId !== null) {
+            $scRow = DB::table('site_currencies')->where('id', $sessionCurrencyId)->first();
+            if ($scRow) {
+                $currencyPosition = $scRow->position;
+                $currencyFormat = $scRow->format;
+                $rate = session('conversionRate', 1);
+                $price *= $rate;
+
+                $cRow = DB::table('currencies')->where('id', $scRow->currency_id)->first();
+                if ($cRow) {
+                    $siteCurrencySymbol = $cRow->symbol;
+                }
+            }
+        }
+
+        $decPoint = '.';
+        $thousandsSep = ',';
+        if ($currencyFormat === 'european') {
+            $decPoint = ',';
+            $thousandsSep = '.';
+        }
+
+        $formattedPrice = number_format($price, 2, $decPoint, $thousandsSep);
+
+        if (!empty($class)) {
+            $formattedPrice = "<span class='{$class}'>{$formattedPrice}</span>";
+        }
+
+        if ($showSymbol === 'yes') {
+            return ($currencyPosition === 'left')
+                ? $siteCurrencySymbol . $formattedPrice
+                : $formattedPrice . $siteCurrencySymbol;
+        }
+
+        return $formattedPrice;
+    }
+
+    /**
      * Replicate legacy dynamicUrl function.
      */
     public function dynamicUrl(string $url, bool $prepend = true): string

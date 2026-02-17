@@ -1,0 +1,17 @@
+{
+  "name": "parity-harness",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend parity testing harness for legacy vs Laravel",
+  "scripts": {
+    "capture": "node capture.js",
+    "diff": "node diff.js",
+    "smoke": "node smoke.js",
+    "run": "node run.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0",
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0"
+  }
+}

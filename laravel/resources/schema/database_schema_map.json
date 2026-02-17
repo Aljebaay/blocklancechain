@@ -1,0 +1,1235 @@
+{
+  "_meta": {
+    "generated": "2026-02-16",
+    "source": "scripts/sql/gig-zone.sql + scripts/sql/2026-02-14_password_resets.sql + plugin tables",
+    "total_tables": 102
+  },
+  "admins": {
+    "columns": {
+      "admin_id": "int(10)",
+      "admin_name": "text",
+      "admin_user_name": "text",
+      "admin_email": "text",
+      "admin_pass": "text",
+      "admin_image": "text",
+      "admin_contact": "text",
+      "admin_country": "text",
+      "admin_job": "text",
+      "admin_about": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "admin_logs": {
+    "columns": {
+      "id": "int(100)",
+      "admin_id": "int(100)",
+      "work": "varchar(255)",
+      "work_id": "int(255)",
+      "date": "varchar(255)",
+      "status": "varchar(255)"
+    }
+  },
+  "admin_notifications": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "content_id": "int(10)",
+      "proposal_id": "int(10)",
+      "reason": "varchar(255)",
+      "date": "varchar(255)",
+      "status": "varchar(255)"
+    }
+  },
+  "admin_rights": {
+    "columns": {
+      "id": "int(10)",
+      "admin_id": "varchar(10)",
+      "settings": "int(11)",
+      "plugins": "int(10)",
+      "pages": "int(11)",
+      "blog": "int(10)",
+      "feedback": "int(10)",
+      "video_schedules": "int(10)",
+      "proposals": "int(11)",
+      "accounting": "int(10)",
+      "payouts": "int(10)",
+      "reports": "int(11)",
+      "inbox": "int(11)",
+      "reviews": "int(11)",
+      "buyer_requests": "int(11)",
+      "restricted_words": "int(11)",
+      "notifications": "int(11)",
+      "cats": "int(11)",
+      "delivery_times": "int(11)",
+      "seller_languages": "int(11)",
+      "seller_skills": "int(11)",
+      "seller_levels": "int(10)",
+      "customer_support": "int(11)",
+      "coupons": "int(11)",
+      "slides": "int(11)",
+      "terms": "int(11)",
+      "sellers": "int(11)",
+      "orders": "int(11)",
+      "referrals": "int(11)",
+      "files": "int(11)",
+      "knowledge_bank": "int(10)",
+      "currencies": "int(10)",
+      "languages": "int(11)",
+      "admins": "int(11)"
+    }
+  },
+  "announcement_bar": {
+    "columns": {
+      "id": "int(10)",
+      "enable_bar": "int(10)",
+      "bg_color": "varchar(255)",
+      "text_color": "varchar(255)",
+      "bar_text": "varchar(255)",
+      "last_updated": "varchar(255)",
+      "language_id": "int(10)"
+    }
+  },
+  "api_settings": {
+    "columns": {
+      "id": "int(10)",
+      "enable_s3": "int(10)",
+      "s3_access_key": "varchar(255)",
+      "s3_access_sceret": "varchar(255)",
+      "s3_bucket": "varchar(255)",
+      "s3_region": "varchar(255)",
+      "s3_domain": "varchar(255)"
+    }
+  },
+  "app_info": {
+    "columns": {
+      "id": "int(100)",
+      "version": "varchar(255)",
+      "r_date": "varchar(255)"
+    }
+  },
+  "archived_messages": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "message_group_id": "int(10)"
+    }
+  },
+  "article_cat": {
+    "columns": {
+      "article_cat_id": "int(11)",
+      "language_id": "int(10)",
+      "article_cat_title": "text",
+      "position": "varchar(20)"
+    }
+  },
+  "buyer_requests": {
+    "columns": {
+      "request_id": "int(10)",
+      "seller_id": "int(10)",
+      "cat_id": "int(10)",
+      "child_id": "int(10)",
+      "request_title": "text",
+      "request_description": "text",
+      "request_file": "text",
+      "delivery_time": "text",
+      "request_budget": "text",
+      "request_date": "text",
+      "request_status": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "buyer_reviews": {
+    "columns": {
+      "review_id": "int(10)",
+      "proposal_id": "int(10)",
+      "order_id": "int(10)",
+      "review_buyer_id": "int(10)",
+      "buyer_rating": "int(10)",
+      "buyer_review": "text",
+      "review_seller_id": "int(10)",
+      "review_date": "text"
+    }
+  },
+  "cart": {
+    "columns": {
+      "cart_id": "int(10)",
+      "seller_id": "int(10)",
+      "proposal_id": "int(10)",
+      "proposal_price": "varchar(255)",
+      "proposal_qty": "int(10)",
+      "delivery_id": "int(10)",
+      "revisions": "varchar(255)",
+      "coupon_used": "int(100)"
+    }
+  },
+  "cart_extras": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "proposal_id": "int(10)",
+      "name": "text",
+      "price": "text"
+    }
+  },
+  "categories": {
+    "columns": {
+      "cat_id": "int(10)",
+      "cat_url": "text",
+      "cat_image": "text",
+      "cat_featured": "text",
+      "enable_watermark": "int(10)",
+      "isS3": "int(10)"
+    }
+  },
+  "categories_children": {
+    "columns": {
+      "child_id": "int(10)",
+      "child_url": "text",
+      "child_parent_id": "int(10)"
+    }
+  },
+  "cats_meta": {
+    "columns": {
+      "id": "int(10)",
+      "cat_id": "int(10)",
+      "language_id": "int(10)",
+      "cat_title": "text",
+      "cat_desc": "text"
+    }
+  },
+  "child_cats_meta": {
+    "columns": {
+      "id": "int(10)",
+      "child_id": "int(10)",
+      "child_parent_id": "int(10)",
+      "language_id": "int(10)",
+      "child_title": "varchar(255)",
+      "child_desc": "text"
+    }
+  },
+  "comments": {
+    "columns": {
+      "id": "int(10)",
+      "idea_id": "int(100)",
+      "seller_id": "int(100)",
+      "comment": "text",
+      "date": "varchar(255)"
+    }
+  },
+  "contact_support": {
+    "columns": {
+      "contact_id": "int(10)",
+      "contact_email": "text"
+    }
+  },
+  "contact_support_meta": {
+    "columns": {
+      "id": "int(10)",
+      "language_id": "int(10)",
+      "contact_heading": "text",
+      "contact_desc": "text"
+    }
+  },
+  "countries": {
+    "columns": {
+      "id": "int(10)",
+      "name": "mediumtext",
+      "code": "int(10)"
+    }
+  },
+  "coupons": {
+    "columns": {
+      "coupon_id": "int(10)",
+      "proposal_id": "int(10)",
+      "coupon_title": "text",
+      "coupon_type": "varchar(255)",
+      "coupon_price": "varchar(255)",
+      "coupon_code": "text",
+      "coupon_limit": "int(10)",
+      "coupon_used": "int(10)"
+    }
+  },
+  "coupons_used": {
+    "columns": {
+      "id": "int(100)",
+      "proposal_id": "varchar(255)",
+      "seller_id": "varchar(255)",
+      "coupon_used": "varchar(255)",
+      "coupon_price": "varchar(255)"
+    }
+  },
+  "currencies": {
+    "columns": {
+      "id": "int(10)",
+      "name": "varchar(255)",
+      "symbol": "varchar(255)"
+    }
+  },
+  "currency_converter_settings": {
+    "columns": {
+      "id": "int(10)",
+      "enable": "int(10)",
+      "api_key": "varchar(255)",
+      "main_currency": "varchar(255)",
+      "server": "varchar(255)"
+    }
+  },
+  "delivery_times": {
+    "columns": {
+      "delivery_id": "int(10)",
+      "delivery_title": "text",
+      "delivery_proposal_title": "text"
+    }
+  },
+  "dusupay_orders": {
+    "columns": {
+      "id": "int(10)",
+      "order_id": "varchar(255)",
+      "reference_no": "varchar(255)",
+      "buyer_id": "int(10)",
+      "content_id": "int(10)",
+      "qty": "int(10)",
+      "price": "varchar(255)",
+      "total": "varchar(255)",
+      "delivery_id": "int(10)",
+      "revisions": "varchar(255)",
+      "minutes": "int(10)",
+      "extras": "text",
+      "type": "varchar(255)",
+      "currency": "varchar(255)",
+      "message": "text",
+      "status": "varchar(255)"
+    }
+  },
+  "enquiry_types": {
+    "columns": {
+      "enquiry_id": "int(10)",
+      "enquiry_title": "text"
+    }
+  },
+  "expenses": {
+    "columns": {
+      "id": "int(10)",
+      "title": "text",
+      "description": "text",
+      "amount": "decimal(10,1)",
+      "date": "text"
+    }
+  },
+  "favorites": {
+    "columns": {
+      "favourite_id": "int(10)",
+      "seller_id": "int(10)",
+      "proposal_id": "int(10)"
+    }
+  },
+  "featured_proposals": {
+    "columns": {
+      "featured_id": "int(10)",
+      "proposal_id": "int(10)",
+      "end_date": "text"
+    }
+  },
+  "footer_links": {
+    "columns": {
+      "link_id": "int(10)",
+      "language_id": "int(10)",
+      "icon_class": "varchar(255)",
+      "link_title": "text",
+      "link_url": "text",
+      "link_section": "text"
+    }
+  },
+  "general_settings": {
+    "columns": {
+      "id": "int(10)",
+      "site_title": "text",
+      "site_www": "int(10)",
+      "site_name": "text",
+      "site_favicon": "text",
+      "site_logo_type": "text",
+      "site_logo_text": "text",
+      "site_logo_image": "text",
+      "enable_mobile_logo": "int(10)",
+      "site_mobile_logo": "varchar(255)",
+      "site_logo": "text",
+      "site_favicon_s3": "int(10)",
+      "site_logo_image_s3": "int(10)",
+      "site_mobile_logo_s3": "int(10)",
+      "site_logo_s3": "int(10)",
+      "site_watermark": "varchar(255)",
+      "google_analytics": "text",
+      "site_color": "text",
+      "site_hover_color": "varchar(255)",
+      "site_border_color": "varchar(255)",
+      "site_desc": "text",
+      "site_keywords": "text",
+      "site_author": "text",
+      "site_url": "text",
+      "site_email_address": "text",
+      "site_copyright": "text",
+      "site_timezone": "varchar(255)",
+      "language_switcher": "int(10)",
+      "enable_google_translate": "int(10)",
+      "tinymce_api_key": "text",
+      "recaptcha_site_key": "varchar(255)",
+      "recaptcha_secret_key": "varchar(255)",
+      "google_app_link": "varchar(255)",
+      "apple_app_link": "varchar(255)",
+      "enable_social_login": "text",
+      "fb_app_id": "text",
+      "fb_app_secret": "text",
+      "g_client_id": "text",
+      "g_client_secret": "text",
+      "jwplayer_code": "text",
+      "level_one_rating": "int(10)",
+      "level_one_orders": "int(10)",
+      "level_two_rating": "int(10)",
+      "level_two_orders": "int(10)",
+      "level_top_rating": "int(10)",
+      "level_top_orders": "int(10)",
+      "approve_proposals": "text",
+      "edited_proposals": "int(10)",
+      "disable_local_video": "int(10)",
+      "proposal_email": "text",
+      "revisions_list": "text",
+      "enable_unlimited_revisions": "int(10)",
+      "signup_email": "text",
+      "relevant_requests": "varchar(255)",
+      "enable_referrals": "text",
+      "knowledge_bank": "text",
+      "referral_money": "int(10)",
+      "site_currency": "varchar(255)",
+      "currency_position": "varchar(255)",
+      "currency_format": "text",
+      "enable_maintenance_mode": "varchar(255)",
+      "make_phone_number_required": "int(10)",
+      "order_auto_complete": "int(10)",
+      "wish_do_manual_payouts": "int(10)",
+      "payouts_date": "text",
+      "payouts_anyday": "int(10)",
+      "enable_websocket": "int(10)",
+      "websocket_address": "varchar(255)",
+      "mobileApp_apiKey": "varchar(255)"
+    }
+  },
+  "hide_seller_messages": {
+    "columns": {
+      "id": "int(10)",
+      "hider_id": "int(10)",
+      "hide_seller_id": "int(10)"
+    }
+  },
+  "home_cards": {
+    "columns": {
+      "card_id": "int(10)",
+      "language_id": "int(10)",
+      "card_title": "text",
+      "card_desc": "text",
+      "card_link": "varchar(255)",
+      "card_image": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "home_section": {
+    "columns": {
+      "section_id": "int(10)",
+      "language_id": "int(10)",
+      "section_heading": "text",
+      "section_short_heading": "text"
+    }
+  },
+  "home_section_slider": {
+    "columns": {
+      "slide_id": "int(100)",
+      "slide_name": "varchar(255)",
+      "slide_image": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "ideas": {
+    "columns": {
+      "id": "int(100)",
+      "seller_id": "int(100)",
+      "votes": "int(100)",
+      "title": "text",
+      "content": "text",
+      "date": "varchar(255)"
+    }
+  },
+  "inbox_messages": {
+    "columns": {
+      "message_id": "int(10)",
+      "message_group_id": "int(10)",
+      "message_sender": "int(10)",
+      "message_receiver": "int(10)",
+      "message_offer_id": "int(10)",
+      "message_desc": "text",
+      "message_file": "text",
+      "message_date": "text",
+      "dateAgo": "text",
+      "bell": "varchar(255)",
+      "message_status": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "inbox_sellers": {
+    "columns": {
+      "inbox_seller_id": "int(10)",
+      "message_group_id": "int(10)",
+      "message_id": "int(10)",
+      "offer_id": "int(10)",
+      "sender_id": "int(10)",
+      "receiver_id": "int(10)",
+      "popup": "int(10)",
+      "time": "int(11)",
+      "message_status": "text"
+    }
+  },
+  "instant_deliveries": {
+    "columns": {
+      "id": "int(10)",
+      "proposal_id": "int(10)",
+      "enable": "int(10)",
+      "message": "text",
+      "watermark": "int(10)",
+      "watermark_file": "varchar(255)",
+      "file": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "knowledge_bank": {
+    "columns": {
+      "article_id": "int(11)",
+      "language_id": "int(10)",
+      "cat_id": "int(10)",
+      "article_url": "text",
+      "article_heading": "text",
+      "article_body": "text",
+      "right_image": "varchar(255)",
+      "top_image": "varchar(255)",
+      "bottom_image": "varchar(255)",
+      "article_status": "varchar(255)",
+      "right_image_s3": "int(10)",
+      "top_image_s3": "int(10)",
+      "bottom_image_s3": "int(10)"
+    }
+  },
+  "languages": {
+    "columns": {
+      "id": "int(10)",
+      "title": "text",
+      "image": "varchar(255)",
+      "default_lang": "int(10)",
+      "direction": "varchar(255)",
+      "template_folder": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "languages_relation": {
+    "columns": {
+      "relation_id": "int(10)",
+      "seller_id": "int(10)",
+      "language_id": "int(11)",
+      "language_level": "text"
+    }
+  },
+  "messages_offers": {
+    "columns": {
+      "offer_id": "int(10)",
+      "sender_id": "int(10)",
+      "proposal_id": "int(10)",
+      "order_id": "int(10)",
+      "description": "text",
+      "delivery_time": "text",
+      "amount": "text",
+      "status": "text"
+    }
+  },
+  "my_buyers": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "buyer_id": "int(10)",
+      "completed_orders": "int(10)",
+      "amount_spent": "int(10)",
+      "last_order_date": "text"
+    }
+  },
+  "my_sellers": {
+    "columns": {
+      "id": "int(10)",
+      "buyer_id": "int(10)",
+      "seller_id": "int(10)",
+      "completed_orders": "int(10)",
+      "amount_spent": "int(10)",
+      "last_order_date": "text"
+    }
+  },
+  "notifications": {
+    "columns": {
+      "notification_id": "int(10)",
+      "receiver_id": "int(10)",
+      "sender_id": "text",
+      "order_id": "int(10)",
+      "reason": "text",
+      "date": "text",
+      "bell": "varchar(255)",
+      "status": "text",
+      "fcm_notification_status": "tinyint(1)"
+    }
+  },
+  "orders": {
+    "columns": {
+      "order_id": "int(10)",
+      "order_number": "text",
+      "order_duration": "text",
+      "order_time": "text",
+      "order_date": "text",
+      "order_revisions": "varchar(255)",
+      "order_revisions_used": "int(10)",
+      "order_description": "text",
+      "seller_id": "int(10)",
+      "buyer_id": "int(10)",
+      "proposal_id": "int(10)",
+      "order_price": "varchar(255)",
+      "order_qty": "int(10)",
+      "order_fee": "varchar(255)",
+      "order_active": "text",
+      "complete_time": "text",
+      "order_status": "text"
+    }
+  },
+  "order_conversations": {
+    "columns": {
+      "c_id": "int(10)",
+      "order_id": "int(10)",
+      "sender_id": "int(10)",
+      "message": "text",
+      "file": "varchar(255)",
+      "date": "varchar(255)",
+      "reason": "text",
+      "status": "varchar(255)",
+      "watermark": "int(10)",
+      "watermark_file": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "order_extras": {
+    "columns": {
+      "id": "int(10)",
+      "order_id": "int(10)",
+      "name": "varchar(255)",
+      "price": "varchar(255)"
+    }
+  },
+  "order_tips": {
+    "columns": {
+      "id": "int(10)",
+      "order_id": "int(10)",
+      "amount": "int(10)",
+      "message": "text",
+      "date": "varchar(255)"
+    }
+  },
+  "package_attributes": {
+    "columns": {
+      "attribute_id": "int(100)",
+      "proposal_id": "int(100)",
+      "package_id": "int(100)",
+      "attribute_name": "text",
+      "attribute_value": "text"
+    }
+  },
+  "pages": {
+    "columns": {
+      "id": "int(10)",
+      "url": "text",
+      "date": "text"
+    }
+  },
+  "pages_meta": {
+    "columns": {
+      "id": "int(11)",
+      "page_id": "int(11)",
+      "language_id": "int(11)",
+      "title": "text",
+      "content": "text"
+    }
+  },
+  "payment_settings": {
+    "columns": {
+      "id": "int(10)",
+      "min_proposal_price": "int(10)",
+      "comission_percentage": "int(10)",
+      "days_before_withdraw": "int(10)",
+      "withdrawal_limit": "int(10)",
+      "featured_fee": "int(10)",
+      "featured_duration": "int(10)",
+      "featured_proposal_while_creating": "int(10)",
+      "processing_feeType": "varchar(100)",
+      "processing_fee": "int(10)",
+      "enable_paypal": "text",
+      "paypal_email": "text",
+      "paypal_currency_code": "text",
+      "paypal_app_client_id": "text",
+      "paypal_app_client_secret": "text",
+      "paypal_sandbox": "text",
+      "enable_payoneer": "int(10)",
+      "enable_stripe": "text",
+      "stripe_secret_key": "text",
+      "stripe_publishable_key": "text",
+      "stripe_webhook_key": "varchar(255)",
+      "stripe_currency_code": "text",
+      "enable_dusupay": "text",
+      "dusupay_sandbox": "text",
+      "dusupay_currency_code": "text",
+      "dusupay_api_key": "text",
+      "dusupay_secret_key": "text",
+      "dusupay_webhook_hash": "varchar(255)",
+      "dusupay_method": "varchar(255)",
+      "dusupay_provider_id": "varchar(255)",
+      "dusupay_payout_method": "varchar(255)",
+      "dusupay_payout_provider_id": "varchar(255)",
+      "enable_payza": "varchar(255)",
+      "payza_email": "varchar(255)",
+      "payza_currency_code": "varchar(255)",
+      "payza_test": "varchar(255)",
+      "enable_coinpayments": "varchar(255)",
+      "coinpayments_merchant_id": "text",
+      "coinpayments_currency_code": "varchar(255)",
+      "coinpayments_withdrawal_fee": "text",
+      "coinpayments_public_key": "text",
+      "coinpayments_private_key": "text",
+      "coinpayments_ipn_secret": "varchar(255)",
+      "enable_paystack": "varchar(255)",
+      "paystack_public_key": "varchar(255)",
+      "paystack_secret_key": "varchar(255)",
+      "enable_mercadopago": "int(10)",
+      "mercadopago_access_token": "text",
+      "mercadopago_currency": "varchar(255)",
+      "mercadopago_sandbox": "int(10)"
+    }
+  },
+  "payouts": {
+    "columns": {
+      "id": "int(255)",
+      "seller_id": "varchar(255)",
+      "ref": "varchar(255)",
+      "method": "varchar(255)",
+      "amount": "varchar(255)",
+      "date": "varchar(255)",
+      "message": "text",
+      "status": "varchar(255)"
+    }
+  },
+  "plugins": {
+    "columns": {
+      "id": "int(10)",
+      "name": "text",
+      "description": "text",
+      "folder": "text",
+      "version": "varchar(255)",
+      "author": "varchar(255)",
+      "author_url": "varchar(255)",
+      "status": "int(10)"
+    }
+  },
+  "posts": {
+    "columns": {
+      "id": "int(11)",
+      "cat_id": "varchar(255)",
+      "image": "varchar(500)",
+      "date_time": "text",
+      "isS3": "int(10)",
+      "language_id": "int(10)",
+      "status": "int(10)"
+    }
+  },
+  "posts_meta": {
+    "columns": {
+      "id": "int(11)",
+      "post_id": "int(11)",
+      "title": "text",
+      "author": "varchar(255)",
+      "content": "text",
+      "language_id": "int(11)"
+    }
+  },
+  "post_categories": {
+    "columns": {
+      "id": "int(11)",
+      "cat_image": "varchar(255)",
+      "date_time": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "post_categories_meta": {
+    "columns": {
+      "id": "int(11)",
+      "cat_id": "int(11)",
+      "language_id": "int(11)",
+      "cat_name": "varchar(255)",
+      "cat_creator": "varchar(255)"
+    }
+  },
+  "post_comments": {
+    "columns": {
+      "id": "int(10)",
+      "post_id": "int(100)",
+      "seller_id": "int(100)",
+      "comment": "text",
+      "date": "varchar(255)"
+    }
+  },
+  "proposals": {
+    "columns": {
+      "proposal_id": "int(10)",
+      "proposal_title": "text",
+      "proposal_url": "text",
+      "proposal_cat_id": "int(10)",
+      "proposal_child_id": "int(10)",
+      "proposal_price": "varchar(10)",
+      "proposal_img1": "text",
+      "proposal_img2": "text",
+      "proposal_img3": "text",
+      "proposal_img4": "text",
+      "proposal_video": "text",
+      "proposal_img1_s3": "int(10)",
+      "proposal_img2_s3": "int(10)",
+      "proposal_img3_s3": "int(10)",
+      "proposal_img4_s3": "int(10)",
+      "proposal_video_s3": "int(10)",
+      "proposal_desc": "text",
+      "buyer_instruction": "text",
+      "proposal_tags": "text",
+      "proposal_enable_referrals": "varchar(255)",
+      "proposal_referral_money": "int(10)",
+      "proposal_referral_code": "varchar(255)",
+      "proposal_featured": "text",
+      "proposal_toprated": "text",
+      "proposal_seller_id": "int(10)",
+      "delivery_id": "int(10)",
+      "proposal_revisions": "varchar(255)",
+      "level_id": "int(10)",
+      "language_id": "int(10)",
+      "proposal_rating": "int(11)",
+      "proposal_views": "int(10)",
+      "proposal_status": "text"
+    }
+  },
+  "proposals_extras": {
+    "columns": {
+      "id": "int(10)",
+      "proposal_id": "int(10)",
+      "name": "varchar(255)",
+      "price": "int(255)"
+    }
+  },
+  "proposals_faq": {
+    "columns": {
+      "id": "int(10)",
+      "proposal_id": "int(11)",
+      "title": "varchar(255)",
+      "content": "text"
+    }
+  },
+  "proposal_modifications": {
+    "columns": {
+      "modification_id": "int(10)",
+      "proposal_id": "int(10)",
+      "modification_message": "text"
+    }
+  },
+  "proposal_packages": {
+    "columns": {
+      "package_id": "int(100)",
+      "proposal_id": "int(100)",
+      "package_name": "varchar(255)",
+      "description": "text",
+      "revisions": "varchar(255)",
+      "delivery_time": "varchar(255)",
+      "price": "varchar(255)"
+    }
+  },
+  "proposal_referrals": {
+    "columns": {
+      "referral_id": "int(10)",
+      "proposal_id": "int(10)",
+      "order_id": "int(100)",
+      "seller_id": "int(10)",
+      "referrer_id": "int(10)",
+      "buyer_id": "varchar(255)",
+      "comission": "varchar(255)",
+      "date": "text",
+      "ip": "varchar(255)",
+      "status": "text"
+    }
+  },
+  "proposal_videosettings": {
+    "columns": {
+      "id": "int(10)",
+      "proposal_id": "int(10)",
+      "enable": "int(10)"
+    }
+  },
+  "purchases": {
+    "columns": {
+      "purchase_id": "int(10)",
+      "seller_id": "int(10)",
+      "order_id": "int(10)",
+      "reason": "varchar(255)",
+      "amount": "varchar(255)",
+      "processing_fee": "text",
+      "method": "text",
+      "date": "text"
+    }
+  },
+  "recent_proposals": {
+    "columns": {
+      "recent_id": "int(10)",
+      "seller_id": "int(10)",
+      "proposal_id": "int(10)"
+    }
+  },
+  "referrals": {
+    "columns": {
+      "referral_id": "int(10)",
+      "seller_id": "int(10)",
+      "referred_id": "int(10)",
+      "comission": "varchar(255)",
+      "date": "text",
+      "ip": "varchar(255)",
+      "status": "text"
+    }
+  },
+  "reports": {
+    "columns": {
+      "id": "int(10)",
+      "reporter_id": "int(10)",
+      "content_id": "int(10)",
+      "content_type": "varchar(255)",
+      "reason": "varchar(255)",
+      "additional_information": "text",
+      "date": "text",
+      "status": "varchar(255)"
+    }
+  },
+  "revenues": {
+    "columns": {
+      "revenue_id": "int(10)",
+      "seller_id": "int(10)",
+      "order_id": "int(10)",
+      "reason": "varchar(255)",
+      "amount": "varchar(255)",
+      "date": "text",
+      "end_date": "text",
+      "status": "text"
+    }
+  },
+  "sales": {
+    "columns": {
+      "id": "int(10)",
+      "buyer_id": "int(10)",
+      "work_id": "int(10)",
+      "payment_method": "text",
+      "amount": "varchar(255)",
+      "profit": "varchar(255)",
+      "processing_fee": "varchar(255)",
+      "action": "text",
+      "date": "text"
+    }
+  },
+  "section_boxes": {
+    "columns": {
+      "box_id": "int(10)",
+      "language_id": "int(10)",
+      "box_title": "text",
+      "box_desc": "text",
+      "box_image": "varchar(255)",
+      "isS3": "int(10)"
+    }
+  },
+  "sellers": {
+    "columns": {
+      "seller_id": "int(10)",
+      "seller_name": "varchar(255)",
+      "seller_user_name": "varchar(255)",
+      "seller_email": "text",
+      "seller_wallet": "text",
+      "seller_phone": "varchar(255)",
+      "seller_payouts": "int(100)",
+      "seller_paypal_email": "text",
+      "seller_payoneer_email": "text",
+      "seller_m_account_number": "bigint(100)",
+      "seller_m_account_name": "text",
+      "seller_pass": "text",
+      "seller_image": "text",
+      "seller_cover_image": "text",
+      "seller_image_s3": "int(10)",
+      "seller_cover_image_s3": "int(10)",
+      "seller_country": "text",
+      "seller_city": "varchar(255)",
+      "seller_headline": "text",
+      "seller_about": "text",
+      "seller_level": "int(10)",
+      "seller_language": "int(10)",
+      "seller_recent_delivery": "text",
+      "seller_rating": "int(10)",
+      "seller_offers": "int(10)",
+      "seller_referral": "int(10)",
+      "seller_ip": "varchar(255)",
+      "seller_verification": "text",
+      "seller_vacation": "text",
+      "seller_vacation_reason": "text",
+      "seller_vacation_message": "text",
+      "seller_register_date": "text",
+      "enable_sound": "varchar(255)",
+      "enable_notifications": "int(10)",
+      "seller_activity": "varchar(255)",
+      "seller_timezone": "varchar(255)",
+      "seller_status": "text",
+      "device_type": "varchar(15)",
+      "device_token": "int(10)",
+      "inbox_push_notification_status": "tinyint(1)",
+      "order_message_push_notification_status": "tinyint(1)",
+      "order_update_push_notification_status": "tinyint(1)",
+      "buyer_req_push_notification_status": "tinyint(1)",
+      "myproposal_push_notification_status": "tinyint(1)",
+      "myaccount_push_notification_status": "int(11)"
+    }
+  },
+  "seller_accounts": {
+    "columns": {
+      "account_id": "int(10)",
+      "seller_id": "int(10)",
+      "withdrawn": "varchar(255)",
+      "current_balance": "varchar(255)",
+      "used_purchases": "varchar(255)",
+      "pending_clearance": "varchar(255)",
+      "month_earnings": "varchar(255)"
+    }
+  },
+  "seller_languages": {
+    "columns": {
+      "language_id": "int(10)",
+      "language_title": "text"
+    }
+  },
+  "seller_levels": {
+    "columns": {
+      "level_id": "int(10)"
+    }
+  },
+  "seller_levels_meta": {
+    "columns": {
+      "id": "int(10)",
+      "language_id": "int(10)",
+      "level_id": "int(10)",
+      "title": "varchar(255)"
+    }
+  },
+  "seller_payment_settings": {
+    "columns": {
+      "id": "int(10)",
+      "level_id": "int(10)",
+      "commission_percentage": "int(10)",
+      "payout_day": "int(100)",
+      "payout_time": "varchar(255)",
+      "payout_anyday": "int(10)"
+    }
+  },
+  "seller_reviews": {
+    "columns": {
+      "review_id": "int(10)",
+      "order_id": "int(10)",
+      "review_seller_id": "int(10)",
+      "seller_rating": "int(10)",
+      "seller_review": "text"
+    }
+  },
+  "seller_skills": {
+    "columns": {
+      "skill_id": "int(10)",
+      "skill_title": "text"
+    }
+  },
+  "seller_type_status": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "message_group_id": "text",
+      "time": "varchar(255)",
+      "status": "text"
+    }
+  },
+  "send_offers": {
+    "columns": {
+      "offer_id": "int(10)",
+      "request_id": "int(10)",
+      "sender_id": "int(10)",
+      "proposal_id": "int(10)",
+      "description": "text",
+      "delivery_time": "text",
+      "amount": "text",
+      "status": "text"
+    }
+  },
+  "site_currencies": {
+    "columns": {
+      "id": "int(10)",
+      "currency_id": "int(10)",
+      "code": "varchar(255)",
+      "position": "varchar(255)",
+      "format": "varchar(255)",
+      "rate": "varchar(255)"
+    }
+  },
+  "skills_relation": {
+    "columns": {
+      "relation_id": "int(10)",
+      "seller_id": "int(10)",
+      "skill_id": "int(10)",
+      "skill_level": "text"
+    }
+  },
+  "slider": {
+    "columns": {
+      "slide_id": "int(10)",
+      "language_id": "int(10)",
+      "slide_name": "text",
+      "slide_desc": "text",
+      "slide_image": "text",
+      "slide_url": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "smtp_settings": {
+    "columns": {
+      "id": "int(10)",
+      "library": "varchar(255)",
+      "enable_smtp": "varchar(255)",
+      "host": "text",
+      "port": "text",
+      "secure": "text",
+      "username": "text",
+      "password": "text"
+    }
+  },
+  "spam_words": {
+    "columns": {
+      "id": "int(10)",
+      "word": "varchar(255)"
+    }
+  },
+  "starred_messages": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "message_group_id": "int(10)"
+    }
+  },
+  "support_conversations": {
+    "columns": {
+      "id": "int(11)",
+      "ticket_id": "int(11)",
+      "admin_id": "int(11)",
+      "sender_id": "int(11)",
+      "message": "text",
+      "date": "text",
+      "attachment": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "support_tickets": {
+    "columns": {
+      "ticket_id": "int(10)",
+      "enquiry_id": "int(10)",
+      "number": "int(11)",
+      "sender_id": "int(10)",
+      "subject": "text",
+      "message": "text",
+      "order_number": "text",
+      "order_rule": "text",
+      "attachment": "text",
+      "date": "text",
+      "status": "text",
+      "isS3": "int(10)"
+    }
+  },
+  "temp_extras": {
+    "columns": {
+      "id": "int(10)",
+      "reference_no": "varchar(255)",
+      "buyer_id": "int(10)",
+      "item_id": "int(10)",
+      "proposal_id": "int(10)",
+      "name": "text",
+      "price": "text"
+    }
+  },
+  "temp_orders": {
+    "columns": {
+      "id": "int(10)",
+      "reference_no": "varchar(255)",
+      "buyer_id": "int(10)",
+      "content_id": "int(10)",
+      "qty": "int(10)",
+      "price": "varchar(255)",
+      "total": "varchar(255)",
+      "delivery_id": "int(10)",
+      "revisions": "varchar(255)",
+      "minutes": "int(10)",
+      "video": "int(10)",
+      "extras": "text",
+      "type": "varchar(255)",
+      "currency": "varchar(255)",
+      "method": "varchar(255)",
+      "message": "text",
+      "status": "varchar(255)"
+    }
+  },
+  "terms": {
+    "columns": {
+      "term_id": "int(10)",
+      "language_id": "int(10)",
+      "term_title": "text",
+      "term_link": "text",
+      "term_description": "text"
+    }
+  },
+  "top_proposals": {
+    "columns": {
+      "id": "int(10)",
+      "proposal_id": "int(10)"
+    }
+  },
+  "unread_messages": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "message_group_id": "int(10)"
+    }
+  },
+  "withdrawals": {
+    "columns": {
+      "id": "int(10)",
+      "seller_id": "int(10)",
+      "method": "text",
+      "amount": "int(10)",
+      "date": "text"
+    }
+  },
+  "password_resets": {
+    "columns": {
+      "id": "int(11)",
+      "seller_id": "int(10)",
+      "email": "varchar(255)",
+      "selector": "varchar(32)",
+      "token_hash": "varchar(255)",
+      "expires_at": "datetime",
+      "used_at": "datetime",
+      "created_at": "datetime"
+    }
+  }
+}

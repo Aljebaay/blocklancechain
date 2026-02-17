@@ -86,8 +86,8 @@ $proposal_child_title = $proposal_child_title ?? '';
         <hr>
         <nav class="breadcrumbs h-text-truncate mb-2">
           <a href="{{ $site_url }}/">Home</a>
-          <a href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($proposal_cat_url) }}"> {{ $proposal_cat_title }} </a> 
-          <a href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($proposal_cat_url) }}&cat_child_url={{ rawurlencode($proposal_child_url) }}">
+          <a href="{{ $site_url }}/categories/{{ rawurlencode($proposal_cat_url) }}"> {{ $proposal_cat_title }} </a> 
+          <a href="{{ $site_url }}/categories/{{ rawurlencode($proposal_cat_url) }}/{{ rawurlencode($proposal_child_url) }}">
           {{ $proposal_child_title }}
           </a>
         </nav>
@@ -149,11 +149,11 @@ $proposal_child_title = $proposal_child_title ?? '';
           <h3>{{ $lang['proposal']['reviews'] ?? 'Reviews' }} ({{ $count_reviews_val }})</h3>
           <hr>
           @php
-            $buyer_reviews = DB::table('buyer_reviews')->where('proposal_id', $proposal_id ?? 0)->orderBy('id', 'DESC')->get();
+            $buyer_reviews = DB::table('buyer_reviews')->where('proposal_id', $proposal_id ?? 0)->orderBy('review_id', 'DESC')->get();
           @endphp
           @foreach($buyer_reviews as $review)
           @php
-            $reviewer = DB::table('sellers')->where('seller_id', $review->buyer_id)->first();
+            $reviewer = DB::table('sellers')->where('seller_id', $review->review_buyer_id)->first();
           @endphp
           <div class="media mb-3">
             @if($legacyData_local && $reviewer)
@@ -161,7 +161,7 @@ $proposal_child_title = $proposal_child_title ?? '';
             @endif
             <div class="media-body">
               <h6 class="mt-0">{{ $reviewer->seller_user_name ?? '' }}
-                <small class="text-muted">{{ $review->date ?? '' }}</small>
+                <small class="text-muted">{{ $review->review_date ?? '' }}</small>
               </h6>
               @for($i = 0; $i < ($review->buyer_rating ?? 0); $i++)
                 <img src='{{ $site_url }}/images/user_rate_full.png' width="14">

@@ -54,7 +54,8 @@
       </button>
       <div class="catnav-search-bar search-browse-wrapper with-catnav">
         <div class="search-browse-inner">
-          <form id="gnav-search" class="search-nav expanded-search apply-nav-height" method="post" action="{{ $site_url }}/search">
+          <form id="gnav-search" class="search-nav expanded-search apply-nav-height" method="post">
+            @csrf
             <div class="gnav-search-inner clearable">
               <label for="search-query" class="screen-reader-only">Search for items</label>
               <div class="search-input-wrapper text-field-wrapper">

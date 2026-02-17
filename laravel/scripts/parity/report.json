@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-02-16T00:00:00.000Z",
+  "overallStatus": "PENDING",
+  "threshold": "0.5%",
+  "note": "Initial skeleton - parity harness not yet run against live servers",
+  "pages": {
+    "home-guest": { "pageId": "home-guest", "status": "TODO", "diffPercent": null },
+    "home-auth": { "pageId": "home-auth", "status": "TODO", "diffPercent": null },
+    "login": { "pageId": "login", "status": "TODO", "diffPercent": null },
+    "register": { "pageId": "register", "status": "TODO", "diffPercent": null },
+    "categories-show": { "pageId": "categories-show", "status": "TODO", "diffPercent": null },
+    "categories-index": { "pageId": "categories-index", "status": "TODO", "diffPercent": null },
+    "search": { "pageId": "search", "status": "TODO", "diffPercent": null },
+    "blog-index": { "pageId": "blog-index", "status": "TODO", "diffPercent": null },
+    "blog-post": { "pageId": "blog-post", "status": "TODO", "diffPercent": null },
+    "tags": { "pageId": "tags", "status": "TODO", "diffPercent": null },
+    "static-page": { "pageId": "static-page", "status": "TODO", "diffPercent": null },
+    "proposal": { "pageId": "proposal", "status": "TODO", "diffPercent": null },
+    "user-profile": { "pageId": "user-profile", "status": "TODO", "diffPercent": null },
+    "admin-login": { "pageId": "admin-login", "status": "TODO", "diffPercent": null },
+    "logout": { "pageId": "logout", "status": "TODO", "diffPercent": null },
+    "admin-logout": { "pageId": "admin-logout", "status": "TODO", "diffPercent": null }
+  }
+}

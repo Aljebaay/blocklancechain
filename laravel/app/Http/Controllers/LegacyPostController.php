@@ -120,18 +120,20 @@ class LegacyPostController extends Controller
         }
 
         if (!$seller || !password_verify($password, $seller->seller_pass)) {
-            session()->flash('login_errors', ['Password or username is incorrect. Please try again.']);
+            // Legacy outputs a SweetAlert warning inline (no redirect in the original),
+            // but we use PRG with flash. The login view checks 'login_warning' for swal.
+            session()->flash('login_warning', $request->session()->get('lang.alert.incorrect_login', 'Password or username is incorrect. Please try again.'));
             return redirect()->back();
         }
 
         // Check seller status (legacy checks)
         if ($seller->seller_status === 'deactivated') {
-            session()->flash('login_errors', ['Your account has been deactivated.']);
+            session()->flash('login_warning', $request->session()->get('lang.alert.deactivated', 'Your account has been deactivated.'));
             return redirect()->back();
         }
 
         if ($seller->seller_status === 'block-ban') {
-            session()->flash('login_errors', ['Your account has been blocked.']);
+            session()->flash('login_warning', $request->session()->get('lang.alert.blocked', 'Your account has been blocked.'));
             return redirect()->back();
         }
 

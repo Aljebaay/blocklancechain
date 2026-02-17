@@ -37,6 +37,7 @@ class LegacyPageController extends Controller
         $isLoggedIn = session()->has('seller_user_name');
 
         if ($isLoggedIn) {
+            $globals = $this->legacyData->loadAuthHomeData($globals);
             return view('legacy.home-auth', $globals);
         }
 

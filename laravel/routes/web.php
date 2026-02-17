@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LegacyAjaxController;
+use App\Http\Controllers\LegacyComponentController;
 use App\Http\Controllers\LegacyPageController;
 use App\Http\Controllers\LegacyPostController;
 use Illuminate\Support\Facades\Route;
@@ -41,13 +43,82 @@ Route::post('/pages/{slug}', [LegacyPostController::class, 'dispatchRootPost']);
 Route::post('/proposals/{username}/{slug}', [LegacyPostController::class, 'dispatchRootPost']);
 
 // =====================================================================
+// Legacy AJAX Endpoints (parity with search_load.php, category_load.php,
+// tag_load.php, featured_load.php)
+//
+// Called by sidebar filter JavaScript via $.ajax() POST.
+// Returns HTML fragments (proposal cards + pagination).
+// =====================================================================
+Route::post('/search_load', [LegacyAjaxController::class, 'searchLoad'])->name('legacy.ajax.search');
+Route::post('/category_load', [LegacyAjaxController::class, 'categoryLoad'])->name('legacy.ajax.category');
+Route::post('/tag_load', [LegacyAjaxController::class, 'tagLoad'])->name('legacy.ajax.tag');
+Route::post('/featured_load', [LegacyAjaxController::class, 'featuredLoad'])->name('legacy.ajax.featured');
+
+// =====================================================================
+// Legacy Component AJAX Endpoints (parity with includes/comp/*.php,
+// includes/messagePopup.php, includes/notificationsPopup.php,
+// includes/close_cookies_footer.php)
+//
+// Called by customjs.js / knowledge-bank.js via $.ajax() POST.
+// Returns plain text counts, JSON data, or cookie responses.
+// =====================================================================
+Route::post('/includes/comp/c-favorites', [LegacyComponentController::class, 'cFavorites']);
+Route::post('/includes/comp/c-messages-header', [LegacyComponentController::class, 'cMessagesHeader']);
+Route::post('/includes/comp/c-messages-body', [LegacyComponentController::class, 'cMessagesBody']);
+Route::post('/includes/comp/c-notifications-header', [LegacyComponentController::class, 'cNotificationsHeader']);
+Route::post('/includes/comp/c-notifications-body', [LegacyComponentController::class, 'cNotificationsBody']);
+Route::post('/includes/messagePopup', [LegacyComponentController::class, 'messagePopup']);
+Route::post('/includes/notificationsPopup', [LegacyComponentController::class, 'notificationsPopup']);
+Route::post('/includes/close_cookies_footer.php', [LegacyComponentController::class, 'closeCookiesFooter']);
+Route::post('/search-knowledge', [LegacyComponentController::class, 'searchKnowledge']);
+
+// =====================================================================
 // Authentication GET routes + logout
 // =====================================================================
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // =====================================================================
-// Admin Authentication
+// Admin Authentication + static assets (when all requests go through index.php)
+// Admin panel may request /admin/assets/... or root-relative /assets/ and /admin_images/
+// Serves from Laravel public first, then legacy app/Modules/Platform/admin/ (so 500s become 404s).
 // =====================================================================
+$serveAdminAsset = function (string $publicSubPath, string $legacySubPath): \Symfony\Component\HttpFoundation\BinaryFileResponse {
+    $base = realpath(public_path($publicSubPath));
+    if ($base === false && $legacySubPath !== '') {
+        $base = realpath(base_path($legacySubPath)) ?: null;
+    } elseif ($base === false) {
+        $base = null;
+    }
+    if ($base === null) {
+        abort(404);
+    }
+
+    $path = (string) (request()->route('path') ?? '');
+    $path = str_replace(['..', '\\'], ['', '/'], $path);
+    $path = trim($path, '/');
+    if ($path === '') {
+        abort(404);
+    }
+
+    $parts = explode('/', $path);
+    $fullPath = $base . \DIRECTORY_SEPARATOR . implode(\DIRECTORY_SEPARATOR, $parts);
+    $resolved = realpath($fullPath);
+    if ($resolved === false || !is_file($resolved)) {
+        abort(404);
+    }
+
+    $baseReal = realpath($base);
+    if ($baseReal === false || !str_starts_with($resolved, $baseReal)) {
+        abort(404);
+    }
+
+    return response()->file($resolved);
+};
+
+Route::get('/admin/assets/{path}', fn () => $serveAdminAsset('admin/assets', '../app/Modules/Platform/admin/assets'))->where('path', '.*')->name('admin.assets');
+Route::get('/assets/{path}', fn () => $serveAdminAsset('admin/assets', '../app/Modules/Platform/admin/assets'))->where('path', '.*')->name('assets');
+Route::get('/admin_images/{path}', fn () => $serveAdminAsset('admin/admin_images', '../app/Modules/Platform/admin/admin_images'))->where('path', '.*')->name('admin_images');
+
 Route::get('/admin/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'login'])->name('admin.login.submit');
 Route::get('/admin/logout', [\App\Http\Controllers\Admin\AdminAuthController::class, 'logout'])->name('admin.logout');

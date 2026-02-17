@@ -36,9 +36,9 @@ $seller_about = $seller->seller_about ?? '';
 $seller_level = $seller->seller_level ?? 0;
 $seller_rating = $seller->seller_rating ?? 0;
 $seller_recent_delivery = $seller->seller_recent_delivery ?? '';
-$seller_member_since = $seller->seller_member_since ?? '';
+$seller_member_since = $seller->seller_register_date ?? '';
 $seller_vacation = $seller->seller_vacation ?? 'off';
-$seller_cover = $seller->seller_cover ?? '';
+$seller_cover = $seller->seller_cover_image ?? '';
 $seller_status_txt = $seller->seller_status ?? '';
 
 $level_meta = DB::table('seller_levels_meta')
@@ -70,7 +70,7 @@ $seller_languages = DB::table('languages_relation')
 
 // Skills
 $seller_skills = DB::table('skills_relation')
-    ->join('skills', 'skills_relation.skill_id', '=', 'skills.skill_id')
+    ->join('seller_skills', 'skills_relation.skill_id', '=', 'seller_skills.skill_id')
     ->where('skills_relation.seller_id', $seller_id)
     ->get();
 @endphp

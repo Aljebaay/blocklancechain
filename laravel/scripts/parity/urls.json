@@ -1,0 +1,36 @@
+{
+  "legacyBase": "http://127.0.0.1:8080",
+  "laravelBase": "http://127.0.0.1:8000",
+  "viewport": { "width": 1920, "height": 1080 },
+  "pages": [
+    { "id": "home-guest", "path": "/", "title": "Homepage (Guest)", "auth": false },
+    { "id": "login", "path": "/login", "title": "Login Page", "auth": false },
+    { "id": "search", "path": "/search", "title": "Search Page", "auth": false },
+    { "id": "blog-index", "path": "/blog", "title": "Blog Index", "auth": false },
+    { "id": "admin-login", "path": "/admin/login", "title": "Admin Login", "auth": false },
+    { "id": "register", "path": "/register", "title": "Register", "auth": false }
+  ],
+  "dynamicPages": [
+    { "id": "categories-show", "pathPattern": "/categories/{catUrl}", "title": "Category Show", "auth": false },
+    { "id": "blog-post", "pathPattern": "/blog/{id}/{slug}", "title": "Blog Post", "auth": false },
+    { "id": "tags", "pathPattern": "/tags/{tag}", "title": "Tag Page", "auth": false },
+    { "id": "static-page", "pathPattern": "/pages/{slug}", "title": "Static Page", "auth": false },
+    { "id": "proposal", "pathPattern": "/proposals/{username}/{slug}", "title": "Proposal Detail", "auth": false },
+    { "id": "user-profile", "pathPattern": "/{username}", "title": "User Profile", "auth": false }
+  ],
+  "smokeChecks": {
+    "assets": [
+      { "path": "/styles/bootstrap.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/styles/custom.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/styles/styles.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/styles/categories_nav_styles.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/font_awesome/css/font-awesome.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/styles/sweat_alert.css", "expectedStatus": 200, "expectedContentType": "text/css" },
+      { "path": "/js/jquery.min.js", "expectedStatus": 200, "expectedContentType": "application/javascript" },
+      { "path": "/js/ie.js", "expectedStatus": 200, "expectedContentType": "application/javascript" },
+      { "path": "/js/sweat_alert.js", "expectedStatus": 200, "expectedContentType": "application/javascript" },
+      { "path": "/js/customjs.js", "expectedStatus": 200, "expectedContentType": "application/javascript" },
+      { "path": "/js/bootstrap.js", "expectedStatus": 200, "expectedContentType": "application/javascript" }
+    ]
+  }
+}

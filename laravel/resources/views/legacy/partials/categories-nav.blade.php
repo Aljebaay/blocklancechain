@@ -21,7 +21,7 @@
         @endphp
         <li class="top-nav-item pt-xs-1 pb-xs-1 pl-xs-2 pr-xs-2 display-flex-xs align-items-center text-center" 
           data-linkable="true" data-ui="top-nav-category-link" data-node-id="c-{{ $navCat->cat_id }}">
-          <a href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($navCat->cat_url) }}">
+          <a href="{{ $site_url }}/categories/{{ rawurlencode($navCat->cat_url) }}">
           {{ $catTitle }}
           </a>
         </li>
@@ -43,7 +43,7 @@
         @endphp
         <li class="top-nav-item pt-xs-1 pb-xs-1 pl-xs-2 pr-xs-2 display-flex-xs align-items-center text-center" 
           data-linkable="true" data-ui="top-nav-category-link" data-node-id="c-{{ $extraCat->cat_id }}">
-          <a href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($extraCat->cat_url) }}">
+          <a href="{{ $site_url }}/categories/{{ rawurlencode($extraCat->cat_url) }}">
           {{ $catTitle }}
           </a>
         </li>
@@ -76,7 +76,7 @@
               $childTitle = $childMeta->child_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($ddCat->cat_url) }}&cat_child_url={{ rawurlencode($child->child_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($ddCat->cat_url) }}/{{ rawurlencode($child->child_url) }}">
               {{ $childTitle }}
               </a>
             </li>
@@ -92,7 +92,7 @@
               $childTitle = $childMeta->child_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($ddCat->cat_url) }}&cat_child_url={{ rawurlencode($child->child_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($ddCat->cat_url) }}/{{ rawurlencode($child->child_url) }}">
                 {{ $childTitle }}
               </a>
             </li>
@@ -108,7 +108,7 @@
               $childTitle = $childMeta->child_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($ddCat->cat_url) }}&cat_child_url={{ rawurlencode($child->child_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($ddCat->cat_url) }}/{{ rawurlencode($child->child_url) }}">
                 {{ $childTitle }}
               </a>
             </li>
@@ -124,7 +124,7 @@
               $childTitle = $childMeta->child_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($ddCat->cat_url) }}&cat_child_url={{ rawurlencode($child->child_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($ddCat->cat_url) }}/{{ rawurlencode($child->child_url) }}">
                 {{ $childTitle }}
               </a>
             </li>
@@ -147,7 +147,7 @@
               $mTitle = $mMeta->cat_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($mCat->cat_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($mCat->cat_url) }}">
                 {{ $mTitle }}
               </a>
             </li>
@@ -163,7 +163,7 @@
               $mTitle = $mMeta->cat_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($mCat->cat_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($mCat->cat_url) }}">
                 {{ $mTitle }}
               </a>
             </li>
@@ -179,7 +179,7 @@
               $mTitle = $mMeta->cat_title ?? '';
             @endphp
             <li>
-              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/category.php?cat_url={{ rawurlencode($mCat->cat_url) }}">
+              <a class="display-block text-gray text-body-larger pt-xs-1" href="{{ $site_url }}/categories/{{ rawurlencode($mCat->cat_url) }}">
                 {{ $mTitle }}
               </a>
             </li>

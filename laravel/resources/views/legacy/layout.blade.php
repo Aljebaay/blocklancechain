@@ -7,6 +7,7 @@
 	<meta name="description" content="@yield('meta_description', $site_desc ?? '')">
 	<meta name="keywords" content="{{ $site_keywords ?? '' }}">
 	<meta name="author" content="{{ $site_author ?? '' }}">
+	<meta name="csrf-token" content="{{ csrf_token() }}">
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,300,100" rel="stylesheet">
 	<link href="{{ $site_url }}/styles/bootstrap.css" rel="stylesheet">
 	<link href="{{ $site_url }}/styles/custom.css" rel="stylesheet">
@@ -15,12 +16,15 @@
 	<link href="{{ $site_url }}/font_awesome/css/font-awesome.css" rel="stylesheet">
 	<link href="{{ $site_url }}/styles/sweat_alert.css" rel="stylesheet">
 	@yield('extra_css')
+	<script type="text/javascript" src="{{ $site_url }}/js/ie.js"></script>
+	<script type="text/javascript" src="{{ $site_url }}/js/sweat_alert.js"></script>
+	<script type="text/javascript" src="{{ $site_url }}/js/jquery.min.js"></script>
+	<script type="text/javascript">
+		$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+	</script>
 	@if(!empty($site_favicon))
 		<link rel="shortcut icon" href="{{ $site_favicon }}" type="image/x-icon" />
 	@endif
-	<script src="{{ $site_url }}/js/ie.js"></script>
-	<script type="text/javascript" src="{{ $site_url }}/js/sweat_alert.js"></script>
-	<script type="text/javascript" src="{{ $site_url }}/js/jquery.min.js"></script>
 	@yield('head_extra')
 </head>
 <body class="@yield('body_class', 'is-responsive')">
